@@ -144,6 +144,10 @@ export const TRANSLATIONS = {
     en: "An account with this email already exists. Try signing in with the method you used originally (Google or magic link).",
     da: "Der findes allerede en konto med denne e-mail. Log ind med den metode, du brugte oprindeligt (Google eller magisk link).",
   },
+  "login.errOAuthOnlyGoogle": {
+    en: "You signed up with Google. Use \"Continue with Google\" below — magic-link sign-in isn't enabled for this account.",
+    da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" nedenfor — login via magisk link er ikke aktiveret for denne konto.",
+  },
   "login.errOAuthDeclined": {
     en: "Google sign-in was cancelled. Try again or use the email option.",
     da: "Google-login blev annulleret. Prøv igen eller brug e-mail-mulighed.",
@@ -270,8 +274,20 @@ export const TRANSLATIONS = {
     da: "Der findes allerede en konto for",
   },
   "signup.existingAccountBody": {
-    en: "Please sign in instead. If you originally signed up with Google, use \"Continue with Google\" on the sign-in page. We also sent a magic link to your inbox — you can use that to sign in too.",
-    da: "Log ind i stedet. Hvis du oprindeligt brugte Google, så brug \"Fortsæt med Google\" på login-siden. Vi sendte også et magisk link til din indbakke — du kan også bruge det til at logge ind.",
+    en: "Please sign in instead with the method you originally used to create the account.",
+    da: "Log ind i stedet med den metode, du oprindeligt brugte til at oprette kontoen.",
+  },
+  "signup.existingAccountBodyGoogle": {
+    en: "You created this account with Google. Use \"Continue with Google\" on the sign-in page.",
+    da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" på login-siden.",
+  },
+  "signup.existingAccountBodyMagic": {
+    en: "You created this account with a magic link. Go to the sign-in page and we'll send you a fresh one.",
+    da: "Du oprettede kontoen med et magisk link. Gå til login-siden, så sender vi et nyt.",
+  },
+  "signup.existingAccountBodyBoth": {
+    en: "You can sign in either with Google or with a magic link to this email.",
+    da: "Du kan logge ind enten med Google eller med et magisk link til denne e-mail.",
   },
   "signup.existingAccountGoToLogin": {
     en: "Go to sign in",

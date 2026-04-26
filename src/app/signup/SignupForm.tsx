@@ -83,10 +83,14 @@ export function SignupForm() {
   const [submittingMagic, setSubmittingMagic] = useState(false);
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
   const [sent, setSent] = useState(false);
-  // Distinct from `sent`: set when the probe detected an existing account.
+  // Distinct from `sent`: set when the RPC detected an existing account.
   // Renders a different message that points the user at /login instead of
-  // the generic "check your inbox" success state.
+  // the generic "check your inbox" success state. The provider state is
+  // captured alongside so the banner copy can be specific ("you signed
+  // up with Google" vs "you signed up with magic link" vs "either works").
   const [existingAccount, setExistingAccount] = useState(false);
+  const [existingHasEmail, setExistingHasEmail] = useState(false);
+  const [existingHasGoogle, setExistingHasGoogle] = useState(false);
   // Cloudflare Turnstile token. Required by Supabase auth (CAPTCHA enabled
   // in dashboard). Mitigates the user-enumeration vector inherent to the
   // probe pattern (Supabase issues #1547, #1955) by forcing every probe
@@ -167,32 +171,39 @@ export function SignupForm() {
     setSubmittingMagic(true);
     const supabase = createClient();
 
-    // ── Step 1: server-side existence check via public.email_exists RPC ─
-    // The RPC reads auth.users with SECURITY DEFINER and returns boolean
-    // only. No captcha consumed (it's a plain Postgres call, not an auth
-    // endpoint). No magic-link side effect — if the email exists, we
-    // simply tell the user without sending anything to their inbox.
-    const probe = await supabase.rpc("email_exists", {
+    // ── Step 1: provider-aware existence check via public.email_status ──
+    // RPC returns {is_registered, has_email, has_google}. SECURITY DEFINER
+    // reads auth.users + auth.identities with one round trip, no captcha
+    // consumed, no magic-link side effect. The provider booleans drive
+    // the banner copy below so we tell the user EXACTLY which method to
+    // use ("you signed up with Google" vs "with magic link" vs "either").
+    const probe = await supabase.rpc("email_status", {
       check_email: cleanEmail,
     });
 
     if (probe.error) {
-      // RPC failed (network / DB blip) — fail closed. We don't proceed
-      // with signup because we can't verify the email isn't already
-      // registered, and creating a duplicate is worse than asking the
-      // user to retry.
+      // RPC failed (network / DB blip) — fail closed. Creating a duplicate
+      // account is worse than asking the user to retry.
       setSubmittingMagic(false);
       toast.error(t("auth.errUnexpected"));
       return;
     }
 
-    if (probe.data === true) {
-      // Email already in auth.users (OAuth identity, magic-link identity,
-      // or both). Surface clearly and direct the user to /login. We did
-      // NOT send a magic link — the user gets nothing in their inbox,
-      // just the on-screen banner.
+    const status = (probe.data as
+      | { is_registered: boolean; has_email: boolean; has_google: boolean }[]
+      | null)?.[0] ?? {
+      is_registered: false,
+      has_email: false,
+      has_google: false,
+    };
+
+    if (status.is_registered) {
+      // Existing account — block, no magic link sent. Banner picks the
+      // provider-specific body via existingHasEmail / existingHasGoogle.
       setSubmittingMagic(false);
       setExistingAccount(true);
+      setExistingHasEmail(status.has_email);
+      setExistingHasGoogle(status.has_google);
       toast.error(t("signup.errAccountExists"));
       return;
     }
@@ -281,7 +292,15 @@ export function SignupForm() {
           <p className="font-medium">
             {t("signup.existingAccountTitle")} <strong>{email}</strong>
           </p>
-          <p className="mt-2">{t("signup.existingAccountBody")}</p>
+          <p className="mt-2">
+            {existingHasEmail && existingHasGoogle
+              ? t("signup.existingAccountBodyBoth")
+              : existingHasGoogle
+                ? t("signup.existingAccountBodyGoogle")
+                : existingHasEmail
+                  ? t("signup.existingAccountBodyMagic")
+                  : t("signup.existingAccountBody")}
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a
               href="/login"

@@ -140,21 +140,43 @@ export function LoginForm() {
     }
     setSubmittingMagic(true);
     const supabase = createClient();
-    // shouldCreateUser:false makes /login a STRICT sign-in flow:
-    //   - If the email matches an existing user → magic link is sent.
-    //   - If it doesn't → Supabase returns "Signups not allowed for otp",
-    //     which we map to a friendly "no account found, sign up instead?"
-    //     copy. This prevents typo'd emails from silently creating empty
-    //     accounts (which was the prior behavior and would inflate the
-    //     auth.users table with abandoned ghost accounts).
+
+    // ── Step 1: server-side existence check via public.email_exists RPC ─
+    // Replaces the prior `shouldCreateUser:false` probe pattern. Reasons:
+    //   1. The probe returns user_not_found for OAuth-only users even
+    //      though they DO have an auth.users row, so they couldn't sign
+    //      in via magic link with the strict probe.
+    //   2. The RPC reads auth.users directly (SECURITY DEFINER) and
+    //      returns boolean — works for OAuth-only, email-only, and
+    //      identity-linked users alike.
+    //   3. The RPC doesn't consume the captcha token, so we still have
+    //      a fresh one for the actual signInWithOtp call below.
+    const probe = await supabase.rpc("email_exists", {
+      check_email: cleanEmail,
+    });
+    if (probe.error) {
+      setSubmittingMagic(false);
+      toast.error(t("auth.errUnexpected"));
+      return;
+    }
+    if (probe.data !== true) {
+      // No matching auth.users row → strict /login refusal. Mirrors the
+      // prior probe-based "no account" copy. Prevents typo'd emails from
+      // silently creating ghost accounts.
+      setSubmittingMagic(false);
+      toast.error(t("login.errNoAccount"));
+      return;
+    }
+
+    // ── Step 2: send magic link ────────────────────────────────────────
+    // Email is registered. shouldCreateUser:false is still passed as a
+    // belt-and-suspenders guard against a race (account deleted between
+    // step 1 and step 2) — Supabase will refuse rather than auto-create.
     const { error: err } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
       options: {
         emailRedirectTo: callback,
         shouldCreateUser: false,
-        // Pass token if present, omit otherwise. When Supabase CAPTCHA
-        // re-enabled, an absent token returns captcha_failed → friendly
-        // toast. When disabled, token is ignored either way.
         ...(captchaToken ? { captchaToken } : {}),
       },
     });
@@ -163,10 +185,6 @@ export function LoginForm() {
     setCaptchaToken(null);
     setSubmittingMagic(false);
     if (err) {
-      // Render the SPECIFIC reason — authErrorTranslationKey reads
-      // err.code first (stable Supabase contract) so we surface the
-      // actual cause (rate-limited THIS email vs general request limit
-      // vs validation failure) instead of a generic stock message.
       toast.error(t(authErrorTranslationKey(err)));
       return;
     }

@@ -4,47 +4,83 @@
  * Wrapped in AuthGate so anonymous visitors are bounced to /login. Once
  * mounted with a user, fetches resumes via the Supabase client; RLS scopes
  * the query to the caller's rows automatically.
+ *
+ * If the URL carries `?template=<id>`, we treat it as "the user just clicked
+ * a template card on the landing page". We auto-create a CV pre-seeded with
+ * that template and forward into the editor — the dashboard is never rendered
+ * in that path. This keeps the gallery → editor flow a single click for both
+ * anonymous (sign-in → bounce → auto-create → editor) and authenticated users.
  */
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, FileText, Copy, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Plus, FileText, Copy, Layers, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-modal";
+import { usePrompt } from "@/components/ui/prompt-modal";
 import { AuthGate } from "@/components/auth-gate";
 import { useAuth } from "@/lib/auth-context";
+import { staggerContainer, staggerItem } from "@/lib/motion";
 import {
   listResumes,
   createResume,
   deleteResume,
   duplicateResume,
+  duplicateAsVariant,
+  groupResumesByMaster,
+  CvLimitReachedError,
+  MAX_CVS_PER_USER,
   type ResumeRow,
 } from "@/lib/resumes";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TemplateId } from "@/types/resume";
+import { TEMPLATES_BY_ID } from "@/templates/registry";
 
-// Small helper — keep it local so the editor can have its own variant later.
-function formatUpdated(iso: string) {
+/** Translated relative-time formatter — passed the active `t` so the i18n
+ *  switch works without re-defining anything. We re-derive the type from
+ *  useLanguage's return so TS doesn't fight the strict TranslationKey union. */
+type TFn = ReturnType<typeof useLanguage>["t"];
+function formatUpdated(iso: string, t: TFn): string {
   const updated = new Date(iso);
   const diffMs = Date.now() - updated.getTime();
   const min = Math.floor(diffMs / 60_000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min} min ago`;
+  if (min < 1) return t("dashboard.justNow");
+  if (min < 60) return `${min} ${t("dashboard.minAgo")}`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} hr ago`;
+  if (hr < 24) return `${hr} ${t("dashboard.hrAgo")}`;
   const day = Math.floor(hr / 24);
-  if (day < 30) return `${day} day${day === 1 ? "" : "s"} ago`;
+  if (day < 30)
+    return `${day} ${day === 1 ? t("dashboard.dayAgo") : t("dashboard.daysAgo")}`;
   return updated.toLocaleDateString();
+}
+
+/** Narrow a raw search-param string to a known template id. */
+function asTemplate(raw: string | null): TemplateId | null {
+  if (!raw) return null;
+  return raw in TEMPLATES_BY_ID ? (raw as TemplateId) : null;
 }
 
 function DashboardInner() {
   const router = useRouter();
+  const params = useSearchParams();
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const confirm = useConfirm();
+  const prompt = usePrompt();
   const [resumes, setResumes] = useState<ResumeRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Guard so the auto-create path runs at most once per mount even if the
+  // search params re-fire (StrictMode double-mount, hydration, etc.).
+  const autoCreateFiredRef = useRef(false);
+
+  const requestedTemplate = asTemplate(params.get("template"));
 
   // Fetch on mount AND when the user identity changes — covers sign-in
   // happening after the component has already rendered (rare but possible).
@@ -59,7 +95,7 @@ function DashboardInner() {
       })
       .catch((e: unknown) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load CVs.");
+          setError(e instanceof Error ? e.message : t("editor.loadFailed"));
           setResumes([]);
         }
       });
@@ -69,11 +105,41 @@ function DashboardInner() {
     // user.id triggers a refetch if the signed-in user actually changes.
   }, [user?.id]);
 
+  // Auto-create-and-forward when ?template=<id> is present. We wait until the
+  // user is loaded (signed-in) so the insert hits RLS as the right identity.
+  useEffect(() => {
+    if (!requestedTemplate) return;
+    if (!user) return; // AuthGate is still resolving; effect will re-fire.
+    if (autoCreateFiredRef.current) return;
+    autoCreateFiredRef.current = true;
+    void (async () => {
+      try {
+        const id = await createResume(requestedTemplate);
+        router.replace(`/editor?id=${id}`);
+      } catch (e) {
+        if (e instanceof CvLimitReachedError) {
+          // Don't loop the auto-create — show the dashboard with a clear
+          // banner so the user can free a slot by deleting another CV.
+          toast.error(e.message);
+        } else {
+          toast.error(
+            e instanceof Error ? e.message : t("dashboard.toastNewFailed"),
+          );
+        }
+        // Drop the query string so a retry click on "New CV" doesn't re-loop.
+        router.replace("/dashboard");
+        autoCreateFiredRef.current = false;
+      }
+    })();
+  }, [requestedTemplate, user, router]);
+
   async function refresh() {
     try {
       setResumes(await listResumes());
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Refresh failed.");
+      toast.error(
+        e instanceof Error ? e.message : t("dashboard.toastRefreshFailed"),
+      );
     }
   }
 
@@ -83,49 +149,151 @@ function DashboardInner() {
       const id = await createResume();
       router.push(`/editor?id=${id}`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't create CV.");
+      if (e instanceof CvLimitReachedError) {
+        toast.error(e.message);
+      } else {
+        toast.error(
+          e instanceof Error ? e.message : t("dashboard.toastCreateFailed"),
+        );
+      }
     } finally {
       setBusy(false);
     }
   }
 
   async function onDelete(id: string) {
-    if (!confirm("Delete this CV permanently?")) return;
+    const cv = resumes?.find((r) => r.id === id);
+    const ok = await confirm({
+      title: t("dashboard.confirmDeleteTitle"),
+      description: cv?.title
+        ? t("dashboard.confirmDeleteDescNamed", { name: cv.title })
+        : t("dashboard.confirmDeleteDesc"),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteResume(id);
-      toast.success("Deleted.");
+      toast.success(t("dashboard.toastDeleted"));
       await refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Delete failed.");
+      toast.error(
+        e instanceof Error ? e.message : t("dashboard.toastDeleteFailed"),
+      );
     }
   }
 
   async function onDuplicate(id: string) {
     try {
       await duplicateResume(id);
-      toast.success("Duplicated.");
+      toast.success(t("dashboard.toastDuplicated"));
       await refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Duplicate failed.");
+      if (e instanceof CvLimitReachedError) {
+        toast.error(e.message);
+      } else {
+        toast.error(
+          e instanceof Error ? e.message : t("dashboard.toastDuplicateFailed"),
+        );
+      }
     }
+  }
+
+  /** Save-as-variant flow. Pops a prompt for a label, then clones the
+   *  source CV with `parent_id` set to the source's master (or the source
+   *  itself if it IS a master). The new variant lands grouped under its
+   *  master in the dashboard. */
+  async function onSaveAsVariant(id: string) {
+    const label = await prompt({
+      title: t("dashboard.variantPromptTitle"),
+      description: t("dashboard.variantPromptDesc"),
+      inputLabel: t("dashboard.variantPromptLabel"),
+      placeholder: t("dashboard.variantPromptPlaceholder"),
+      confirmLabel: t("dashboard.variantPromptConfirm"),
+      cancelLabel: t("common.cancel"),
+      maxLength: 80,
+    });
+    if (!label) return;
+    try {
+      await duplicateAsVariant(id, label);
+      toast.success(t("dashboard.toastVariantCreated"));
+      await refresh();
+    } catch (e) {
+      if (e instanceof CvLimitReachedError) {
+        toast.error(e.message);
+      } else {
+        toast.error(
+          e instanceof Error ? e.message : t("dashboard.toastVariantFailed"),
+        );
+      }
+    }
+  }
+
+  // Whether the user has reached the per-account cap. Counted client-side
+  // for UX (disable the button, show a banner); the trigger is the actual
+  // gate, so this is allowed to lag briefly without a security impact.
+  const atLimit =
+    Array.isArray(resumes) && resumes.length >= MAX_CVS_PER_USER;
+
+  // Show a focused "preparing your CV…" splash while the auto-create runs.
+  if (requestedTemplate) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+        <div className="text-sm font-medium text-fg">
+          {t("dashboard.preparingTemplate")}{" "}
+          <span className="font-semibold">
+            {TEMPLATES_BY_ID[requestedTemplate].name}
+          </span>{" "}
+          {t("dashboard.preparingSuffix")}
+        </div>
+        <p className="mt-2 text-sm text-muted">
+          {t("dashboard.preparingHint")}
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-            Your CVs
+          <h1 className="text-2xl font-semibold tracking-tight text-fg">
+            {t("dashboard.title")}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Auto-saved. Pick up where you left off.
+          <p className="mt-1 text-sm text-muted">
+            {t("dashboard.subtitle")}
+            {Array.isArray(resumes) && (
+              <span className="ml-1 font-medium text-fg">
+                {resumes.length} / {MAX_CVS_PER_USER} {t("dashboard.usedSuffix")}
+              </span>
+            )}
           </p>
         </div>
-        <Button type="button" onClick={onCreate} disabled={busy}>
+        <Button
+          type="button"
+          onClick={onCreate}
+          disabled={busy || atLimit}
+          title={
+            atLimit
+              ? t("dashboard.limitTitle", { n: MAX_CVS_PER_USER })
+              : undefined
+          }
+        >
           <Plus className="h-4 w-4" />
-          {busy ? "Creating…" : "New CV"}
+          {busy
+            ? t("dashboard.creating")
+            : atLimit
+              ? t("dashboard.limitReached")
+              : t("dashboard.newCv")}
         </Button>
       </div>
+
+      {atLimit && (
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {t("dashboard.limitTitle", { n: MAX_CVS_PER_USER })}
+        </div>
+      )}
 
       <div className="mt-8">
         {error ? (
@@ -133,71 +301,69 @@ function DashboardInner() {
             {error}
           </div>
         ) : resumes === null ? (
-          <div className="text-center text-sm text-neutral-400">Loading…</div>
-        ) : resumes.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resumes.map((r) => (
-              <Card key={r.id} className="flex flex-col">
-                <CardContent className="flex flex-1 flex-col gap-3 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <Link
-                      href={`/editor?id=${r.id}`}
-                      className="flex flex-1 items-start gap-3 text-left"
-                    >
-                      <FileText className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" />
-                      <div>
-                        <h3 className="font-semibold text-neutral-900 hover:underline">
-                          {r.title}
-                        </h3>
-                        <p className="mt-1 text-xs text-neutral-500">
-                          Updated {formatUpdated(r.updated_at)}
-                        </p>
-                      </div>
-                    </Link>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Duplicate CV"
-                        title="Duplicate"
-                        onClick={() => {
-                          void onDuplicate(r.id);
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Delete CV"
-                        title="Delete"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => {
-                          void onDelete(r.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="text-center text-sm text-subtle">
+            {t("common.loading")}
           </div>
+        ) : resumes.length > 0 ? (
+          // Stagger container — each immediate child gets a 50ms-spaced
+          // entrance. We wrap the per-master <div> so masters AND their
+          // variant siblings share one stagger pass; otherwise the
+          // variant subgroup would re-stagger on its own which reads as
+          // a second wave of motion the user has to notice.
+          <motion.div
+            variants={staggerContainer(0.05)}
+            initial="initial"
+            animate="animate"
+            className="space-y-6"
+          >
+            {groupResumesByMaster(resumes).map((group) => (
+              <motion.div key={group.master.id} variants={staggerItem}>
+                <ResumeCard
+                  row={group.master}
+                  isVariant={false}
+                  onDuplicate={onDuplicate}
+                  onSaveAsVariant={onSaveAsVariant}
+                  onDelete={onDelete}
+                  t={t}
+                />
+                {group.variants.length > 0 && (
+                  <div
+                    // Variants render as a slightly-inset stack under their
+                    // master so the parent → children relationship is
+                    // visually obvious. Left-border accent gives a clean
+                    // "this is a sub-tree" affordance without needing a
+                    // separate column.
+                    className="mt-2 ml-4 space-y-2 border-l-2 border-[color:var(--color-border)] pl-4"
+                  >
+                    {group.variants.map((v) => (
+                      <ResumeCard
+                        key={v.id}
+                        row={v}
+                        isVariant
+                        masterTitle={group.master.title}
+                        onDuplicate={onDuplicate}
+                        onSaveAsVariant={onSaveAsVariant}
+                        onDelete={onDelete}
+                        t={t}
+                      />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
         ) : (
-          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-10 text-center">
-            <FileText className="mx-auto h-10 w-10 text-neutral-300" />
-            <h2 className="mt-4 text-lg font-semibold text-neutral-900">
-              No CVs yet
+          <div className="rounded-xl border border-dashed border-strong bg-surface p-10 text-center">
+            <FileText className="mx-auto h-10 w-10 text-subtle" />
+            <h2 className="mt-4 text-lg font-semibold text-fg">
+              {t("dashboard.empty.title")}
             </h2>
-            <p className="mt-1 text-sm text-neutral-500">
-              Hit &ldquo;New CV&rdquo; to start your first one.
+            <p className="mt-1 text-sm text-muted">
+              {t("dashboard.empty.body")}
             </p>
             <Button type="button" onClick={onCreate} className="mt-6" disabled={busy}>
               <Plus className="h-4 w-4" />
-              {busy ? "Creating…" : "New CV"}
+              {busy ? t("dashboard.creating") : t("dashboard.newCv")}
             </Button>
           </div>
         )}
@@ -206,10 +372,120 @@ function DashboardInner() {
   );
 }
 
+/** Single CV card. Same shape for both masters and variants — the only
+ *  visual differences are: variant gets a "Variant of {master} · {label}"
+ *  badge above the title, and (because variants render inside the
+ *  indented sibling stack) they sit at slightly higher density. */
+function ResumeCard({
+  row,
+  isVariant,
+  masterTitle,
+  onDuplicate,
+  onSaveAsVariant,
+  onDelete,
+  t,
+}: {
+  row: ResumeRow;
+  isVariant: boolean;
+  masterTitle?: string;
+  onDuplicate: (id: string) => void;
+  onSaveAsVariant: (id: string) => void;
+  onDelete: (id: string) => void;
+  t: TFn;
+}) {
+  return (
+    <Card className="flex flex-col">
+      <CardContent className="flex flex-1 flex-col gap-3 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <Link
+            href={`/editor?id=${row.id}`}
+            className="flex flex-1 items-start gap-3 text-left"
+          >
+            <FileText className="mt-0.5 h-5 w-5 shrink-0 text-subtle" />
+            <div className="min-w-0 flex-1">
+              {isVariant && (
+                <div className="mb-0.5 inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-violet-900 dark:bg-violet-900/40 dark:text-violet-200">
+                  <Layers className="h-3 w-3" aria-hidden="true" />
+                  <span className="truncate">
+                    {t("dashboard.variantBadge")} {masterTitle ?? "—"}
+                  </span>
+                </div>
+              )}
+              <h3 className="truncate font-semibold text-fg hover:underline">
+                {isVariant && row.variant_label
+                  ? row.variant_label
+                  : row.title}
+              </h3>
+              <p className="mt-1 text-xs text-muted">
+                {t("dashboard.updated")} {formatUpdated(row.updated_at, t)}
+              </p>
+            </div>
+          </Link>
+          <div className="flex items-center gap-1">
+            {/* Layers icon → save-as-variant. The icon itself gets a
+                subtle scale + rotate on hover via group-hover so the
+                user feels the "stack" gesture. The Button's own
+                hover/press transitions stay intact. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("dashboard.variantAria")}
+              title={t("dashboard.variantAria")}
+              onClick={() => {
+                onSaveAsVariant(row.id);
+              }}
+              className="group/layers"
+            >
+              <Layers className="h-4 w-4 transition-transform duration-200 ease-out group-hover/layers:scale-110 group-hover/layers:-rotate-6" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("dashboard.duplicateAria")}
+              title={t("common.duplicate")}
+              onClick={() => {
+                onDuplicate(row.id);
+              }}
+              className="group/dupe"
+            >
+              <Copy className="h-4 w-4 transition-transform duration-200 ease-out group-hover/dupe:scale-110" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("dashboard.deleteAria")}
+              title={t("common.delete")}
+              className="group/del text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => {
+                onDelete(row.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4 transition-transform duration-200 ease-out group-hover/del:scale-110" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   return (
     <AuthGate>
-      <DashboardInner />
+      {/* Suspense is required because <DashboardInner> calls useSearchParams,
+          which triggers a CSR bailout on the static-export build. */}
+      <Suspense
+        fallback={
+          <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-subtle">
+            Loading…
+          </div>
+        }
+      >
+        <DashboardInner />
+      </Suspense>
     </AuthGate>
   );
 }

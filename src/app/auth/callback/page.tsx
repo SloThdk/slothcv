@@ -15,6 +15,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { exchangeErrorToCallbackCode } from "@/lib/auth-errors";
 
 function CallbackInner() {
   const router = useRouter();
@@ -27,31 +28,106 @@ function CallbackInner() {
     const next = params.get("next") ?? "/dashboard";
     const errorDescription = params.get("error_description");
 
-    // Provider-side error (e.g. user denied OAuth consent) — surface and
-    // bounce. Don't try to redeem a non-existent code.
+    // Sanitize `next` once. Only relative paths — never honor a full URL,
+    // even if it points at our domain (would be an open-redirect waiting to
+    // be turned into a phishing template).
+    const safeNext =
+      next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+
+    // Provider-side error (e.g. user denied OAuth consent, or identity
+    // collision: same email used previously via a different identity and
+    // automatic linking is not enabled). Map the most common ones to a
+    // short error code so /login can render friendly copy without leaking
+    // raw provider strings to the user.
     if (errorDescription) {
-      router.replace(`/login?error=${encodeURIComponent(errorDescription)}`);
+      const lower = errorDescription.toLowerCase();
+      let mapped = "exchange_failed";
+      if (lower.includes("user already") || lower.includes("identity already")) {
+        // Google OAuth attempted with an email that already belongs to a
+        // magic-link / different-provider account. Tell them to sign in
+        // through the original method.
+        mapped = "account_exists_other_method";
+      } else if (lower.includes("access_denied") || lower.includes("denied")) {
+        // User declined the OAuth consent screen.
+        mapped = "oauth_declined";
+      }
+      // Use a known short-code, never the raw provider string. The old
+      // code put the raw description into the URL which then leaked
+      // through `decodeURIComponent` on the receiving page.
+      router.replace(`/login?error=${mapped}`);
       return;
     }
 
     if (!code) {
-      router.replace("/login?error=missing_code");
+      // No code in URL. Two possibilities:
+      //   1. Stale callback bookmark — bounce to /login with a code.
+      //   2. User is already signed in (callback re-loaded after success)
+      //      — just forward to where they wanted to go.
+      (async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        router.replace(user ? safeNext : "/login?error=missing_code");
+      })();
       return;
     }
 
     (async () => {
       const supabase = createClient();
+
+      // ALWAYS attempt the exchange. Supabase replaces any pre-existing
+      // session with the one created by this code, which is what we
+      // want — it's the C1 mitigation. We do NOT signOut first because
+      // signOut({scope:'local'}) wipes localStorage including the PKCE
+      // code_verifier that exchangeCodeForSession needs to read; doing
+      // so breaks every magic-link AND every OAuth callback.
+      //
+      // Outcomes:
+      //   - exchange succeeds → session is now the link-owner's
+      //     (Supabase overwrites). C1 (Bob's link in Alice's browser
+      //     replacing Alice with Bob) is the desired behavior.
+      //   - exchange fails because code already used (double-click,
+      //     refresh on success page) AND there's a valid existing
+      //     session → that session was almost certainly created by
+      //     the FIRST click of this same link. Forward to safeNext.
+      //   - exchange fails for any other reason → bounce to /login
+      //     with the specific reason. Do NOT auto-forward using a
+      //     pre-existing session, since we can't prove it belongs
+      //     to whoever owns this link.
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (cancelled) return;
-      if (error) {
-        router.replace("/login?error=exchange_failed");
+
+      if (!error) {
+        setMessage("Signed in. Redirecting…");
+        router.replace(safeNext);
         return;
       }
-      // `next` is user-supplied, so only honour relative paths to avoid an
-      // open-redirect (e.g. ?next=https://evil.com).
-      const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-      setMessage("Signed in. Redirecting…");
-      router.replace(safeNext);
+
+      // Exchange failed. Before bouncing to /login with an error, check
+      // if the user has a valid session anyway (this happens when:
+      //   1. They double-clicked the magic link — first click consumed
+      //      the code and gave them a session; second click hits this
+      //      branch with "code already used".
+      //   2. They refreshed the success page after sign-in.
+      //   3. PKCE verifier was lost mid-flow but a parallel tab already
+      //      completed the exchange.
+      // In any of these cases the user IS signed in. Showing them an
+      // error toast then auto-redirecting to /dashboard is confusing —
+      // they end up on the dashboard with a red toast for no reason.
+      // Just forward silently if a valid session exists.
+      const {
+        data: { user: existing },
+      } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (existing) {
+        router.replace(safeNext);
+        return;
+      }
+
+      // Genuinely no session — bounce with the specific error code so
+      // /login can render the right copy.
+      const errCode = exchangeErrorToCallbackCode(error);
+      router.replace(`/login?error=${errCode}`);
     })();
 
     return () => {
@@ -60,7 +136,7 @@ function CallbackInner() {
   }, [params, router]);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-neutral-500">
+    <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-muted">
       {message}
     </div>
   );
@@ -70,7 +146,7 @@ export default function CallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-neutral-500">
+        <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-muted">
           Loading…
         </div>
       }

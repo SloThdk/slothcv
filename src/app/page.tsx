@@ -1,100 +1,260 @@
 /**
- * Landing page.
+ * Landing page — slothcv marketing front door.
  *
- * Single-screen hero on mobile (390px target), with three placeholder
- * template cards below. The CTA points to /dashboard; middleware will bounce
- * anonymous visitors to /login first, so the same button works for both.
+ * Mobile-first hero, then a feature trio, then a clickable template gallery.
+ * Every clickable card is a real <Link> to /dashboard?template=<id>; the
+ * AuthGate inside /dashboard either bounces unauthenticated visitors to
+ * /login or auto-creates a CV with the chosen template and pushes the user
+ * into the editor.
+ *
+ * All copy comes through `useLanguage().t(...)` so DA/EN flips in one toggle.
+ * All chrome surfaces use CSS variables so dark / light theme flips
+ * everywhere at once.
  */
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
 
-// Phase 1 templates are visual placeholders only. Phase 2 will replace these
-// with real, openable templates plus a "Use this template" CTA.
-const TEMPLATES = [
-  {
-    name: "Minimal",
-    accent: "from-neutral-100 to-neutral-200",
-    description: "Clean, single-column. Lets the content speak.",
-  },
-  {
-    name: "Modern",
-    accent: "from-amber-50 to-orange-100",
-    description: "Two-column with a confident accent bar.",
-  },
-  {
-    name: "Editorial",
-    accent: "from-emerald-50 to-teal-100",
-    description: "Magazine-style with display typography.",
-  },
-];
+import { useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileDown,
+  Lock,
+  Sparkles,
+} from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { TEMPLATES } from "@/templates/registry";
+import { TemplatePreview } from "@/components/editor/template-preview";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import {
+  DUR,
+  EASE,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/motion";
 
 export default function LandingPage() {
+  const { t } = useLanguage();
+  // Router is used by the template gallery cards. We deliberately route
+  // programmatically instead of wrapping each card in a <Link>, because
+  // the rendered <TemplatePreview> contains its own <a> tags for the
+  // personal contact links — nesting them inside a Link's anchor causes
+  // a hydration error ("<a> cannot be a descendant of <a>").
+  const router = useRouter();
+  // Refs + useInView for sections that should animate when scrolled into
+  // view (feature trio + template gallery). once:true so the animation
+  // runs exactly the first time the section enters the viewport. margin
+  // pulls the trigger 80px before the section's top edge so the user
+  // sees motion completing as the section settles, not after.
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const featuresInView = useInView(featuresRef, {
+    once: true,
+    margin: "0px 0px -80px 0px",
+  });
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const galleryInView = useInView(galleryRef, {
+    once: true,
+    margin: "0px 0px -80px 0px",
+  });
+
   return (
-    <div>
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:pt-24 sm:pb-28">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 sm:text-6xl">
-            Free, beautiful CVs.
+    <div className="bg-[color:var(--color-bg)] text-[color:var(--color-text)] transition-colors">
+      {/* ---------------- Hero ----------------
+          First-impression entrance: a 400ms fade+rise on every element
+          so the headline + subhead + CTAs settle in sequence. Slightly
+          slower than the rest of the site because hero is the moment
+          the user decides whether they're staying. */}
+      <section className="relative mx-auto max-w-6xl px-4 pt-16 pb-16 sm:pt-24 sm:pb-20">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_10%,rgba(15,23,42,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_10%,rgba(255,255,255,0.05),transparent_50%)]"
+        />
+        <motion.div
+          variants={staggerContainer(0.08)}
+          initial="initial"
+          animate="animate"
+          className="mx-auto max-w-3xl text-center"
+        >
+          <motion.p
+            variants={staggerItem}
+            transition={{ duration: DUR.feature, ease: EASE.out }}
+            className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium text-[color:var(--color-text-muted)]"
+          >
+            <Sparkles className="h-3 w-3" />
+            {t("landing.eyebrow")}
+          </motion.p>
+          <motion.h1
+            variants={staggerItem}
+            transition={{ duration: DUR.feature, ease: EASE.out }}
+            className="text-balance text-4xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-6xl"
+          >
+            {t("landing.headlineA")}
             <br />
-            <span className="text-neutral-500">No signup walls, no watermarks.</span>
-          </h1>
-          <p className="mt-6 text-base text-neutral-600 sm:text-lg">
-            Drag, drop, design. Export to PDF. Your work auto-saves so you can
-            pick up exactly where you left off.
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <span className="text-[color:var(--color-text-muted)]">
+              {t("landing.headlineB")}
+            </span>
+          </motion.h1>
+          <motion.p
+            variants={staggerItem}
+            transition={{ duration: DUR.feature, ease: EASE.out }}
+            className="mx-auto mt-6 max-w-xl text-pretty text-base text-[color:var(--color-text-muted)] sm:text-lg"
+          >
+            {t("landing.body")}
+          </motion.p>
+          <motion.div
+            variants={staggerItem}
+            transition={{ duration: DUR.feature, ease: EASE.out }}
+            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          >
             <Link href="/dashboard" className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
-                Start building
+                {t("landing.startBuilding")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link href="/login" className="w-full sm:w-auto">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Sign in
+                {t("landing.signIn")}
               </Button>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Template gallery (Phase 1 placeholders) */}
+      {/* ---------------- Feature trio ----------------
+          Staggers on scroll-into-view via useInView. Trigger fires once
+          per page load — the user shouldn't see the same animation
+          again if they scroll back up. */}
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:pb-20">
+        <motion.div
+          ref={featuresRef}
+          variants={staggerContainer(0.08)}
+          initial="initial"
+          animate={featuresInView ? "animate" : "initial"}
+          className="grid gap-4 sm:grid-cols-3"
+        >
+          <FeatureTile
+            icon={FileDown}
+            title={t("features.pdfTitle")}
+            body={t("features.pdfBody")}
+          />
+          <FeatureTile
+            icon={Lock}
+            title={t("features.dataTitle")}
+            body={t("features.dataBody")}
+          />
+          <FeatureTile
+            icon={CheckCircle2}
+            title={t("features.watermarkTitle")}
+            body={t("features.watermarkBody")}
+          />
+        </motion.div>
+      </section>
+
+      {/* ---------------- Template gallery ---------------- */}
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight text-neutral-900">
-            Templates to start from
-          </h2>
-          <p className="text-sm text-neutral-500">
-            More templates landing in Phase 2.
-          </p>
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-3xl">
+              {t("templates.title")}
+            </h2>
+            <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+              {TEMPLATES.length} {t("templates.body")}
+            </p>
+          </div>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Gallery cascade — 30ms apart, slightly faster than the
+            features stagger because there are many more cards. */}
+        <motion.div
+          ref={galleryRef}
+          variants={staggerContainer(0.03)}
+          initial="initial"
+          animate={galleryInView ? "animate" : "initial"}
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {TEMPLATES.map((tpl) => (
-            <Card key={tpl.name} className="overflow-hidden">
-              {/*
-                Visual placeholder — gradient stand-in for an eventual
-                generated preview thumbnail. aspect-[3/4] mimics A4-ish.
-              */}
-              <div
-                className={`aspect-[3/4] w-full bg-gradient-to-br ${tpl.accent}`}
-                aria-hidden
-              />
-              <CardContent className="pt-5">
-                <h3 className="text-lg font-semibold text-neutral-900">
-                  {tpl.name}
-                </h3>
-                <p className="mt-1 text-sm text-neutral-500">
-                  {tpl.description}
-                </p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key={tpl.id}
+              variants={staggerItem}
+              // Hover lift via Framer transform so the underlying CSS
+              // class rules don't fight the entrance translate. Pure
+              // transform — no layout impact.
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.2, ease: EASE.out }}
+            >
+              {/* Card uses <button> instead of <Link> because the inner
+                  <TemplatePreview> emits <a> elements for the personal
+                  contact links, and nested anchors are an HTML invariant
+                  that React flags as a hydration error. The pointer-events-
+                  none on the preview wrapper stops the inner anchors from
+                  intercepting clicks — the whole card routes via onClick. */}
+              <button
+                type="button"
+                onClick={() => router.push(`/dashboard?template=${tpl.id}`)}
+                aria-label={tpl.name}
+                className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-left shadow-sm transition-shadow duration-200 hover:border-[color:var(--color-border-strong)] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] focus-visible:ring-offset-2 cursor-pointer"
+              >
+                <div className="pointer-events-none border-b border-[color:var(--color-border)]">
+                  <TemplatePreview id={tpl.id} />
+                </div>
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-lg font-semibold text-[color:var(--color-text)]">
+                      {tpl.name}
+                    </h3>
+                    <span className="text-xs font-medium text-[color:var(--color-text-subtle)] transition-colors group-hover:text-[color:var(--color-text)]">
+                      {t("templates.use")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
+                    {tpl.blurb}
+                  </p>
+                </div>
+              </button>
+            </motion.div>
           ))}
+        </motion.div>
+        <div className="mt-12 flex justify-center">
+          <Link href="/dashboard">
+            <Button size="lg">
+              {t("templates.openDashboard")}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
     </div>
+  );
+}
+
+/** FeatureTile — wraps the static feature copy in a motion.div so the
+ *  parent staggerContainer can drive its entrance. Hover lift comes from
+ *  whileHover (transform-only so it doesn't fight the entrance variant
+ *  the way the previous CSS hover:-translate-y-px did). */
+function FeatureTile({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  body: string;
+}) {
+  return (
+    <motion.div
+      variants={staggerItem}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2, ease: EASE.out }}
+      className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5 transition-shadow duration-200 hover:border-[color:var(--color-border-strong)] hover:shadow-md"
+    >
+      <Icon className="h-5 w-5 text-[color:var(--color-text)]" />
+      <h3 className="mt-3 text-sm font-semibold text-[color:var(--color-text)]">
+        {title}
+      </h3>
+      <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">{body}</p>
+    </motion.div>
   );
 }

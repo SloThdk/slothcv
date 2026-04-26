@@ -1,107 +1,226 @@
 /**
- * /editor — Phase 1 placeholder editor.
+ * /editor — the actual usable CV builder (Phase 2).
  *
- * We use a query parameter (`?id=...`) instead of a dynamic segment because
- * Phase 1 ships as a static export and Next 16's static-export mode doesn't
- * permit dynamic routes without compile-time `generateStaticParams`. CV ids
- * are user-generated, so we couldn't enumerate them at build time anyway.
+ * Two-pane layout:
+ *   - Left (40%): tabbed controls (Content / Design / Templates / Settings).
+ *   - Right (60%): live A4 preview, scrollable + zoomable.
  *
- * Phase 2 may flip to a Worker deploy and reintroduce `/editor/[id]`. The
- * UI cost of switching is one Link change in the dashboard.
+ * On mount we hydrate the editor store from Supabase. Mutations are applied
+ * optimistically; the store schedules a debounced 1s save. The header shows
+ * the SaveIndicator pill so the user always knows where they stand.
+ *
+ * Mobile: collapses to a single column with a bottom-bar toggle between
+ * "Edit" and "Preview". Desktop-first; mobile is functional, not polished.
  */
 
 "use client";
 
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AuthGate } from "@/components/auth-gate";
 import {
-  getResume,
-  renameResume,
-  saveResumeData,
-  type ResumeFull,
-} from "@/lib/resumes";
+  ArrowLeft,
+  Eye,
+  FileText,
+  Layers,
+  Plus,
+  Redo2,
+  Save,
+  Settings2,
+  Undo2,
+  Wand2,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { usePrompt } from "@/components/ui/prompt-modal";
+import { AuthGate } from "@/components/auth-gate";
+import { getResumeParsed, renameResume } from "@/lib/resumes";
+import {
+  useEditorStore,
+  flushPendingSave,
+  type SaveStatus,
+} from "@/lib/store/editor";
+import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { SaveIndicator } from "@/components/editor/save-indicator";
+import { SectionList } from "@/components/editor/section-list";
+import { DesignTab } from "@/components/editor/design-tab";
+import { TemplatesTab } from "@/components/editor/templates-tab";
+import { SettingsTab } from "@/components/editor/settings-tab";
+import { ToolshelfTab } from "@/components/editor/toolshelf-tab";
+import { Preview } from "@/components/editor/preview";
+
+type Tab = "content" | "design" | "add" | "templates" | "settings";
+type MobilePane = "edit" | "preview";
 
 function EditorInner() {
   const router = useRouter();
   const params = useSearchParams();
   const id = params.get("id") ?? "";
+  const { t, lang } = useLanguage();
 
-  const [resume, setResume] = useState<ResumeFull | null>(null);
+  const hydrate = useEditorStore((s) => s.hydrate);
+  const reset = useEditorStore((s) => s.reset);
+  const resumeId = useEditorStore((s) => s.resumeId);
+  const selectedElementId = useEditorStore((s) => s.selectedElementId);
+  const setMeta = useEditorStore((s) => s.setMeta);
+  const dataLanguage = useEditorStore((s) => s.data.meta.language);
+  const requestJumpToSection = useEditorStore((s) => s.requestJumpToSection);
+
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [savedTitle, setSavedTitle] = useState("");
-  const [pending, startTransition] = useTransition();
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("content");
+  const [mobilePane, setMobilePane] = useState<MobilePane>("edit");
+  // Tab the user was on BEFORE selecting a custom element. We auto-switch
+  // to "add" on selection so the inspector pops open, but on deselect we
+  // want to send the user back to wherever they came from — not jump to
+  // a default tab. Without this, picking a shape and clicking out would
+  // bounce them to Design (or whatever default), losing their place.
+  const prevTabBeforeSelectionRef = useRef<Tab | null>(null);
 
+  // Hydrate the store from Supabase on mount / when the URL id changes.
   useEffect(() => {
     if (!id) {
-      // No id in the URL — bounce back to the dashboard so the user isn't
-      // staring at a confused empty state.
       router.replace("/dashboard");
       return;
     }
     let cancelled = false;
-    getResume(id)
-      .then((r) => {
+    getResumeParsed(id)
+      .then((res) => {
         if (cancelled) return;
-        if (!r) {
-          setError("This CV doesn't exist or you don't have access.");
+        if (!res) {
+          setError(t("editor.notFound"));
           return;
         }
         setError(null);
-        setResume(r);
-        setTitle(r.title);
-        setSavedTitle(r.title);
-        setLastSavedAt(r.updated_at);
+        setTitle(res.row.title);
+        hydrate(res.row.id, res.data);
       })
       .catch((e: unknown) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load CV.");
-        }
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : t("editor.loadFailed"));
       });
+
+    // Warn the user if they try to close / navigate away with unsaved
+    // changes. Auto-save is OFF so this is the only safety net.
+    // Per spec, modern browsers ignore the custom message and show a
+    // localized "Unsaved changes" prompt — that's fine, the goal is to
+    // surface the dirty state, not the exact wording.
+    function onUnload(e: BeforeUnloadEvent) {
+      if (useEditorStore.getState().saveStatus === "dirty") {
+        e.preventDefault();
+        // Some old browsers still want a returnValue assignment.
+        e.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", onUnload);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("beforeunload", onUnload);
+      // Don't reset on unmount in dev (StrictMode double-mount would clobber);
+      // call reset only when the id actually changes by triggering it on next
+      // hydrate above.
     };
-  }, [id, router]);
+    // t included in deps so the not-found message reflects language switches
+    // mid-load; harmless because hydrate-already-resolved checks bail out.
+  }, [id, hydrate, router, t]);
 
-  function onSaveTitle() {
-    if (!resume) return;
-    if (title.trim() === savedTitle.trim() || !title.trim()) return;
-    startTransition(async () => {
-      try {
-        await renameResume(resume.id, title);
-        setSavedTitle(title);
-        toast.success("Title saved.");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed.");
-      }
-    });
-  }
+  // Reset the store when the editor leaves entirely. We DO NOT flush a
+  // pending save on unmount — auto-save is off, so unsaved changes are
+  // intentionally discarded. The beforeunload prompt above already gave
+  // the user a chance to cancel the navigation.
+  useEffect(() => {
+    return () => {
+      reset();
+    };
+  }, [reset]);
 
-  function onSaveAll() {
-    if (!resume) return;
-    startTransition(async () => {
-      try {
-        if (title.trim() && title.trim() !== savedTitle.trim()) {
-          await renameResume(resume.id, title);
-          setSavedTitle(title);
-        }
-        // Phase 1: editor state is a passthrough — Phase 2 will replace
-        // resume.data with the real editor model.
-        await saveResumeData(resume.id, resume.data ?? {});
-        setLastSavedAt(new Date().toISOString());
-        toast.success("Saved.");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed.");
+  // Click-to-jump from the live preview.
+  //   - `slothcv:jump-to-section` → switch to Content tab + expand the row
+  //     (the section list listens separately for the expand part). This
+  //     also clears any pending "restore" target since the user explicitly
+  //     navigated to a section by clicking it.
+  //   - `slothcv:open-design-tab` is intentionally NOT listened for here.
+  //     Background clicks no longer force-switch to Design — they just
+  //     deselect, and the deselect-restore effect below sends the user
+  //     back to wherever they were working. (The Design tab is one click
+  //     away in the tab bar; surprising tab-switches aren't worth it.)
+  useEffect(() => {
+    function onJump(e: Event) {
+      const detail = (e as CustomEvent<{ id: string }>).detail;
+      if (!detail?.id) return;
+      setTab("content");
+      setMobilePane("edit");
+      // Explicit nav clears the "where to send you back" memory — the
+      // user has chosen a new home and any pending custom-element
+      // selection is stale from their POV.
+      prevTabBeforeSelectionRef.current = null;
+      // Persist the intent in the store so SectionList can pick it up
+      // when it (re)mounts. Avoids the previous race where the window
+      // event fired before SectionList had attached its listener.
+      requestJumpToSection(detail.id);
+    }
+    window.addEventListener("slothcv:jump-to-section", onJump);
+    return () => {
+      window.removeEventListener("slothcv:jump-to-section", onJump);
+    };
+  }, [requestJumpToSection]);
+
+  // Selection ↔ tab coordination.
+  //
+  //   - Selection acquired (id goes from null → truthy):
+  //       Snapshot the current tab into `prevTabBeforeSelectionRef`,
+  //       then auto-open the "add" tab so the inspector pops up.
+  //       Same idiom as Canva — selection = inspector, no extra click.
+  //
+  //   - Selection cleared (id goes from truthy → null):
+  //       Pop the snapshot and restore that tab. The user lands back
+  //       wherever they were before they touched the shape — no surprise
+  //       Design-tab jumps, no orphaned "add" tab with nothing in it.
+  //       If we never snapshotted (selection started before mount, or
+  //       was set by something other than user click), leave the tab
+  //       alone — don't jump to "content" by default.
+  //
+  // Tracked with a ref instead of state because the snapshot is a
+  // single-use side-channel; consumers are this effect only and we
+  // don't want React rerenders for it.
+  useEffect(() => {
+    if (selectedElementId) {
+      // Only snapshot the FIRST time selection appears — if the user
+      // selects element A then element B without deselecting in between,
+      // we still want to remember the tab from BEFORE A.
+      if (prevTabBeforeSelectionRef.current === null && tab !== "add") {
+        prevTabBeforeSelectionRef.current = tab;
       }
-    });
-  }
+      if (tab !== "add") {
+        setTab("add");
+        setMobilePane("edit");
+      }
+    } else {
+      const restore = prevTabBeforeSelectionRef.current;
+      if (restore) {
+        setTab(restore);
+        prevTabBeforeSelectionRef.current = null;
+      }
+    }
+    // `tab` intentionally not in deps — we only want to run when the
+    // selection changes. Reading the latest `tab` via closure is fine
+    // because this effect re-creates whenever selectedElementId changes,
+    // which is exactly when we need to read the current tab.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElementId]);
+
+  // Sync the CV's `meta.language` to whatever the global header toggle
+  // is set to. Removes the need for a duplicate "Document language"
+  // selector inside the editor's Settings tab — the header is the single
+  // source of truth. Only writes when they actually differ so the save
+  // debouncer doesn't churn on every render.
+  useEffect(() => {
+    if (resumeId && dataLanguage !== lang) {
+      setMeta({ language: lang });
+    }
+  }, [lang, resumeId, dataLanguage, setMeta]);
 
   if (error) {
     return (
@@ -109,92 +228,279 @@ function EditorInner() {
         <p className="text-sm text-red-600">{error}</p>
         <Link href="/dashboard">
           <Button variant="outline" className="mt-6">
-            Back to dashboard
+            {t("editor.backToDashboard")}
           </Button>
         </Link>
       </div>
     );
   }
 
-  if (!resume) {
+  if (!resumeId) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-neutral-400">
-        Loading…
+      <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-subtle">
+        {t("common.loading")}
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="flex h-[calc(100vh-64px-44px)] flex-col">
       {/* Top bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-2">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
-              All CVs
+              <span className="hidden sm:inline">{t("editor.allCvs")}</span>
             </Button>
           </Link>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={onSaveTitle}
-            maxLength={120}
-            className="max-w-md text-base font-medium"
-            aria-label="CV title"
-          />
+          <span className="truncate text-sm font-medium text-fg">
+            {title || t("editor.untitled")}
+          </span>
         </div>
-        <div className="flex items-center gap-3">
-          {lastSavedAt && (
-            <p className="text-xs text-neutral-400">
-              Last saved {new Date(lastSavedAt).toLocaleTimeString()}
-            </p>
-          )}
-          <Button onClick={onSaveAll} disabled={pending}>
-            <Save className="h-4 w-4" />
-            {pending ? "Saving…" : "Save"}
-          </Button>
+        <div className="flex items-center gap-2">
+          <UndoRedoButtons />
+          <SaveIndicator />
+          <SaveNowButton resumeId={resumeId} />
         </div>
       </div>
 
-      {/* Phase 2 canvas placeholder */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div className="flex aspect-[3/4] items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-white p-8 text-center">
-          <div className="max-w-md">
-            <p className="text-sm font-medium uppercase tracking-wider text-neutral-400">
-              Phase 2
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-neutral-900">
-              Drag-and-drop editor coming next
-            </h2>
-            <p className="mt-3 text-sm text-neutral-500">
-              The canvas, blocks, design controls, and PDF export ship in the
-              next pass. For now, your title and (empty) state save to the
-              database — try the Save button, then refresh to confirm.
-            </p>
+      {/* Two-pane layout (desktop) */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left pane */}
+        <div
+          className={`flex w-full flex-col border-r border-border bg-surface-hover md:w-[40%] md:max-w-[520px] ${mobilePane === "edit" ? "" : "hidden md:flex"}`}
+        >
+          <Tabs tab={tab} onChange={setTab} />
+          <div className="flex-1 overflow-auto p-3">
+            {tab === "content" && <SectionList />}
+            {tab === "design" && <DesignTab />}
+            {tab === "add" && <ToolshelfTab />}
+            {tab === "templates" && <TemplatesTab />}
+            {tab === "settings" && <SettingsTab initialTitle={title} />}
           </div>
         </div>
 
-        <aside className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Design
-          </h3>
-          <p className="text-sm text-neutral-400">
-            Font, palette, spacing, and column controls arrive in Phase 2.
-          </p>
-        </aside>
+        {/* Right pane (preview) */}
+        <div
+          className={`flex flex-1 flex-col bg-surface-hover ${mobilePane === "preview" ? "" : "hidden md:flex"}`}
+        >
+          <Preview />
+        </div>
+      </div>
+
+      {/* Mobile pane toggle */}
+      <div className="flex border-t border-border bg-surface md:hidden">
+        <button
+          type="button"
+          className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-sm font-medium ${mobilePane === "edit" ? "text-fg" : "text-subtle"}`}
+          onClick={() => setMobilePane("edit")}
+        >
+          <Wand2 className="h-4 w-4" /> {t("editor.mobile.edit")}
+        </button>
+        <button
+          type="button"
+          className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-sm font-medium ${mobilePane === "preview" ? "text-fg" : "text-subtle"}`}
+          onClick={() => setMobilePane("preview")}
+        >
+          <Eye className="h-4 w-4" /> {t("editor.mobile.preview")}
+        </button>
       </div>
     </div>
+  );
+}
+
+function Tabs({
+  tab,
+  onChange,
+}: {
+  tab: Tab;
+  onChange: (t: Tab) => void;
+}) {
+  const { t: trans } = useLanguage();
+  const items: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "content", label: trans("editor.tab.content"), icon: FileText },
+    { id: "design", label: trans("editor.tab.design"), icon: Wand2 },
+    { id: "add", label: trans("editor.tab.add"), icon: Plus },
+    { id: "templates", label: trans("editor.tab.templates"), icon: Layers },
+    { id: "settings", label: trans("editor.tab.settings"), icon: Settings2 },
+  ];
+  return (
+    // The Linear-style "magic ink" tab bar. Each button hosts a relative
+    // motion.div on the active tab; framer-motion's layoutId animates the
+    // SAME virtual element from button to button using a transform-only
+    // 200ms slide. Inactive tabs render plain (no underline element), so
+    // there's only ever one visible indicator at a time.
+    <div className="relative grid grid-cols-5 border-b border-border bg-surface">
+      {items.map((it) => {
+        const Icon = it.icon;
+        const active = tab === it.id;
+        return (
+          <button
+            key={it.id}
+            type="button"
+            onClick={() => onChange(it.id)}
+            className={`relative flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
+              active ? "text-fg" : "text-muted hover:text-fg"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            <span>{it.label}</span>
+            {active && (
+              // 2px slab at the bottom edge. layoutId="editor-tab-active"
+              // means framer-motion treats every render of this element
+              // (across all five buttons) as the same node, animating
+              // its position with the in-out-cubic 200ms slide.
+              <motion.span
+                layoutId="editor-tab-active"
+                className="absolute inset-x-0 bottom-0 h-[2px] bg-fg"
+                transition={{
+                  type: "tween",
+                  duration: 0.2,
+                  ease: [0.65, 0, 0.35, 1],
+                }}
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** UndoRedoButtons — paired Undo/Redo controls in the editor header.
+ *  Reads canUndo/canRedo from the store so the buttons disable when the
+ *  history pointer is at an end. Also catches the Ctrl+Z chord — the
+ *  preview's keyboard handler already invokes the same store actions,
+ *  so the buttons + keyboard are in sync. */
+function UndoRedoButtons() {
+  // Subscribe to historyIndex so the buttons re-render when state moves.
+  const historyIndex = useEditorStore((s) => s.historyIndex);
+  const historyLength = useEditorStore((s) => s.history.length);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < historyLength - 1;
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={undo}
+        disabled={!canUndo}
+        title="Undo (Ctrl+Z / Cmd+Z)"
+        aria-label="Undo"
+        className="h-9 w-9 p-0"
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={redo}
+        disabled={!canRedo}
+        title="Redo (Ctrl+Shift+Z / Cmd+Shift+Z)"
+        aria-label="Redo"
+        className="h-9 w-9 p-0"
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+/** Has the user explicitly saved this CV before? Tracked per-CV in
+ *  localStorage so the title prompt only fires the first time and
+ *  survives reloads. Reset = clearing the key. */
+function readSavedFlag(resumeId: string | null): boolean {
+  if (!resumeId || typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(`slothcv.saved.${resumeId}`) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeSavedFlag(resumeId: string) {
+  try {
+    window.localStorage.setItem(`slothcv.saved.${resumeId}`, "1");
+  } catch {
+    // localStorage may be unavailable (private mode); fall through.
+  }
+}
+
+/** SaveNowButton — the ONLY path to persist a CV's data to Supabase.
+ *
+ *  Auto-save was removed (see store/editor.ts) because it surprised
+ *  users who were experimenting with templates and didn't want their
+ *  exploration committed. Saving is now explicit:
+ *
+ *    - First save in a session: opens a title prompt. The CV becomes
+ *      "named" and is written to Supabase.
+ *    - Subsequent saves: just flush, no prompt.
+ *    - Disabled when nothing to save (status === "saved" / "idle").
+ *
+ *  The persistent "has been saved" flag lives in localStorage so it
+ *  survives reloads. Once a user has named a CV, hitting Save just
+ *  saves — they don't get nagged again. They can rename via Settings.
+ */
+function SaveNowButton({ resumeId }: { resumeId: string | null }) {
+  const status = useEditorStore((s) => s.saveStatus);
+  const { t } = useLanguage();
+  const prompt = usePrompt();
+  const dirtyOrError: SaveStatus[] = ["dirty", "error", "saving"];
+  const enabled = dirtyOrError.includes(status) && !!resumeId;
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={status === "dirty" || status === "error" ? "default" : "outline"}
+      disabled={!enabled}
+      onClick={async () => {
+        if (!resumeId) return;
+        try {
+          // First-save title prompt. We use localStorage as the
+          // "has-been-saved" cache because it survives reloads cheaply
+          // — this prompt is purely UX, not a security boundary.
+          if (!readSavedFlag(resumeId)) {
+            const title = await prompt({
+              title: t("save.namePromptTitle"),
+              description: t("save.namePromptDesc"),
+              inputLabel: t("save.namePromptLabel"),
+              placeholder: "e.g. Marketing CV — 2026",
+              confirmLabel: t("save.namePromptConfirm"),
+              cancelLabel: t("common.cancel"),
+              required: true,
+              maxLength: 120,
+            });
+            // Cancelled — bail without saving.
+            if (!title) return;
+            await renameResume(resumeId, title);
+            writeSavedFlag(resumeId);
+          }
+          await flushPendingSave();
+          toast.success(t("save.savedNow"));
+        } catch (e) {
+          toast.error(
+            e instanceof Error ? e.message : t("save.error"),
+          );
+        }
+      }}
+      title={t("save.saveNow")}
+    >
+      <Save className="h-4 w-4" />
+      <span className="hidden md:inline">{t("save.saveNow")}</span>
+    </Button>
   );
 }
 
 export default function EditorPage() {
   return (
     <AuthGate>
-      {/* Suspense boundary — useSearchParams() needs one in Next 15+. */}
       <Suspense
         fallback={
-          <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-neutral-400">
+          <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-subtle">
             Loading…
           </div>
         }

@@ -12,20 +12,31 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  // Base: tap target meets the >=48px floor on mobile; focus ring is visible
-  // for keyboard users; transition is fast enough to feel responsive.
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-h-[44px]",
+  // Base styles. Theme-aware via CSS variables — auto-flips for dark mode.
+  // `cursor-pointer` is explicit (not relying on the user agent) because
+  // some browsers inherit `cursor: default` from a parent flex container
+  // and the inheritance trumps the native `<button>` cursor on Windows
+  // Chromium builds. Setting it here guarantees the hand cursor anywhere
+  // a Button is rendered. Disabled state restores the not-allowed cursor.
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-120 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] hover:-translate-y-px min-h-[44px]",
   {
     variants: {
       variant: {
+        // Solid — primary CTA. Inverted bg/fg so it always pops against the
+        // page background (dark in light mode, light in dark mode).
         default:
-          "bg-neutral-900 text-neutral-50 hover:bg-neutral-800 active:bg-neutral-950",
+          "bg-[color:var(--color-text)] text-[color:var(--color-bg)] shadow-sm hover:opacity-90 hover:shadow-md active:opacity-100",
+        // Outline — secondary CTA. Surface bg, fg text, themed border.
         outline:
-          "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 active:bg-neutral-200",
-        ghost: "text-neutral-900 hover:bg-neutral-100 active:bg-neutral-200",
+          "border border-strong bg-surface text-fg shadow-xs hover:bg-surface-hover hover:shadow-md hover:border-fg active:bg-surface-hover",
+        // Ghost — tertiary. Hover: subtle surface-hover tint.
+        ghost:
+          "text-fg hover:bg-surface-hover hover:shadow-sm active:bg-surface-hover",
+        // Destructive — semantic red, kept stable across themes (red is red).
         destructive:
-          "bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
-        link: "text-neutral-900 underline-offset-4 hover:underline min-h-0",
+          "bg-red-600 text-white shadow-sm hover:bg-red-500 hover:shadow-md hover:shadow-red-900/30 active:bg-red-800",
+        // Link — underlined text. No min-h, no transform.
+        link: "text-fg underline-offset-4 hover:underline min-h-0 hover:translate-y-0 active:scale-100",
       },
       size: {
         default: "h-11 px-5 py-2",

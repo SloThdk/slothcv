@@ -1,22 +1,20 @@
 /**
- * Site footer — credit + studio link. Intentionally minimal for Phase 1.
+ * Site footer — minimal trust line + EU-hosting note. Reads copy through
+ * useLanguage so DA/EN swaps the entire string set in one toggle.
  */
 
+"use client";
+
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+
 export function SiteFooter() {
+  const { t } = useLanguage();
   return (
-    <footer className="mt-auto border-t border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-neutral-500 sm:flex-row">
-        <p>Free, forever. No watermarks.</p>
-        <p>
-          Built by{" "}
-          <a
-            href="https://slothstudioco.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-neutral-700 underline-offset-4 hover:underline"
-          >
-            Sloth Studio
-          </a>
+    <footer className="mt-auto border-t border-[color:var(--color-border)] bg-[color:var(--color-surface)] transition-colors">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-[color:var(--color-text-muted)] sm:flex-row">
+        <p>{t("footer.tagline")}</p>
+        <p className="text-[color:var(--color-text-subtle)]">
+          {t("footer.note")}
         </p>
       </div>
     </footer>

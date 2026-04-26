@@ -141,17 +141,17 @@ export function LoginForm() {
     setSubmittingMagic(true);
     const supabase = createClient();
 
-    // ── Step 1: server-side existence check via public.email_exists RPC ─
-    // Replaces the prior `shouldCreateUser:false` probe pattern. Reasons:
-    //   1. The probe returns user_not_found for OAuth-only users even
-    //      though they DO have an auth.users row, so they couldn't sign
-    //      in via magic link with the strict probe.
-    //   2. The RPC reads auth.users directly (SECURITY DEFINER) and
-    //      returns boolean — works for OAuth-only, email-only, and
-    //      identity-linked users alike.
-    //   3. The RPC doesn't consume the captcha token, so we still have
-    //      a fresh one for the actual signInWithOtp call below.
-    const probe = await supabase.rpc("email_exists", {
+    // ── Step 1: provider-aware existence check via public.email_status ──
+    // RPC returns {is_registered, has_email, has_google}. The trio
+    // drives strict provider separation:
+    //   · !is_registered                 → "no account" toast, no email sent
+    //   · is_registered, has_google only → refuse magic link, point user
+    //                                      at the Google button (account
+    //                                      was created via Google, not
+    //                                      via magic link)
+    //   · is_registered, has_email       → proceed to send magic link
+    // SECURITY DEFINER + table-return — one round trip, no captcha.
+    const probe = await supabase.rpc("email_status", {
       check_email: cleanEmail,
     });
     if (probe.error) {
@@ -159,12 +159,30 @@ export function LoginForm() {
       toast.error(t("auth.errUnexpected"));
       return;
     }
-    if (probe.data !== true) {
-      // No matching auth.users row → strict /login refusal. Mirrors the
-      // prior probe-based "no account" copy. Prevents typo'd emails from
-      // silently creating ghost accounts.
+    const status = (probe.data as
+      | { is_registered: boolean; has_email: boolean; has_google: boolean }[]
+      | null)?.[0] ?? {
+      is_registered: false,
+      has_email: false,
+      has_google: false,
+    };
+
+    if (!status.is_registered) {
+      // No account at all → "sign up first" toast. Prevents typo'd
+      // emails from silently creating ghost accounts.
       setSubmittingMagic(false);
       toast.error(t("login.errNoAccount"));
+      return;
+    }
+
+    if (!status.has_email && status.has_google) {
+      // OAuth-only account — REFUSE magic link. The account was created
+      // via Google and never opted in to email-link sign-in; sending one
+      // would either silently link a new identity (Supabase default) or
+      // be rejected. We surface the explicit "use Google" message and
+      // bail without sending anything to the inbox.
+      setSubmittingMagic(false);
+      toast.error(t("login.errOAuthOnlyGoogle"));
       return;
     }
 

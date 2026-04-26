@@ -41,6 +41,9 @@ yarn-error.log*
 .wrangler/
 .dev.vars
 
+# supabase CLI cache (version stamp etc)
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

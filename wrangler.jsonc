@@ -1,0 +1,27 @@
+{
+  // OpenNext-generated Worker config. We deploy slothcv as a regular Worker
+  // (not a Pages site) because Server Components + Server Actions need a
+  // runtime that the Pages static-only path cannot provide.
+  //
+  // Domain: deployed at https://slothcv.<account>.workers.dev. Custom domain
+  // (cv.slothstudioco.com) is wired post-Phase-1.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "slothcv",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-04-26",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Self-binding so the Worker can call itself for caching primitives.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "slothcv"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

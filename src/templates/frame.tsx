@@ -1,0 +1,228 @@
+/**
+ * TemplateFrame — the shared "page sheet" that every DOM template uses.
+ *
+ * Handles the boring stuff:
+ *   - A4/Letter/Legal sheet sizing
+ *   - Page background + body color + base font
+ *   - Page margin
+ *
+ * Templates pass a `children` callback that receives the resolved design and
+ * resume data so it can lay out the body however it wants.
+ */
+
+"use client";
+
+import type { ReactNode } from "react";
+import { useEditorStore } from "@/lib/store/editor";
+import {
+  PAGE_DIMENSIONS_MM,
+  basePx,
+  letterSpacingEm,
+  marginMm,
+  mmToPx,
+} from "./shared";
+import type { GlobalDesign, ResumeData } from "@/types/resume";
+import { CustomElementsLayer } from "./custom-elements-layer";
+
+interface FrameProps {
+  data: ResumeData;
+  children: ReactNode;
+  /**
+   * If true, render at intrinsic mm-derived px. If false, fill 100% of the
+   * parent (used for the responsive editor preview which scales separately).
+   */
+  fixedSize?: boolean;
+  /**
+   * When true, skip rendering the toolshelf overlay (CustomElementsLayer).
+   * Used by `<TemplatePreview>` thumbnails on the gallery — those mount
+   * outside the editor store and shouldn't subscribe to it.
+   */
+  skipOverlay?: boolean;
+}
+
+export function TemplateFrame({
+  data,
+  children,
+  fixedSize = false,
+  skipOverlay = false,
+}: FrameProps) {
+  const { design } = data;
+  const dims = PAGE_DIMENSIONS_MM[design.pageSize];
+  const mm = marginMm(design);
+
+  const style: React.CSSProperties = {
+    background: design.pageBg,
+    color: design.textColor,
+    fontFamily: `var(--font-${slugFont(design.bodyFont)}, ${design.bodyFont}), system-ui, sans-serif`,
+    fontSize: `${basePx(design)}px`,
+    lineHeight: design.lineSpacing,
+    letterSpacing: `${letterSpacingEm(design)}em`,
+    padding: `${mmToPx(mm)}px`,
+    boxSizing: "border-box",
+  };
+
+  if (fixedSize) {
+    style.width = `${mmToPx(dims.w)}px`;
+    style.minHeight = `${mmToPx(dims.h)}px`;
+  } else {
+    style.width = "100%";
+    style.minHeight = "100%";
+  }
+
+  return (
+    <div className="relative overflow-hidden break-words" style={style}>
+      {children}
+      <Watermark design={design} />
+      {!skipOverlay && <ToolshelfOverlay data={data} />}
+    </div>
+  );
+}
+
+/** Thin wrapper around CustomElementsLayer that pulls `selectedElementId`
+ *  from the store so the renderer doesn't have to care about the source.
+ *  Kept as a separate component so TemplatePreview (which mounts outside
+ *  the editor) can avoid the store dependency via `skipOverlay`. */
+function ToolshelfOverlay({ data }: { data: ResumeData }) {
+  const selectedId = useEditorStore((s) => s.selectedElementId);
+  return <CustomElementsLayer data={data} selectedId={selectedId} />;
+}
+
+/**
+ * Watermark — oversized branding text positioned absolutely in one of the
+ * four corners. Rendered LAST so it sits on top of the page background but
+ * stays under the content visually due to low opacity.
+ *
+ * Hidden when `watermarkPosition === "off"` or `watermarkText` is empty.
+ */
+function Watermark({ design }: { design: GlobalDesign }) {
+  const text = (design.watermarkText ?? "").trim();
+  const pos = design.watermarkPosition ?? "off";
+  if (!text || pos === "off") return null;
+  const color =
+    (design.watermarkColor ?? "").trim() || design.accentColor;
+  const cornerClass =
+    pos === "bottom-left"
+      ? "left-3 bottom-3"
+      : pos === "bottom-right"
+        ? "right-3 bottom-3"
+        : pos === "top-left"
+          ? "left-3 top-3"
+          : "right-3 top-3";
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute ${cornerClass} select-none`}
+      style={{
+        color,
+        fontWeight: 800,
+        fontSize: "5.5em",
+        lineHeight: 1,
+        letterSpacing: "0.04em",
+        opacity: 0.85,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+/**
+ * Convert a font display name to its CSS variable suffix. Mirrors the slugs
+ * defined in `src/lib/fonts.ts`. Falls back to body sans-serif.
+ */
+function slugFont(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+/** Header-decoration helper used by many templates. */
+export function SectionHeader({
+  text,
+  design,
+  withDivider = true,
+}: {
+  text: string;
+  design: GlobalDesign;
+  withDivider?: boolean;
+}) {
+  const transformed =
+    design.headerStyle === "uppercase"
+      ? text.toUpperCase()
+      : design.headerStyle === "titlecase"
+        ? text.replace(
+            /\w\S*/g,
+            (w) => w[0].toUpperCase() + w.slice(1).toLowerCase(),
+          )
+        : text;
+
+  let inner: React.ReactNode = transformed;
+
+  if (design.headerStyle === "box") {
+    inner = (
+      <span
+        className="inline-block rounded px-2 py-0.5 text-[0.95em]"
+        style={{
+          background: `${design.accentColor}1a`,
+          color: design.accentColor,
+        }}
+      >
+        {transformed}
+      </span>
+    );
+  } else if (design.headerStyle === "accent-block") {
+    inner = (
+      <span className="flex items-center gap-2">
+        <span
+          className="inline-block h-3 w-1 rounded"
+          style={{ background: design.accentColor }}
+        />
+        <span style={{ color: design.accentColor }}>{transformed}</span>
+      </span>
+    );
+  } else if (design.headerStyle === "underline") {
+    inner = (
+      <span
+        className="inline-block border-b-2 pb-0.5"
+        style={{ borderColor: design.accentColor, color: design.accentColor }}
+      >
+        {transformed}
+      </span>
+    );
+  } else {
+    inner = (
+      <span style={{ color: design.accentColor }}>{transformed}</span>
+    );
+  }
+
+  return (
+    <div className="mb-2">
+      <h2 className="text-[1.1em] font-semibold tracking-wider">{inner}</h2>
+      {withDivider && <Divider design={design} />}
+    </div>
+  );
+}
+
+/** Renders the configured divider style under section headers. */
+export function Divider({ design }: { design: GlobalDesign }) {
+  if (design.dividerStyle === "none") return null;
+  if (design.dividerStyle === "accent-bar") {
+    return (
+      <div
+        className="mt-1 h-0.5 w-8 rounded-full"
+        style={{ background: design.accentColor }}
+      />
+    );
+  }
+  return (
+    <div
+      className="mt-1 h-px w-full"
+      style={{
+        background:
+          design.dividerStyle === "dashed"
+            ? `repeating-linear-gradient(90deg, ${design.accentColor}55 0 4px, transparent 4px 8px)`
+            : design.dividerStyle === "dotted"
+              ? `repeating-linear-gradient(90deg, ${design.accentColor}55 0 1.5px, transparent 1.5px 4px)`
+              : `${design.accentColor}55`,
+      }}
+    />
+  );
+}

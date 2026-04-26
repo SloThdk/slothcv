@@ -1,0 +1,721 @@
+/**
+ * Obsidian — pure black, italic Fraunces, electric purple. Power-user.
+ *
+ * Visual character:
+ *   - Hardcoded #0a0a0a page (pure-black-ish — true #000 reads as broken
+ *     monitor on most screens; #0a0a0a is the OLED-true-black that ships
+ *     in every modern dark-mode design system).
+ *   - Italic Fraunces serif name at a massive 4em — instantly editorial,
+ *     instantly different from every sans-serif dark template.
+ *   - Electric purple #a78bfa (Tailwind violet-400) accent on bullets,
+ *     section heads, and links. The shade is bright enough to glow
+ *     against the black without being aggressive.
+ *   - Inter for body at 0.9em — denser than Aurora because the dark
+ *     reduces apparent x-height; the smaller size compensates.
+ *   - Long thin section heads with NO rule beneath — the title floats,
+ *     spaced way away from the body. Reads as "I read deeply."
+ *   - Body color #e5e5e5 (off-white). Pure white on black is too sharp
+ *     for sustained reading.
+ *
+ * Industry-fit: senior ICs at AI labs, infosec / security researchers,
+ * dev tool founders, indie hackers with a Twitter following. The CV that
+ * says "I take my craft personally."
+ */
+
+"use client";
+
+import { TemplateFrame } from "./frame";
+import { SectionActions } from "./section-actions";
+import {
+  bulletGlyph,
+  elementStyle,
+  formatDateRange,
+  positionStyle,
+  resolveDesign,
+  visibleBullets,
+  visibleSections,
+} from "./shared";
+import type {
+  Bullet,
+  CertificationsSection,
+  EducationSection,
+  ExperienceSection,
+  GlobalDesign,
+  ProjectsSection,
+  ResumeData,
+  Section,
+  SkillsSection,
+} from "@/types/resume";
+
+interface Props {
+  data: ResumeData;
+  fixedSize?: boolean;
+  skipOverlay?: boolean;
+}
+
+// Hardcoded core palette. These three values define the Obsidian identity —
+// flipping any of them lands you in a different template.
+const BLACK = "#0a0a0a";
+const PURPLE = "#a78bfa";
+const OFF_WHITE = "#e5e5e5";
+
+export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
+  const { design, personal } = data;
+  const visible = visibleSections(data);
+
+  // Force the page background and body color to the Obsidian identity. The
+  // user can still set design.textColor through the Design tab and it will
+  // flow through to body text via the inline styles below — but the page
+  // background and the giant italic name color are intentionally fixed.
+  const themed: ResumeData = {
+    ...data,
+    design: {
+      ...design,
+      pageBg: BLACK,
+      textColor: OFF_WHITE,
+    },
+  };
+
+  return (
+    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+      <header
+        data-section-id="personal"
+        className="mb-12 cursor-pointer pb-6"
+        style={{ borderBottom: `1px solid ${PURPLE}22` }}
+      >
+        <div className="flex items-end justify-between gap-6">
+          <div className="flex-1">
+            <h1
+              data-element-id="personal.name"
+              className="block w-fit cursor-text leading-[0.95] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              style={{
+                color: OFF_WHITE,
+                fontFamily:
+                  "var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif",
+                fontWeight: 400,
+                fontStyle: "italic",
+                fontSize: "4em",
+                letterSpacing: "-0.03em",
+                ...elementStyle(data, "personal.name"),
+              }}
+            >
+              {personal.fullName || "Your name"}
+            </h1>
+            {personal.headline && (
+              <p
+                data-element-id="personal.headline"
+                className="mt-3 block w-fit cursor-text text-[0.9em] uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+                style={{
+                  color: PURPLE,
+                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontWeight: 500,
+                  letterSpacing: "0.18em",
+                  ...elementStyle(data, "personal.headline"),
+                }}
+              >
+                {personal.headline}
+              </p>
+            )}
+            <ObsidianContact data={data} />
+          </div>
+          {design.photo.enabled && personal.photoUrl && (
+            <div
+              data-element-id="personal.photo"
+              className="cursor-grab"
+              style={elementStyle(data, "personal.photo")}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={personal.photoUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                draggable={false}
+                className="h-24 w-24 rounded-full object-cover"
+                style={{
+                  outline: `1.5px solid ${PURPLE}66`,
+                  outlineOffset: "3px",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="space-y-9">
+        {visible.map((s) => {
+          const d = resolveDesign(design, s);
+          return (
+            <ObsidianSection key={s.id} section={s} design={d} data={data} />
+          );
+        })}
+      </div>
+    </TemplateFrame>
+  );
+}
+
+function ObsidianContact({ data }: { data: ResumeData }) {
+  const { personal } = data;
+  const items: { id: string; label: string; href?: string }[] = [];
+  if (personal.email)
+    items.push({ id: "personal.email", label: personal.email });
+  if (personal.phone)
+    items.push({ id: "personal.phone", label: personal.phone });
+  if (personal.location)
+    items.push({ id: "personal.location", label: personal.location });
+  for (const l of personal.links) {
+    items.push({
+      id: `personal.links.${l.id}`,
+      label: l.label || l.url,
+      href: l.url,
+    });
+  }
+  if (items.length === 0) return null;
+  const grab =
+    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent rounded-sm";
+  return (
+    <div
+      className="mt-4 text-[0.85em]"
+      style={{
+        color: `${OFF_WHITE}99`,
+        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+      }}
+    >
+      {items.map((it, i) => (
+        <span key={it.id}>
+          {i > 0 && (
+            <span className="mx-2" style={{ color: `${PURPLE}55` }}>
+              ◆
+            </span>
+          )}
+          {it.href ? (
+            <a
+              data-element-id={it.id}
+              href={it.href.startsWith("http") ? it.href : `https://${it.href}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${grab} underline-offset-2 hover:underline`}
+              style={{ color: PURPLE, ...elementStyle(data, it.id) }}
+            >
+              {it.label}
+            </a>
+          ) : (
+            <span
+              data-element-id={it.id}
+              className={grab}
+              style={elementStyle(data, it.id)}
+            >
+              {it.label}
+            </span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ObsidianSection({
+  section,
+  design,
+  data,
+}: {
+  section: Section;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const titleId = `section.${section.id}.title`;
+  return (
+    <section
+      data-section-id={section.id}
+      style={positionStyle(section)}
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.03] hover:ring-2 hover:ring-white/10"
+    >
+      {/* Long thin head — way more vertical breathing room than other
+          templates. Reads as "I have nothing to prove." */}
+      <h2
+        data-element-id={titleId}
+        className="mb-5 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+        style={{
+          color: PURPLE,
+          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontWeight: 500,
+          letterSpacing: "0.28em",
+          ...elementStyle(data, titleId),
+        }}
+      >
+        {section.title}
+      </h2>
+      <ObsidianBody section={section} design={design} data={data} />
+      <SectionActions section={section} />
+    </section>
+  );
+}
+
+function ObsidianBody({
+  section,
+  design,
+  data,
+}: {
+  section: Section;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  switch (section.type) {
+    case "summary": {
+      const id = `section.${section.id}.body`;
+      return (
+        <p
+          data-element-id={id}
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-white/15"
+          style={{
+            color: OFF_WHITE,
+            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            ...elementStyle(data, id),
+          }}
+        >
+          {section.body || "Add a short summary."}
+        </p>
+      );
+    }
+    case "experience":
+      return (
+        <ObsidianExperience section={section} design={design} data={data} />
+      );
+    case "projects":
+      return <ObsidianProjects section={section} design={design} data={data} />;
+    case "education":
+      return (
+        <ObsidianEducation section={section} design={design} data={data} />
+      );
+    case "skills":
+      return <ObsidianSkills section={section} design={design} data={data} />;
+    case "certifications":
+      return <ObsidianCerts section={section} design={design} data={data} />;
+    default:
+      return (
+        <ObsidianFallback section={section} design={design} data={data} />
+      );
+  }
+}
+
+function ObsidianExperience({
+  section,
+  design,
+  data,
+}: {
+  section: ExperienceSection;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const items = section.items.filter((i) => i.visible);
+  return (
+    <div className="space-y-5">
+      {items.map((it) => {
+        const id = `section.${section.id}.item.${it.id}`;
+        return (
+          <article
+            key={it.id}
+            data-element-id={id}
+            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            style={elementStyle(data, id)}
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <h3
+                className="text-[1.05em]"
+                style={{
+                  color: OFF_WHITE,
+                  fontFamily:
+                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontWeight: 500,
+                  fontStyle: "italic",
+                }}
+              >
+                {it.role}
+                {it.company && (
+                  <span style={{ color: `${OFF_WHITE}aa`, fontStyle: "normal" }}>
+                    {" — "}
+                    {it.company}
+                  </span>
+                )}
+              </h3>
+              <span
+                className="text-[0.78em]"
+                style={{
+                  color: `${OFF_WHITE}77`,
+                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                }}
+              >
+                {formatDateRange(
+                  it.startDate,
+                  it.endDate,
+                  it.current,
+                  design.dateFormat,
+                )}
+              </span>
+            </div>
+            {it.location && (
+              <div
+                className="text-[0.82em]"
+                style={{ color: `${OFF_WHITE}66` }}
+              >
+                {it.location}
+              </div>
+            )}
+            <ObsidianBullets
+              bullets={it.bullets}
+              data={data}
+              sectionId={section.id}
+              design={design}
+            />
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function ObsidianProjects({
+  section,
+  design,
+  data,
+}: {
+  section: ProjectsSection;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const items = section.items.filter((i) => i.visible);
+  return (
+    <div className="space-y-4">
+      {items.map((it) => {
+        const id = `section.${section.id}.item.${it.id}`;
+        return (
+          <article
+            key={it.id}
+            data-element-id={id}
+            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            style={elementStyle(data, id)}
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <h3
+                className="text-[1em]"
+                style={{
+                  color: OFF_WHITE,
+                  fontFamily:
+                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontWeight: 500,
+                }}
+              >
+                {it.url ? (
+                  <a
+                    href={it.url.startsWith("http") ? it.url : `https://${it.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline-offset-2 hover:underline"
+                    style={{ color: PURPLE }}
+                  >
+                    {it.name}
+                  </a>
+                ) : (
+                  it.name
+                )}
+                {it.role && (
+                  <span style={{ color: `${OFF_WHITE}99`, fontWeight: 400 }}>
+                    {" · "}
+                    {it.role}
+                  </span>
+                )}
+              </h3>
+              {(it.startDate || it.endDate || it.current) && (
+                <span
+                  className="text-[0.78em]"
+                  style={{ color: `${OFF_WHITE}77` }}
+                >
+                  {formatDateRange(
+                    it.startDate,
+                    it.endDate,
+                    it.current,
+                    design.dateFormat,
+                  )}
+                </span>
+              )}
+            </div>
+            {it.techStack && (
+              <div
+                className="text-[0.82em]"
+                style={{ color: `${OFF_WHITE}77` }}
+              >
+                {it.techStack}
+              </div>
+            )}
+            <ObsidianBullets
+              bullets={it.bullets}
+              data={data}
+              sectionId={section.id}
+              design={design}
+            />
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function ObsidianEducation({
+  section,
+  design,
+  data,
+}: {
+  section: EducationSection;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const items = section.items.filter((i) => i.visible);
+  return (
+    <div className="space-y-2">
+      {items.map((it) => {
+        const id = `section.${section.id}.item.${it.id}`;
+        return (
+          <article
+            key={it.id}
+            data-element-id={id}
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            style={elementStyle(data, id)}
+          >
+            <div>
+              <span
+                className="text-[0.95em]"
+                style={{
+                  color: OFF_WHITE,
+                  fontFamily:
+                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontStyle: "italic",
+                }}
+              >
+                {it.degree}
+                {it.field ? `, ${it.field}` : ""}
+              </span>
+              <span
+                className="ml-2 text-[0.85em]"
+                style={{ color: `${OFF_WHITE}99` }}
+              >
+                {it.institution}
+              </span>
+            </div>
+            <span
+              className="text-[0.78em]"
+              style={{ color: `${OFF_WHITE}77` }}
+            >
+              {formatDateRange(
+                it.startDate,
+                it.endDate,
+                it.current,
+                design.dateFormat,
+              )}
+            </span>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function ObsidianSkills({
+  section,
+  data,
+}: {
+  section: SkillsSection;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const items = section.items.filter((i) => i.visible);
+  if (items.length === 0) return null;
+  const groups = new Map<string, typeof items>();
+  for (const s of items) {
+    const key = s.group || "Skills";
+    const arr = groups.get(key) ?? [];
+    arr.push(s);
+    groups.set(key, arr);
+  }
+  return (
+    <div className="space-y-2">
+      {[...groups.entries()].map(([group, list]) => (
+        <div key={group}>
+          {groups.size > 1 && (
+            <div
+              className="mb-1 text-[0.78em] uppercase"
+              style={{
+                color: PURPLE,
+                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontWeight: 500,
+                letterSpacing: "0.18em",
+              }}
+            >
+              {group}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.9em]">
+            {list.map((s, i) => {
+              const id = `section.${section.id}.item.${s.id}`;
+              return (
+                <span key={s.id}>
+                  {i > 0 && (
+                    <span style={{ color: `${PURPLE}55` }} className="mr-3">
+                      ◆
+                    </span>
+                  )}
+                  <span
+                    data-element-id={id}
+                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+                    style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
+                  >
+                    {s.name}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ObsidianCerts({
+  section,
+  data,
+}: {
+  section: CertificationsSection;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  const items = section.items.filter((i) => i.visible);
+  return (
+    <div className="space-y-1.5 text-[0.9em]" style={{ color: OFF_WHITE }}>
+      {items.map((c) => {
+        const id = `section.${section.id}.item.${c.id}`;
+        return (
+          <div
+            key={c.id}
+            data-element-id={id}
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            style={elementStyle(data, id)}
+          >
+            <span>
+              <span
+                style={{
+                  fontWeight: 500,
+                  fontFamily:
+                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontStyle: "italic",
+                }}
+              >
+                {c.name}
+              </span>
+              {c.issuer && (
+                <span style={{ color: `${OFF_WHITE}88` }}>
+                  {" · "}
+                  {c.issuer}
+                </span>
+              )}
+            </span>
+            {c.date && (
+              <span
+                className="text-[0.82em]"
+                style={{ color: `${OFF_WHITE}77` }}
+              >
+                {c.date}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ObsidianFallback({
+  section,
+  design,
+  data,
+}: {
+  section: Section;
+  design: GlobalDesign;
+  data: ResumeData;
+}) {
+  if ("body" in section && (section as { body?: string }).body) {
+    const id = `section.${section.id}.body`;
+    return (
+      <p
+        data-element-id={id}
+        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-white/15"
+        style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
+      >
+        {(section as { body: string }).body}
+      </p>
+    );
+  }
+  if ("items" in section) {
+    const its = (section as { items: Bullet[] | unknown[] }).items as unknown[];
+    if (
+      its.length > 0 &&
+      typeof its[0] === "object" &&
+      its[0] !== null &&
+      "text" in (its[0] as object)
+    ) {
+      return (
+        <ObsidianBullets
+          bullets={its as Bullet[]}
+          data={data}
+          sectionId={section.id}
+          design={design}
+        />
+      );
+    }
+  }
+  return null;
+}
+
+function ObsidianBullets({
+  bullets,
+  data,
+  sectionId,
+  design,
+}: {
+  bullets: Bullet[];
+  data: ResumeData;
+  sectionId: string;
+  design: GlobalDesign;
+}) {
+  const list = visibleBullets(bullets);
+  if (list.length === 0) return null;
+  // We respect the user's bullet style choice but default to ◆ (diamond)
+  // when set to disc — fits the Obsidian power-user aesthetic better than
+  // a round dot.
+  const glyph =
+    design.bulletStyle === "disc" ? "◆" : bulletGlyph(design);
+  return (
+    <ul className="mt-1.5 space-y-1 text-[0.9em]">
+      {list.map((b) => {
+        const id = `section.${sectionId}.bullet.${b.id}`;
+        return (
+          <li
+            key={b.id}
+            data-element-id={id}
+            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
+          >
+            {glyph && (
+              <span
+                className="select-none text-[0.8em] leading-[1.4]"
+                style={{ color: PURPLE }}
+                aria-hidden
+              >
+                {glyph}
+              </span>
+            )}
+            <span className="flex-1 whitespace-pre-wrap">{b.text}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}

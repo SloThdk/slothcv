@@ -1,0 +1,600 @@
+/**
+ * Translations — single source of truth for every user-facing string the
+ * slothcv chrome renders. Mirrors the philipsloth-portfolio i18n shape so
+ * future cross-pollination is one-paste.
+ *
+ * Adding a new string:
+ *   1. Pick a dot.path key matching the surface it lives on (header / hero /
+ *      editor / etc.) so future maintainers can find it.
+ *   2. Provide both `en` and `da`. Use real æ / ø / å in Danish — never
+ *      ae / oe / aa.
+ *   3. Reference via `t("your.key")` in components.
+ *
+ * Keep this object as the canonical key set — `TranslationKey` is derived
+ * from it so TypeScript flags any reference to a missing key.
+ */
+
+export type Lang = "en" | "da";
+
+type Entry = { en: string; da: string };
+
+export const TRANSLATIONS = {
+  // ─── Language toggle ──────────────────────────────────────────────
+  "lang.toggleAria": { en: "Switch language", da: "Skift sprog" },
+  "lang.english": { en: "English", da: "Engelsk" },
+  "lang.danish": { en: "Danish", da: "Dansk" },
+
+  // ─── Theme toggle ─────────────────────────────────────────────────
+  "theme.toggleAria": { en: "Toggle theme", da: "Skift tema" },
+  "theme.light": { en: "Light", da: "Lys" },
+  "theme.dark": { en: "Dark", da: "Mørk" },
+
+  // ─── Header ───────────────────────────────────────────────────────
+  "header.brand": { en: "slothcv", da: "slothcv" },
+  "header.signIn": { en: "Sign in", da: "Log ind" },
+  "header.dashboard": { en: "Dashboard", da: "Oversigt" },
+  "header.account": { en: "Account", da: "Konto" },
+  "header.signOut": { en: "Sign out", da: "Log ud" },
+  "header.signedInAs": { en: "Signed in as", da: "Logget ind som" },
+
+  // ─── Footer ───────────────────────────────────────────────────────
+  "footer.tagline": {
+    en: "Free, forever. No watermarks.",
+    da: "Gratis, altid. Ingen vandmærker.",
+  },
+  "footer.note": {
+    en: "Hosted in the EU · Your data stays yours",
+    da: "Hostet i EU · Dine data forbliver dine",
+  },
+
+  // ─── Landing page ─────────────────────────────────────────────────
+  "landing.eyebrow": {
+    en: "Free CV builder, no dark patterns",
+    da: "Gratis CV-bygger, ingen mørke mønstre",
+  },
+  "landing.headlineA": { en: "Beautiful CVs.", da: "Smukke CV'er." },
+  "landing.headlineB": { en: "Truly free.", da: "Helt gratis." },
+  "landing.body": {
+    en: "Pick a template, fill it in, and download a vector PDF. No watermark, no $1-trial-into-$30/month, no signup wall to export. Your work auto-saves the second you stop typing.",
+    da: "Vælg en skabelon, udfyld den, og hent en vektor-PDF. Intet vandmærke, ingen $1-prøveperiode-til-$30/måned, ingen tilmeldingsmur for at hente. Dit arbejde gemmes automatisk det øjeblik du holder pause.",
+  },
+  "landing.startBuilding": { en: "Start building", da: "Begynd at bygge" },
+  "landing.signIn": { en: "Sign in", da: "Log ind" },
+
+  "features.pdfTitle": { en: "Vector PDF export", da: "Vektor-PDF-eksport" },
+  "features.pdfBody": {
+    en: "Selectable text, embedded fonts, ATS-readable. A4 + Letter + Legal.",
+    da: "Markérbar tekst, indlejrede skrifttyper, ATS-læsbar. A4 + Letter + Legal.",
+  },
+  "features.dataTitle": { en: "Your data stays yours", da: "Dine data forbliver dine" },
+  "features.dataBody": {
+    en: "Hosted in the EU. Row-level security on every row. No tracking pixels.",
+    da: "Hostet i EU. Row-level security på hver række. Ingen tracking-pixels.",
+  },
+  "features.watermarkTitle": { en: "No watermark, ever", da: "Aldrig nogen vandmærker" },
+  "features.watermarkBody": {
+    en: "Free is free. No upsell modals, no surprise charges, no trial trap.",
+    da: "Gratis er gratis. Ingen opsalgs-modaler, ingen overraskelses-gebyrer, ingen prøveperiode-fælde.",
+  },
+
+  "templates.title": { en: "Templates to start from", da: "Skabeloner at starte fra" },
+  "templates.body": {
+    en: "ready-to-edit layouts. Click one to start — your content reflows automatically when you switch templates.",
+    da: "færdige layouts. Klik på én for at starte — dit indhold flyder automatisk om når du skifter skabelon.",
+  },
+  "templates.use": { en: "Use →", da: "Brug →" },
+  "templates.openDashboard": { en: "Open dashboard", da: "Åbn oversigten" },
+
+  // ─── Login ────────────────────────────────────────────────────────
+  "login.title": { en: "Sign in to slothcv", da: "Log ind på slothcv" },
+  "login.subtitle": {
+    en: "Save your work and pick up where you left off, on any device.",
+    da: "Gem dit arbejde og fortsæt hvor du slap, på enhver enhed.",
+  },
+  "login.email": { en: "Email", da: "E-mail" },
+  "login.emailPlaceholder": { en: "you@example.com", da: "dig@eksempel.dk" },
+  "login.sendLink": { en: "Send link", da: "Send link" },
+  "login.sending": { en: "Sending…", da: "Sender…" },
+  "login.linkSentTo": { en: "We sent a sign-in link to", da: "Vi sendte et login-link til" },
+  "login.linkSentBody": {
+    en: "Open it on this device to continue.",
+    da: "Åbn det på denne enhed for at fortsætte.",
+  },
+  "login.googleButton": { en: "Continue with Google", da: "Fortsæt med Google" },
+  "login.googleConnecting": { en: "Connecting…", da: "Forbinder…" },
+  "login.or": { en: "or", da: "eller" },
+  "login.errExpiredLink": {
+    en: "That sign-in link expired. Try again — we'll send a fresh one.",
+    da: "Login-linket udløb. Prøv igen — vi sender et nyt.",
+  },
+  "login.errExchangeGeneric": {
+    en: "Sign-in didn't complete. Try again — request a fresh link if needed.",
+    da: "Login blev ikke gennemført. Prøv igen — bed om et nyt link hvis nødvendigt.",
+  },
+  "login.errLinkUsed": {
+    en: "That sign-in link has already been used. Request a new one to continue.",
+    da: "Det login-link er allerede brugt. Bed om et nyt for at fortsætte.",
+  },
+  "login.errDifferentBrowser": {
+    en: "Open the sign-in link in the same browser you started in. If your email opened in a different app, copy the link manually into this browser.",
+    da: "Åbn login-linket i den samme browser, du startede i. Hvis din e-mail åbnede i en anden app, kopiér linket manuelt ind i denne browser.",
+  },
+  "login.errInterrupted": {
+    en: "Sign-in was interrupted. Click the button again to retry.",
+    da: "Login blev afbrudt. Klik på knappen igen for at prøve igen.",
+  },
+  "login.errSendFailed": {
+    en: "Couldn't send the link. Try again in a moment.",
+    da: "Kunne ikke sende linket. Prøv igen om lidt.",
+  },
+  "login.errGoogleFailed": {
+    en: "Google sign-in failed. Try again.",
+    da: "Google-login mislykkedes. Prøv igen.",
+  },
+  "login.linkSentSuccess": {
+    en: "Check your inbox for a sign-in link.",
+    da: "Tjek din indbakke for et login-link.",
+  },
+  "login.loading": { en: "Loading…", da: "Indlæser…" },
+  "login.errNoAccount": {
+    en: "No account found with that email. Sign up first?",
+    da: "Ingen konto fundet med den e-mail. Opret en konto først?",
+  },
+  "login.errAccountExistsOtherMethod": {
+    en: "An account with this email already exists. Try signing in with the method you used originally (Google or magic link).",
+    da: "Der findes allerede en konto med denne e-mail. Log ind med den metode, du brugte oprindeligt (Google eller magisk link).",
+  },
+  "login.errOAuthDeclined": {
+    en: "Google sign-in was cancelled. Try again or use the email option.",
+    da: "Google-login blev annulleret. Prøv igen eller brug e-mail-mulighed.",
+  },
+  "login.noAccount": {
+    en: "Don't have an account?",
+    da: "Har du ikke en konto?",
+  },
+  "login.signUpLink": { en: "Sign up", da: "Opret konto" },
+  "login.sentWrongEmail": {
+    en: "Wrong email? Try again",
+    da: "Forkert e-mail? Prøv igen",
+  },
+
+  // ─── Auth (granular Supabase error codes) ─────────────────────────
+  // Each maps to a specific Supabase ErrorCode value. Keep names tied
+  // to the code (auth.errOverEmailRateLimit ↔ over_email_send_rate_limit)
+  // so future maintainers can grep both directions.
+  "auth.errOverEmailRateLimit": {
+    en: "Too many sign-in emails sent to this address recently. Wait a few minutes and try again.",
+    da: "For mange login-mails sendt til denne adresse for nylig. Vent et par minutter og prøv igen.",
+  },
+  "auth.errOverRequestRateLimit": {
+    en: "Too many requests from your network. Wait a moment and try again.",
+    da: "For mange forespørgsler fra dit netværk. Vent et øjeblik og prøv igen.",
+  },
+  "auth.errInvalidEmail": {
+    en: "That doesn't look like a valid email address. Check for typos and try again.",
+    da: "Det ligner ikke en gyldig e-mailadresse. Tjek for tastefejl og prøv igen.",
+  },
+  "auth.errValidationFailed": {
+    en: "Some fields didn't pass validation. Check your inputs and try again.",
+    da: "Nogle felter bestod ikke valideringen. Tjek dine indtastninger og prøv igen.",
+  },
+  "auth.errEmailNotAuthorized": {
+    en: "This email address isn't allowed to sign up. Use a different one.",
+    da: "Denne e-mailadresse må ikke oprette konto. Brug en anden.",
+  },
+  "auth.errEmailProviderDisabled": {
+    en: "Email sign-in is temporarily disabled. Try \"Continue with Google\" instead.",
+    da: "E-mail-login er midlertidigt deaktiveret. Prøv \"Fortsæt med Google\" i stedet.",
+  },
+  "auth.errProviderDisabled": {
+    en: "That sign-in method is currently disabled. Try a different option.",
+    da: "Den login-metode er aktuelt deaktiveret. Prøv en anden mulighed.",
+  },
+  "auth.errCaptchaFailed": {
+    en: "We couldn't verify you're human. Reload the page and try again.",
+    da: "Vi kunne ikke bekræfte at du er et menneske. Genindlæs siden og prøv igen.",
+  },
+  "auth.errUserBanned": {
+    en: "This account has been suspended. Contact support if you believe this is a mistake.",
+    da: "Denne konto er suspenderet. Kontakt support hvis du mener, det er en fejl.",
+  },
+  "auth.errEmailNotConfirmed": {
+    en: "Your email isn't confirmed yet. Click the link in the email we sent you.",
+    da: "Din e-mail er ikke bekræftet endnu. Klik på linket i e-mailen vi sendte dig.",
+  },
+  "auth.errFlowExpired": {
+    en: "Your sign-in attempt expired. Start over from the sign-in page.",
+    da: "Dit login-forsøg udløb. Start forfra fra login-siden.",
+  },
+  "auth.errFlowMissing": {
+    en: "We lost track of your sign-in attempt — likely cookies or storage was cleared. Try again.",
+    da: "Vi mistede sporet af dit login-forsøg — sandsynligvis blev cookies eller lager ryddet. Prøv igen.",
+  },
+  "auth.errOAuthCorrupted": {
+    en: "The Google sign-in response was malformed. Try again.",
+    da: "Svaret fra Google-login var ugyldigt. Prøv igen.",
+  },
+  "auth.errSessionGone": {
+    en: "Your session expired. Sign in again to continue.",
+    da: "Din session udløb. Log ind igen for at fortsætte.",
+  },
+  "auth.errNetworkTimeout": {
+    en: "The request took too long. Check your internet connection and try again.",
+    da: "Forespørgslen tog for lang tid. Tjek din internetforbindelse og prøv igen.",
+  },
+  "auth.errUnexpected": {
+    en: "Something went wrong on our end. Try again — if it keeps happening, let us know.",
+    da: "Der gik noget galt hos os. Prøv igen — hvis det fortsætter, så sig til.",
+  },
+
+  // ─── Signup ───────────────────────────────────────────────────────
+  "signup.title": { en: "Create your slothcv account", da: "Opret din slothcv-konto" },
+  "signup.subtitle": {
+    en: "Free forever. Build up to 10 CVs, no credit card needed.",
+    da: "Gratis for altid. Lav op til 10 CV'er, uden betalingskort.",
+  },
+  "signup.firstName": { en: "First name", da: "Fornavn" },
+  "signup.firstNamePlaceholder": { en: "Philip", da: "Philip" },
+  "signup.lastName": { en: "Last name", da: "Efternavn" },
+  "signup.lastNamePlaceholder": { en: "Sloth", da: "Sloth" },
+  "signup.createAccount": { en: "Create account", da: "Opret konto" },
+  "signup.googleButton": { en: "Continue with Google", da: "Fortsæt med Google" },
+  "signup.googleOverridesName": {
+    en: "Note: signing in with Google will use the name on your Google account.",
+    da: "Bemærk: hvis du logger ind med Google, bruges navnet fra din Google-konto.",
+  },
+  "signup.haveAccount": { en: "Already have an account?", da: "Har du allerede en konto?" },
+  "signup.signInLink": { en: "Sign in", da: "Log ind" },
+  "signup.errFirstNameRequired": {
+    en: "First name is required.",
+    da: "Fornavn er påkrævet.",
+  },
+  "signup.errRateLimited": {
+    en: "Too many attempts. Wait a minute and try again.",
+    da: "For mange forsøg. Vent et øjeblik og prøv igen.",
+  },
+  "signup.errInvalidEmail": {
+    en: "That doesn't look like a valid email address.",
+    da: "Det ligner ikke en gyldig e-mailadresse.",
+  },
+  "signup.alreadyExistsHint": {
+    en: "If you already signed up before, the link will sign you back in to your existing account — no new account is created.",
+    da: "Hvis du allerede er oprettet, logger linket dig ind på din eksisterende konto — der oprettes ikke en ny.",
+  },
+  "signup.errAccountExists": {
+    en: "An account with this email already exists.",
+    da: "Der findes allerede en konto med denne e-mail.",
+  },
+  "signup.existingAccountTitle": {
+    en: "An account already exists for",
+    da: "Der findes allerede en konto for",
+  },
+  "signup.existingAccountBody": {
+    en: "Please sign in instead. If you originally signed up with Google, use \"Continue with Google\" on the sign-in page. We also sent a magic link to your inbox — you can use that to sign in too.",
+    da: "Log ind i stedet. Hvis du oprindeligt brugte Google, så brug \"Fortsæt med Google\" på login-siden. Vi sendte også et magisk link til din indbakke — du kan også bruge det til at logge ind.",
+  },
+  "signup.existingAccountGoToLogin": {
+    en: "Go to sign in",
+    da: "Gå til login",
+  },
+  "signup.existingAccountTryAnother": {
+    en: "Try a different email",
+    da: "Prøv en anden e-mail",
+  },
+  // ─── Dashboard ────────────────────────────────────────────────────
+  "dashboard.title": { en: "Your CVs", da: "Dine CV'er" },
+  "dashboard.subtitle": {
+    en: "Auto-saved. Pick up where you left off.",
+    da: "Auto-gemt. Fortsæt hvor du slap.",
+  },
+  "dashboard.usedSuffix": { en: "used", da: "brugt" },
+  "dashboard.newCv": { en: "New CV", da: "Nyt CV" },
+  "dashboard.creating": { en: "Creating…", da: "Opretter…" },
+  "dashboard.limitReached": { en: "Limit reached", da: "Grænse nået" },
+  "dashboard.limitTitle": {
+    en: "You've reached the {n}-CV cap on this account. Delete one above to free up a slot.",
+    da: "Du har nået grænsen på {n} CV'er på denne konto. Slet ét ovenfor for at frigøre en plads.",
+  },
+  "dashboard.empty.title": { en: "No CVs yet", da: "Ingen CV'er endnu" },
+  "dashboard.empty.body": {
+    en: 'Hit "New CV" to start your first one.',
+    da: 'Klik på "Nyt CV" for at starte dit første.',
+  },
+  "dashboard.updated": { en: "Updated", da: "Opdateret" },
+  "dashboard.justNow": { en: "just now", da: "lige nu" },
+  "dashboard.minAgo": { en: "min ago", da: "min siden" },
+  "dashboard.hrAgo": { en: "hr ago", da: "timer siden" },
+  "dashboard.dayAgo": { en: "day ago", da: "dag siden" },
+  "dashboard.daysAgo": { en: "days ago", da: "dage siden" },
+  "dashboard.duplicateAria": { en: "Duplicate CV", da: "Dupliker CV" },
+  "dashboard.variantAria": { en: "Save as variant", da: "Gem som variant" },
+  "dashboard.variantPromptTitle": {
+    en: "Save as a tailored variant",
+    da: "Gem som tilpasset variant",
+  },
+  "dashboard.variantPromptDesc": {
+    en: "Variants share their content with the master but get their own label so you can keep one CV for each role you apply to. Edits to a variant don't change the master.",
+    da: "Varianter deler indhold med masteren, men får deres egen label, så du kan beholde ét CV per rolle du søger. Redigeringer i en variant ændrer ikke masteren.",
+  },
+  "dashboard.variantPromptLabel": {
+    en: "Variant label",
+    da: "Variant-label",
+  },
+  "dashboard.variantPromptPlaceholder": {
+    en: "e.g. PM at Vercel, IC at Anthropic",
+    da: "f.eks. PM hos Vercel, IC hos Anthropic",
+  },
+  "dashboard.variantPromptConfirm": {
+    en: "Create variant",
+    da: "Opret variant",
+  },
+  "dashboard.variantBadge": { en: "Variant of", da: "Variant af" },
+  "dashboard.toastVariantCreated": {
+    en: "Variant created.",
+    da: "Variant oprettet.",
+  },
+  "dashboard.toastVariantFailed": {
+    en: "Couldn't create variant.",
+    da: "Kunne ikke oprette variant.",
+  },
+  "dashboard.deleteAria": { en: "Delete CV", da: "Slet CV" },
+  "dashboard.confirmDelete": {
+    en: "Delete this CV permanently?",
+    da: "Slet dette CV permanent?",
+  },
+  "dashboard.confirmDeleteTitle": {
+    en: "Delete this CV?",
+    da: "Slet dette CV?",
+  },
+  "dashboard.confirmDeleteDesc": {
+    en: "This permanently removes the CV and any uploaded photos. This can't be undone.",
+    da: "Dette fjerner CV'et og alle uploadede billeder permanent. Dette kan ikke fortrydes.",
+  },
+  "dashboard.confirmDeleteDescNamed": {
+    en: "“{name}” will be permanently removed along with any uploaded photos. This can't be undone.",
+    da: "“{name}” vil blive permanent fjernet sammen med alle uploadede billeder. Dette kan ikke fortrydes.",
+  },
+  "dashboard.toastDeleted": { en: "Deleted.", da: "Slettet." },
+  "dashboard.toastDeleteFailed": { en: "Delete failed.", da: "Sletning mislykkedes." },
+  "dashboard.toastDuplicated": { en: "Duplicated.", da: "Dupliceret." },
+  "dashboard.toastDuplicateFailed": {
+    en: "Duplicate failed.",
+    da: "Duplikering mislykkedes.",
+  },
+  "dashboard.toastCreateFailed": {
+    en: "Couldn't create CV.",
+    da: "Kunne ikke oprette CV.",
+  },
+  "dashboard.toastRefreshFailed": {
+    en: "Refresh failed.",
+    da: "Genindlæsning mislykkedes.",
+  },
+  "dashboard.toastNewFailed": {
+    en: "Couldn't start a new CV.",
+    da: "Kunne ikke starte et nyt CV.",
+  },
+  "dashboard.preparingTemplate": { en: "Preparing your", da: "Forbereder dit" },
+  "dashboard.preparingSuffix": { en: "CV…", da: "CV…" },
+  "dashboard.preparingHint": {
+    en: "Just a moment — we're setting things up.",
+    da: "Et øjeblik — vi gør tingene klar.",
+  },
+
+  // ─── Editor (top-level) ───────────────────────────────────────────
+  "editor.allCvs": { en: "All CVs", da: "Alle CV'er" },
+  "editor.untitled": { en: "Untitled CV", da: "CV uden titel" },
+  "editor.notFound": {
+    en: "This CV doesn't exist or you don't have access.",
+    da: "Dette CV findes ikke eller du har ikke adgang.",
+  },
+  "editor.loadFailed": { en: "Failed to load CV.", da: "Kunne ikke hente CV." },
+  "editor.backToDashboard": { en: "Back to dashboard", da: "Tilbage til oversigten" },
+  "editor.tab.content": { en: "Content", da: "Indhold" },
+  "editor.tab.design": { en: "Design", da: "Design" },
+  "editor.tab.add": { en: "Add", da: "Tilføj" },
+  "editor.tab.templates": { en: "Templates", da: "Skabeloner" },
+  "editor.tab.settings": { en: "Settings", da: "Indstillinger" },
+  "editor.mobile.edit": { en: "Edit", da: "Rediger" },
+  "editor.mobile.preview": { en: "Preview", da: "Forhåndsvisning" },
+
+  // ─── Save indicator ───────────────────────────────────────────────
+  "save.saving": { en: "Saving…", da: "Gemmer…" },
+  "save.saved": { en: "Saved", da: "Gemt" },
+  "save.dirty": { en: "Unsaved", da: "Ikke gemt" },
+  "save.error": { en: "Save failed", da: "Gem mislykkedes" },
+  "save.saveNow": { en: "Save", da: "Gem" },
+  "save.savedNow": { en: "Saved.", da: "Gemt." },
+  "save.namePromptTitle": {
+    en: "Name your CV",
+    da: "Navngiv dit CV",
+  },
+  "save.namePromptDesc": {
+    en: "Give this CV a name so you can find it later. You can change it any time from Settings.",
+    da: "Giv dette CV et navn, så du kan finde det igen. Du kan ændre det når som helst i Indstillinger.",
+  },
+  "save.namePromptLabel": {
+    en: "CV title",
+    da: "CV-titel",
+  },
+  "save.namePromptConfirm": {
+    en: "Save CV",
+    da: "Gem CV",
+  },
+
+  // ─── Preview pane ─────────────────────────────────────────────────
+  "preview.label": { en: "Preview", da: "Forhåndsvisning" },
+  "preview.hintClick": { en: "click to edit", da: "klik for at redigere" },
+  "preview.hintDrag": { en: "drag to position", da: "træk for at placere" },
+  "preview.fitToWidth": { en: "Fit to width", da: "Tilpas bredde" },
+
+  // ─── Section list ─────────────────────────────────────────────────
+  "sections.personal": { en: "Personal info", da: "Personlige oplysninger" },
+  "sections.alwaysShown": { en: "always shown", da: "altid synlig" },
+  "sections.add": { en: "Add section", da: "Tilføj sektion" },
+  "sections.cancel": { en: "Cancel", da: "Annuller" },
+  "sections.dragToReorder": { en: "Drag to reorder", da: "Træk for at omarrangere" },
+  "sections.hide": { en: "Hide section", da: "Skjul sektion" },
+  "sections.show": { en: "Show section", da: "Vis sektion" },
+  "sections.delete": { en: "Delete section", da: "Slet sektion" },
+  "sections.confirmDeleteTitle": {
+    en: 'Delete "{name}"?',
+    da: 'Slet "{name}"?',
+  },
+  "sections.confirmDeleteDesc": {
+    en: "This removes the section and everything in it. You can add it back later, but the content will be gone.",
+    da: "Dette fjerner sektionen og alt indhold i den. Du kan tilføje den igen senere, men indholdet er væk.",
+  },
+  "sections.confirmDelete": {
+    en: 'Delete the "{name}" section?',
+    da: 'Slet sektionen "{name}"?',
+  },
+
+  // ─── Section type labels ──────────────────────────────────────────
+  "section.summary": { en: "Summary", da: "Resumé" },
+  "section.experience": { en: "Experience", da: "Erfaring" },
+  "section.education": { en: "Education", da: "Uddannelse" },
+  "section.skills": { en: "Skills", da: "Færdigheder" },
+  "section.languages": { en: "Languages", da: "Sprog" },
+  "section.projects": { en: "Projects", da: "Projekter" },
+  "section.certifications": { en: "Certifications", da: "Certifikater" },
+  "section.awards": { en: "Awards", da: "Priser" },
+  "section.publications": { en: "Publications", da: "Publikationer" },
+  "section.volunteer": { en: "Volunteer", da: "Frivilligt arbejde" },
+  "section.talks": { en: "Talks", da: "Foredrag" },
+  "section.hobbies": { en: "Hobbies", da: "Hobbyer" },
+  "section.references": { en: "References", da: "Referencer" },
+  "section.custom": { en: "Custom", da: "Brugerdefineret" },
+
+  // ─── Personal form ────────────────────────────────────────────────
+  "personal.fullName": { en: "Full name", da: "Fulde navn" },
+  "personal.fullNamePlaceholder": { en: "Jane Doe", da: "Anders Andersen" },
+  "personal.headline": { en: "Headline", da: "Titel" },
+  "personal.headlinePlaceholder": {
+    en: "Senior Frontend Engineer",
+    da: "Senior Frontend-udvikler",
+  },
+  "personal.email": { en: "Email", da: "E-mail" },
+  "personal.emailPlaceholder": { en: "jane@example.com", da: "dig@eksempel.dk" },
+  "personal.phone": { en: "Phone", da: "Telefon" },
+  "personal.phonePlaceholder": { en: "+45 12 34 56 78", da: "+45 12 34 56 78" },
+  "personal.location": { en: "Location", da: "Sted" },
+  "personal.locationPlaceholder": {
+    en: "Copenhagen, Denmark",
+    da: "København, Danmark",
+  },
+  "personal.photo": { en: "Photo", da: "Foto" },
+  "personal.uploadPhoto": { en: "Upload photo", da: "Upload foto" },
+  "personal.replacePhoto": { en: "Replace photo", da: "Erstat foto" },
+  "personal.uploading": { en: "Uploading…", da: "Uploader…" },
+  "personal.removePhoto": { en: "Remove", da: "Fjern" },
+  "personal.noPhoto": { en: "No photo", da: "Intet foto" },
+  "personal.photoHint": {
+    en: "JPG, PNG, WebP, GIF. Max 2 MB. Templates with a photo slot will use it.",
+    da: "JPG, PNG, WebP, GIF. Maks. 2 MB. Skabeloner med fotoplads bruger det.",
+  },
+  "personal.pasteUrl": {
+    en: "…or paste a URL instead",
+    da: "…eller indsæt en URL i stedet",
+  },
+  "personal.links": { en: "Links", da: "Links" },
+  "personal.add": { en: "Add", da: "Tilføj" },
+  "personal.removeLink": { en: "Remove link", da: "Fjern link" },
+  "personal.toastUploaded": { en: "Photo uploaded.", da: "Foto uploadet." },
+  "personal.toastUploadFailed": { en: "Upload failed.", da: "Upload mislykkedes." },
+
+  // ─── Account ──────────────────────────────────────────────────────
+  "account.title": { en: "Account", da: "Konto" },
+  "account.subtitle": {
+    en: "Manage your profile, password, and account data.",
+    da: "Administrer din profil, adgangskode og kontodata.",
+  },
+  "account.section.profile": { en: "Profile", da: "Profil" },
+  "account.section.password": { en: "Password", da: "Adgangskode" },
+  "account.section.session": { en: "Session", da: "Session" },
+  "account.section.danger": { en: "Danger zone", da: "Farezone" },
+  "account.displayName": { en: "Display name", da: "Visningsnavn" },
+  "account.displayNamePlaceholder": { en: "Your name", da: "Dit navn" },
+  "account.emailReadonly": {
+    en: "Email is tied to your sign-in method and can't be changed from here yet.",
+    da: "E-mail er knyttet til din login-metode og kan ikke ændres herfra endnu.",
+  },
+  "account.newPassword": { en: "New password", da: "Ny adgangskode" },
+  "account.newPasswordPlaceholder": {
+    en: "At least 8 characters",
+    da: "Mindst 8 tegn",
+  },
+  "account.confirmPassword": {
+    en: "Confirm new password",
+    da: "Bekræft ny adgangskode",
+  },
+  "account.changePassword": { en: "Change password", da: "Skift adgangskode" },
+  "account.savingPassword": { en: "Saving…", da: "Gemmer…" },
+  "account.passwordHint": {
+    en: "If you signed in with Google or an email link, setting a password here lets you also sign in with that password later.",
+    da: "Hvis du er logget ind med Google eller et e-mail-link, kan du ved at sætte en adgangskode her også logge ind med denne senere.",
+  },
+  "account.signOut": { en: "Sign out", da: "Log ud" },
+  "account.dangerBody": {
+    en: "Permanently delete your account. This cannot be undone — every CV, version history, and uploaded avatar will be removed forever.",
+    da: "Slet din konto permanent. Dette kan ikke fortrydes — alle CV'er, versionshistorik og uploadede avatarer fjernes for evigt.",
+  },
+  "account.deleteConfirmLabel": { en: "Type", da: "Skriv" },
+  "account.deleteConfirmTo": { en: "to confirm", da: "for at bekræfte" },
+  "account.deleteButton": {
+    en: "Permanently delete my account",
+    da: "Slet min konto permanent",
+  },
+  "account.deleting": { en: "Deleting…", da: "Sletter…" },
+  "account.toastNameSaved": { en: "Display name saved.", da: "Visningsnavn gemt." },
+  "account.toastSaveFailed": { en: "Save failed.", da: "Gem mislykkedes." },
+  "account.toastAvatarSaved": { en: "Avatar updated.", da: "Avatar opdateret." },
+  "account.toastAvatarRemoved": { en: "Avatar removed.", da: "Avatar fjernet." },
+  "account.toastUploadFailed": { en: "Upload failed.", da: "Upload mislykkedes." },
+  "account.toastRemoveFailed": { en: "Remove failed.", da: "Fjernelse mislykkedes." },
+  "account.toastPasswordTooShort": {
+    en: "Password must be at least 8 characters.",
+    da: "Adgangskode skal være mindst 8 tegn.",
+  },
+  "account.toastPasswordMismatch": {
+    en: "Passwords don't match.",
+    da: "Adgangskoderne matcher ikke.",
+  },
+  "account.toastPasswordChanged": {
+    en: "Password changed.",
+    da: "Adgangskode ændret.",
+  },
+  "account.toastPasswordFailed": {
+    en: "Couldn't change password.",
+    da: "Kunne ikke ændre adgangskode.",
+  },
+  "account.toastDeleteConfirmRequired": {
+    en: 'Type DELETE to confirm.',
+    da: 'Skriv DELETE for at bekræfte.',
+  },
+  "account.toastAccountDeleted": { en: "Account deleted.", da: "Konto slettet." },
+  "account.toastDeleteFailed": {
+    en: "Delete failed.",
+    da: "Sletning mislykkedes.",
+  },
+  "account.back": { en: "Back to dashboard", da: "Tilbage til oversigten" },
+
+  // ─── Design tab section titles ────────────────────────────────────
+  "design.color": { en: "Color", da: "Farve" },
+  "design.typography": { en: "Typography", da: "Typografi" },
+  "design.layout": { en: "Layout", da: "Layout" },
+  "design.photo": { en: "Photo", da: "Foto" },
+  "design.sectionStyle": { en: "Section style", da: "Sektionsstil" },
+  "design.specialty": { en: "Specialty", da: "Specialitet" },
+  "design.page": { en: "Page", da: "Side" },
+  "design.watermark": { en: "Watermark", da: "Vandmærke" },
+
+  // ─── Common ───────────────────────────────────────────────────────
+  "common.cancel": { en: "Cancel", da: "Annuller" },
+  "common.save": { en: "Save", da: "Gem" },
+  "common.done": { en: "Done", da: "Færdig" },
+  "common.delete": { en: "Delete", da: "Slet" },
+  "common.duplicate": { en: "Duplicate", da: "Dupliker" },
+  "common.loading": { en: "Loading…", da: "Indlæser…" },
+} as const satisfies Record<string, Entry>;
+
+export type TranslationKey = keyof typeof TRANSLATIONS;

@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <title>Your slothcv sign-in link</title>
+  <!--
+    slothcv magic-link email.
+    Designed for the widest email-client matrix:
+      - Inline CSS only (Gmail strips <style>)
+      - Table-based layout (Outlook 2007-2019 ignore CSS box model)
+      - 600px max width with min-width on container for safe rendering
+      - Web-safe fallbacks for Inter (system-ui → Helvetica → Arial)
+      - Light mode only (forced via meta) — dark mode renders inconsistently
+        across clients so we render light-on-white for predictability
+    Brand tokens copied from globals.css :root block:
+      --color-bg: #fafaf9
+      --color-surface: #ffffff
+      --color-text: #0a0a0a
+      --color-text-muted: #525252
+      --color-text-subtle: #a3a3a3
+      --color-border: #e5e5e5
+      --color-accent: #0f172a   (primary button)
+  -->
+</head>
+<body style="margin:0; padding:0; width:100%; background-color:#fafaf9; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;">
+
+  <!-- Hidden preview text shown in inbox list under the subject line. -->
+  <div style="display:none; font-size:1px; color:#fafaf9; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+    Click the button below to sign in to slothcv. The link expires in 1 hour.
+  </div>
+
+  <!-- Outer wrapper. Keeps everything centered and adds the subtle page bg. -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#fafaf9;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <!-- Branded card. -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width:600px; width:100%; background-color:#ffffff; border:1px solid #e5e5e5; border-radius:12px; overflow:hidden;">
+
+          <!-- ── Header / wordmark ────────────────────────────────── -->
+          <tr>
+            <td style="padding:32px 40px 16px 40px; border-bottom:1px solid #e5e5e5;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td align="left">
+                    <span style="display:inline-block; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:20px; font-weight:600; letter-spacing:-0.01em; color:#0a0a0a;">
+                      slothcv
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Body ─────────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:32px 40px 8px 40px;">
+              <h1 style="margin:0 0 12px 0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:22px; line-height:1.3; font-weight:600; color:#0a0a0a; letter-spacing:-0.01em;">
+                Sign in to slothcv
+              </h1>
+              <p style="margin:0 0 24px 0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:15px; line-height:1.55; color:#525252;">
+                Click the button below to sign in. This link is single-use and expires in 1&nbsp;hour. If you didn't request this, you can safely ignore it.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── CTA button ───────────────────────────────────────── -->
+          <tr>
+            <td align="center" style="padding:0 40px 28px 40px;">
+              <!--
+                "Bulletproof" CTA button — table inside table so Outlook
+                renders the padding correctly. The <a> still gets the same
+                styling so Apple Mail / Gmail honor it.
+              -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#0f172a" style="border-radius:8px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       target="_blank"
+                       style="display:inline-block; padding:14px 28px; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:15px; line-height:1; font-weight:600; color:#ffffff; text-decoration:none; border-radius:8px; mso-padding-alt:0;">
+                      Sign in to slothcv
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Plain-link fallback ──────────────────────────────── -->
+          <tr>
+            <td style="padding:0 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:13px; line-height:1.55; color:#525252;">
+                Button not working? Copy and paste this URL into your browser:
+              </p>
+              <p style="margin:0; font-family:'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace; font-size:12px; line-height:1.5; color:#0a0a0a; word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" style="color:#0f172a; text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── Divider ──────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:0 40px;">
+              <div style="border-top:1px solid #e5e5e5; height:1px; line-height:1px; font-size:1px;">&nbsp;</div>
+            </td>
+          </tr>
+
+          <!-- ── Security note ────────────────────────────────────── -->
+          <tr>
+            <td style="padding:24px 40px 32px 40px;">
+              <p style="margin:0 0 8px 0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:13px; line-height:1.55; color:#525252;">
+                <strong style="color:#0a0a0a; font-weight:600;">A note on security.</strong> slothcv will never ask for your password. We don't use one — every sign-in goes through a one-time link like the one above, or through your Google account. If you receive an email like this and didn't try to sign in, just ignore it; the link can't be used twice.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- ── Footer ───────────────────────────────────────────────── -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width:600px; width:100%; margin-top:16px;">
+          <tr>
+            <td align="center" style="padding:16px 40px;">
+              <p style="margin:0 0 4px 0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:12px; line-height:1.5; color:#a3a3a3;">
+                slothcv · Free CV builder · Made by Philip Sloth
+              </p>
+              <p style="margin:0; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size:12px; line-height:1.5; color:#a3a3a3;">
+                Sent to {{ .Email }} because someone (hopefully you) requested a sign-in link.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

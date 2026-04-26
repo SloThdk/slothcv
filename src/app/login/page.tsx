@@ -1,37 +1,47 @@
 /**
  * /login — magic-link + Google OAuth entrypoint.
  *
- * Both paths terminate at /auth/callback, which exchanges the auth code for a
- * session cookie and redirects on. The form is a Client Component because
- * Supabase's `signInWithOtp` / `signInWithOAuth` need to run in the browser
- * to receive the redirect.
+ * The actual auth UI lives in <LoginForm>. The wrapper here translates the
+ * page heading + subtitle and theme-styles the surrounding card.
  */
 
-import { Suspense } from "react";
-import { LoginForm } from "./LoginForm";
+"use client";
 
-export const metadata = {
-  title: "Sign in — slothcv",
-};
+import { Suspense } from "react";
+import Link from "next/link";
+import { LoginForm } from "./LoginForm";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   return (
     <div className="mx-auto flex max-w-md flex-col gap-8 px-4 py-16">
       <div className="text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
-          Sign in to slothcv
+        <h1 className="text-3xl font-semibold tracking-tight text-[color:var(--color-text)]">
+          {t("login.title")}
         </h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          Save your work and pick up where you left off, on any device.
+        <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+          {t("login.subtitle")}
         </p>
       </div>
       <Suspense
         fallback={
-          <p className="text-center text-sm text-neutral-400">Loading…</p>
+          <p className="text-center text-sm text-[color:var(--color-text-subtle)]">
+            {t("common.loading")}
+          </p>
         }
       >
         <LoginForm />
       </Suspense>
+      <p className="text-center text-sm text-[color:var(--color-text-muted)]">
+        {t("login.noAccount")}{" "}
+        <Link
+          href="/signup"
+          className="font-medium text-[color:var(--color-text)] underline underline-offset-2 hover:text-[color:var(--color-accent)]"
+        >
+          {t("login.signUpLink")}
+        </Link>
+      </p>
     </div>
   );
 }

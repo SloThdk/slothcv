@@ -2,7 +2,7 @@
 
 Free, beautiful CVs. No signup walls, no watermarks. Drag, drop, design. Export to PDF.
 
-A free alternative to elegantcv.app. Built by [Sloth Studio](https://slothstudioco.com).
+A free alternative to elegantcv.app — actually free, no trial trap, no watermarks.
 
 ## Status
 

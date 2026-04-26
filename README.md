@@ -11,10 +11,10 @@ A free alternative to elegantcv.app. Built by [Sloth Studio](https://slothstudio
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript + React 19
+- Next.js 16 (App Router, **static export**) + TypeScript + React 19
 - Tailwind v4 + a slim shadcn-style component layer (Button / Input / Card)
-- Supabase (Postgres + Auth: magic-link + Google OAuth)
-- Cloudflare Workers via `@opennextjs/cloudflare` (Pages can't host SSR/Server Actions)
+- Supabase (Postgres + Auth: magic-link + Google OAuth) — fully client-side
+- Cloudflare **Pages** (SPA-style, no Worker) — `wrangler pages deploy out`
 - `lucide-react` for icons, `sonner` for toasts
 
 ## Routes
@@ -23,23 +23,27 @@ A free alternative to elegantcv.app. Built by [Sloth Studio](https://slothstudio
 |-------------------|-----------------------------------------------------------------------------------|
 | `/`               | Landing — hero + 3 placeholder template cards                                     |
 | `/login`          | Magic-link email + Google OAuth                                                   |
-| `/auth/callback`  | OAuth / magic-link redemption (PKCE code exchange)                                |
-| `/auth/signout`   | POST-only signout                                                                 |
+| `/auth/callback`  | OAuth / magic-link redemption (client-side PKCE exchange)                         |
 | `/dashboard`      | Auth-gated CV list (create / rename / duplicate / delete)                         |
-| `/editor/[id]`    | Auth-gated editor — Phase 1 placeholder, persistence loop wired                   |
+| `/editor?id=...`  | Auth-gated editor — Phase 1 placeholder, persistence loop wired                   |
 
-`src/proxy.ts` (the Next 16 replacement for `middleware.ts`) refreshes the
-Supabase session cookie on every request and bounces anonymous visitors away
-from `/dashboard` and `/editor/*`.
+Auth-gating is client-side via `<AuthGate>` (`src/components/auth-gate.tsx`):
+on page load it waits for the Supabase session resolution; anonymous visitors
+are redirected to `/login?next=...`. RLS on every Supabase call is the
+authoritative security gate — `<AuthGate>` is purely UX.
+
+The editor uses `?id=` instead of `[id]` because Next 16 static export
+doesn't support dynamic route params without `generateStaticParams`.
 
 ## Security model
 
 - **Row-Level Security ON** for `resumes` (see `supabase/migrations/00000000000001_init.sql`).
 - All four CRUD policies reduce to `auth.uid() = user_id`. The DB is the authoritative gate.
-- Server Actions filter by `user_id` too — defence in depth, not a substitute for RLS.
-- Anon key shipped to client (safe — RLS-gated). Service-role key server-only.
-- POST-only signout (CSRF-resistant), 303 redirect on completion.
-- Generic external errors, detailed network responses for debugging.
+- Anon key shipped to client (safe — RLS-gated). Service-role key never bundled.
+- `next` redirect param is allowlist-checked (`startsWith("/")` and not `//`)
+  to avoid open-redirect via `?next=https://evil.com`.
+- Title input is hard-capped at 120 chars before persistence.
+- Generic external errors, detail in the network response for debugging.
 
 ## Environment variables
 
@@ -51,15 +55,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # server-only, used by migrations / future jobs
 ```
 
-In production, set the public vars via:
-
-```bash
-wrangler secret put NEXT_PUBLIC_SUPABASE_URL
-wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
-
-(They become Worker env at runtime — OpenNext exposes them to Next as
-`process.env.*`.)
+For Cloudflare Pages, the public vars must be present at **build time**
+(static export bakes them into the bundle). Set them in the Pages project's
+Build Configuration → Environment Variables, OR pass them inline before
+`npm run deploy`. The service-role key is **not used** in Phase 1 — keep it
+out of CI; only the migration script reads it.
 
 ## Local dev
 
@@ -83,15 +83,13 @@ All three must pass before shipping. Enforced by the workspace-wide
 ## Deploy
 
 ```bash
-# One-time: link the project
-wrangler deploy --dry-run
-
-# Real deploy (builds via OpenNext + uploads to Workers)
+# Build + deploy to Cloudflare Pages
+NEXT_PUBLIC_SUPABASE_URL=... \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
 npm run deploy
 ```
 
-Live at https://slothcv.<account>.workers.dev once the Supabase env vars are
-provisioned.
+Live at https://slothcv.pages.dev (auto-assigned by Pages on first deploy).
 
 ## Database setup
 

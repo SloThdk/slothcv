@@ -1,20 +1,20 @@
 /**
  * Site header — wordmark left, auth controls right.
  *
- * Renders as a Server Component so we can read the current user without a
- * client-side roundtrip. Sign-out is a `<form action="/auth/signout"
- * method="post">` so it works without JS and survives RSC navigation.
+ * Client component because we read auth state from the AuthContext (which
+ * itself depends on browser-only Supabase APIs). The signed-in/out branch
+ * waits on `loading` to avoid the "logged-in user briefly sees Sign in"
+ * flash on hard navigations.
  */
 
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+"use client";
 
-export async function SiteHeader() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
+
+export function SiteHeader() {
+  const { user, loading, signOut } = useAuth();
 
   return (
     <header className="border-b border-neutral-200 bg-white">
@@ -26,23 +26,26 @@ export async function SiteHeader() {
           slothcv
         </Link>
         <nav className="flex items-center gap-2">
-          {user ? (
+          {loading ? (
+            // Reserve the slot so layout doesn't shift when auth resolves.
+            <div className="h-9 w-20" aria-hidden />
+          ) : user ? (
             <>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
                   Dashboard
                 </Button>
               </Link>
-              {/*
-                Server-side sign-out: the route handler clears the Supabase
-                session cookies and redirects home. No client JS required —
-                works even if hydration is broken.
-              */}
-              <form action="/auth/signout" method="post">
-                <Button variant="outline" size="sm" type="submit">
-                  Sign out
-                </Button>
-              </form>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => {
+                  void signOut();
+                }}
+              >
+                Sign out
+              </Button>
             </>
           ) : (
             <Link href="/login">

@@ -1,0 +1,8 @@
+# Cloudflare Pages config for slothcv.
+#
+# Static export mode: `next build` writes to `out/`. We ship that to Pages.
+# All auth + data lives in the browser, gated by Supabase RLS. No Worker.
+
+name = "slothcv"
+pages_build_output_dir = "out"
+compatibility_date = "2026-04-26"

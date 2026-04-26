@@ -1,12 +1,13 @@
 /**
  * Root layout — wraps every page in the site shell (header + footer) and
- * mounts the Sonner toast viewport so any nested client component can fire
- * notifications without per-route plumbing.
+ * mounts the Sonner toast viewport. AuthProvider hangs at the top so any
+ * descendant can call `useAuth()` without prop-drilling.
  */
 
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
@@ -21,7 +22,6 @@ export const metadata: Metadata = {
   title: "slothcv — free, beautiful CVs",
   description:
     "Free, beautiful CVs. No signup walls, no watermarks. Drag, drop, design. Export to PDF.",
-  // OG defaults; future Phase 2 will swap in a generated preview image.
   openGraph: {
     title: "slothcv",
     description: "Free, beautiful CVs. No signup walls, no watermarks.",
@@ -37,10 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-        <Toaster richColors position="top-center" />
+        <AuthProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+          <Toaster richColors position="top-center" />
+        </AuthProvider>
       </body>
     </html>
   );

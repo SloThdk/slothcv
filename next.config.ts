@@ -1,26 +1,33 @@
 import type { NextConfig } from "next";
 
 /**
- * Phase 1 ships SSR via Next's regular server because we use:
- *   - Server Components that read cookies (Supabase SSR helper).
- *   - Route Handlers for OAuth callback and signout.
- *   - Server Actions for dashboard mutations.
+ * Phase 1 ships as a static export.
  *
- * Static export (`output: "export"`) would break all four. We deploy via
- * `@cloudflare/next-on-pages` (added in a follow-up step) so the same
- * runtime works on Cloudflare Pages.
+ * Why static instead of SSR:
+ *   - Next 16 forces `proxy.ts` to use the Node.js runtime (no opt-out),
+ *     which the Cloudflare adapter (`@opennextjs/cloudflare`) refuses to
+ *     bundle. Edge Runtime opt-in only exists for legacy `middleware.ts`,
+ *     which the same Next 16 release deprecated.
+ *   - We deploy to Cloudflare Pages (free, instant rollouts, zero cold
+ *     start) instead of Workers. RLS is the security gate, and all data
+ *     calls are client-side via @supabase/ssr's browser client.
  *
- * Image optimization is disabled because we have no remote images yet and
- * the static optimizer adds a runtime dependency we don't need on Pages.
+ * Trade-off: gating happens client-side via <AuthGate>, not in middleware.
+ * Anonymous visitors briefly see a "Loading…" before the redirect. RLS still
+ * prevents any actual data leakage — the loading flash is a UX papercut.
+ *
+ * If Phase 2 needs SSR (server-rendered PDF preview, ISR templates), we
+ * downgrade to Next 15 + @cloudflare/next-on-pages or move to a Worker
+ * deploy with Edge middleware.
  */
 const nextConfig: NextConfig = {
+  output: "export",
   images: { unoptimized: true },
-  // Avoid emitting the source-map files into the final build artifact —
-  // smaller upload, no accidental leak of file paths.
+  // Static export emits to `out/` by default — wrangler.toml points there.
+  // Force trailing-slash so every page is `/foo/index.html`, which Pages and
+  // most static hosts serve cleanly without rewrites.
+  trailingSlash: true,
   productionBrowserSourceMaps: false,
-  // Pin Turbopack's project root to this folder. Without it Next walks
-  // upward and may pick a stray lockfile in C:\Users\phili\ as the root,
-  // which produces noisy warnings during build.
   turbopack: {
     root: __dirname,
   },

@@ -2,27 +2,48 @@
  * LoginForm — magic-link email + Google OAuth.
  *
  * Both flows complete at `/auth/callback`. The `next` query param is honored
- * so when middleware bounces an anonymous visitor here, they land back on
- * the page they were trying to reach after sign-in.
+ * so when AuthGate bounces an anonymous visitor here, they land back on the
+ * page they were trying to reach after sign-in. Already-signed-in users are
+ * forwarded to `next` immediately so the back button doesn't strand them on
+ * the login page.
  */
 
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, loading } = useAuth();
   const next = searchParams.get("next") ?? "/dashboard";
+  const error = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Forward already-signed-in users so they don't see a confusing login form.
+  useEffect(() => {
+    if (!loading && user) {
+      const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      router.replace(safe);
+    }
+  }, [loading, user, next, router]);
+
+  // Surface ?error=... once on mount so the user knows the previous attempt
+  // failed (e.g. expired magic link, OAuth declined).
+  useEffect(() => {
+    if (!error) return;
+    toast.error(decodeURIComponent(error).replaceAll("_", " "));
+  }, [error]);
 
   // Build the absolute callback URL on the client so we hit the same origin
   // we're running on (works in localhost AND on every Pages preview URL).
@@ -38,12 +59,12 @@ export function LoginForm() {
     if (!email) return;
     setSubmitting(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error: err } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: callback },
     });
     setSubmitting(false);
-    if (error) {
+    if (err) {
       // Generic external message; details are in the network response for
       // debugging without leaking provider internals to the user.
       toast.error("Couldn't send the link. Try again in a moment.");
@@ -56,15 +77,23 @@ export function LoginForm() {
   async function handleGoogle() {
     setSubmitting(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error: err } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },
     });
-    if (error) {
+    if (err) {
       setSubmitting(false);
       toast.error("Google sign-in failed. Try again.");
     }
     // On success the browser is redirected away — no further state to set.
+  }
+
+  // While auth is resolving (and we might be about to forward), avoid the
+  // login form briefly flashing for already-signed-in users.
+  if (loading || user) {
+    return (
+      <p className="text-center text-sm text-neutral-400">Loading…</p>
+    );
   }
 
   return (

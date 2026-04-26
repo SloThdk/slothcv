@@ -1,0 +1,75 @@
+/**
+ * AuthProvider — single source of truth for the signed-in user.
+ *
+ * Wraps the entire app in `layout.tsx`. Subscribes once to Supabase's auth
+ * state changes and pushes the current user / loading flag down through
+ * context. Consumers grab it via `useAuth()`.
+ *
+ * We expose `loading` so consumers can render a skeleton instead of bouncing
+ * a logged-in user to /login on first paint (which would happen if we treated
+ * `user === null` and "auth not yet resolved" as the same state).
+ */
+
+"use client";
+
+import { createContext, useContext, useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "./supabase/client";
+
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  loading: true,
+  signOut: async () => {},
+});
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Resolve initial state. `getSession` reads from local storage so this
+    // is a synchronous-feeling read; no network unless the token is stale.
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Subscribe to subsequent changes (sign-in, sign-out, token refresh).
+    // Returning the unsubscribe is critical — without it, React 19's strict
+    // double-mount in dev would leak listeners.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    // Hard navigation home so any cached page state is dropped — simpler
+    // than chasing every component to re-render after sign-out.
+    if (typeof window !== "undefined") window.location.assign("/");
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}

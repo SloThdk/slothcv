@@ -7,47 +7,38 @@
  *      auth.users.raw_user_meta_data — the handle_new_user trigger
  *      (migration 0005) then writes them to the profiles row.
  *   2. Detects the "you already have an account" case BEFORE sending a
- *      magic link, by probing with a `shouldCreateUser:false` call first.
- *      If the probe succeeds (email exists), we abort the signup and
- *      direct the user to /login. If the probe fails with "user not
- *      found", we proceed with the real signup that creates the account.
+ *      magic link, via the public.email_exists() RPC (migration 0007).
+ *      If the email is already in auth.users we abort the signup and
+ *      direct the user to /login. Only NEW emails proceed to the real
+ *      signup that creates the account.
  *
- * Why the two-call probe pattern (instead of just sending the magic link
- * and hoping for the best):
- *   Supabase doesn't expose a "does this email exist" check from the
- *   client (deliberately — would be an enumeration attack vector). The
- *   probe technique is the standard workaround:
- *     - Probe call:  signInWithOtp({email, shouldCreateUser:false})
- *         · If user EXISTS → success (a magic link is sent — see below)
- *         · If user is NEW → error "Signups not allowed for otp"
- *     - Branch on that result:
- *         · Existing user → show "account already exists, use Google or
- *           the link we just sent you (from /login)"
- *         · New user → run the actual signup with the name metadata
- *
- * Side effect we accept:
- *   When an existing user tries to sign up, the probe DOES send them an
- *   unsolicited magic link before we tell them to stop. This is
- *   unavoidable without a server-side check. Acceptable because:
- *     · The link goes to their own verified email — no privacy leak
- *     · The link works (signs them into their existing account)
- *     · We surface a clear message explaining what happened
- *     · It happens at most once per signup attempt; not abuse-prone
+ * Why the RPC instead of a `shouldCreateUser:false` probe (the previous
+ * approach):
+ *   The probe pattern had two failure modes that this implementation
+ *   replaces:
+ *     1. For OAuth-only users (Google sign-up, no email/password
+ *        identity), Supabase returns user_not_found on the probe even
+ *        though the auth.users row exists — so /signup wrongly proceeded
+ *        to send a magic link to an already-registered email.
+ *     2. The probe ALWAYS sent an unsolicited magic link as a side
+ *        effect when the email already existed. Confusing.
+ *   The RPC reads auth.users directly with SECURITY DEFINER and returns
+ *   a boolean — deterministic, no magic-link side effect, works for
+ *   OAuth-only and email-only users alike. Public RPC is gated by
+ *   Turnstile + Supabase rate limits; small enumeration vector accepted.
  *
  * Identity-collision matrix:
  *
  *   ┌───────────────────────────┬─────────────────────────────────────────┐
  *   │ Existing account state    │ What happens when they submit /signup    │
  *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ Google OAuth account for  │ Probe succeeds → we abort signup and    │
- *   │ this email                │ show "account exists, sign in with       │
- *   │                           │ Google" (with link to /login).           │
+ *   │ Google OAuth account for  │ RPC returns true → abort, show          │
+ *   │ this email                │ "account exists, sign in with Google".   │
  *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ Magic-link account for    │ Probe succeeds → we abort signup and    │
- *   │ this email                │ tell user to use the link we just sent  │
- *   │                           │ (or visit /login).                       │
+ *   │ Magic-link account for    │ RPC returns true → abort, show          │
+ *   │ this email                │ "account exists, please log in".         │
  *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ No account                │ Probe errors → we proceed with real     │
+ *   │ No account                │ RPC returns false → proceed with real   │
  *   │                           │ signup carrying the name metadata.       │
  *   └───────────────────────────┴─────────────────────────────────────────┘
  */
@@ -66,7 +57,6 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   authErrorTranslationKey,
   callbackErrorTranslationKey,
-  classifyAuthError,
 } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,67 +167,45 @@ export function SignupForm() {
     setSubmittingMagic(true);
     const supabase = createClient();
 
-    // ── Step 1: probe for existing account ─────────────────────────────
-    // shouldCreateUser:false → succeeds (sends a magic link) ONLY if the
-    // email already has an account. If the email is unknown, Supabase
-    // refuses with "Signups not allowed for otp" without sending anything.
-    const probe = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: callback,
-        shouldCreateUser: false,
-        ...(captchaToken ? { captchaToken } : {}),
-      },
+    // ── Step 1: server-side existence check via public.email_exists RPC ─
+    // The RPC reads auth.users with SECURITY DEFINER and returns boolean
+    // only. No captcha consumed (it's a plain Postgres call, not an auth
+    // endpoint). No magic-link side effect — if the email exists, we
+    // simply tell the user without sending anything to their inbox.
+    const probe = await supabase.rpc("email_exists", {
+      check_email: cleanEmail,
     });
-    // Token used — reset for next call regardless of branch.
-    turnstileRef.current?.reset();
-    setCaptchaToken(null);
 
-    if (!probe.error) {
-      // Account exists. The probe also sent a magic link to their inbox —
-      // we tell the user that, AND point them at /login for the alternate
-      // method (Google) in case they originally used that.
+    if (probe.error) {
+      // RPC failed (network / DB blip) — fail closed. We don't proceed
+      // with signup because we can't verify the email isn't already
+      // registered, and creating a duplicate is worse than asking the
+      // user to retry.
+      setSubmittingMagic(false);
+      toast.error(t("auth.errUnexpected"));
+      return;
+    }
+
+    if (probe.data === true) {
+      // Email already in auth.users (OAuth identity, magic-link identity,
+      // or both). Surface clearly and direct the user to /login. We did
+      // NOT send a magic link — the user gets nothing in their inbox,
+      // just the on-screen banner.
       setSubmittingMagic(false);
       setExistingAccount(true);
       toast.error(t("signup.errAccountExists"));
       return;
     }
 
-    // Use classifyAuthError ONLY here because we need to BRANCH on intent
-    // ("is this email new? then proceed to step 2"). For the actual error
-    // toast we use authErrorTranslationKey to get the specific message.
-    const kind = classifyAuthError(probe.error);
-    if (kind !== "user_not_found") {
-      setSubmittingMagic(false);
-      toast.error(t(authErrorTranslationKey(probe.error)));
-      return;
-    }
-
     // ── Step 2: real signup ────────────────────────────────────────────
-    // Probe returned "user not found" → email is genuinely new. The probe
-    // consumed our captcha token; we need a fresh one for the actual
-    // signup call. The managed-mode widget auto-reissues a token in
-    // <1-2s for low-risk users (no UI shown), so poll the widget's
-    // getResponse() up to 6s. If still empty, ask the user to solve.
-    let freshToken: string | null = captchaToken;
-    if (TURNSTILE_SITE_KEY) {
-      for (let i = 0; i < 30 && !freshToken; i++) {
-        await new Promise((r) => setTimeout(r, 200));
-        freshToken = turnstileRef.current?.getResponse() ?? null;
-      }
-      if (!freshToken) {
-        setSubmittingMagic(false);
-        toast.error(t("auth.errCaptchaFailed"));
-        return;
-      }
-    }
-
+    // Email is genuinely new. Send the magic link. The captcha token is
+    // still fresh because step 1 was a plain RPC, not an auth call.
     const fullName = fullNameFrom(firstName, lastName);
     const { error: err } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
       options: {
         emailRedirectTo: callback,
-        ...(freshToken ? { captchaToken: freshToken } : {}),
+        ...(captchaToken ? { captchaToken } : {}),
         data: {
           full_name: fullName,
           first_name: firstName.trim(),
@@ -249,10 +217,6 @@ export function SignupForm() {
     setCaptchaToken(null);
     setSubmittingMagic(false);
     if (err) {
-      // Render the SPECIFIC reason — same precise mapping as login.
-      // "user_not_found" race-falling-through here (email deleted between
-      // probe and step 2) renders the standard "no account" message,
-      // which is honest about what just happened.
       toast.error(t(authErrorTranslationKey(err)));
       return;
     }

@@ -3,13 +3,45 @@
  * element being edited. Activated by double-clicking any text element
  * with a registered lens (see `src/lib/element-text-lens.ts`).
  *
- * Editing UX:
- *   - The underlying source element's text is HIDDEN during edit
- *     (color: transparent) so the overlay is the only thing the user
- *     sees. The element's BOX stays in place so the layout doesn't
- *     shift, but its rendered text is invisible — when the user types
- *     longer than the original, the overlay can grow without "bleeding
- *     over" still-visible underlying text.
+ * # Why this looks the way it does (Photoshop polish)
+ *
+ * The hard requirement: editing should feel like Photoshop's Type Tool.
+ * Double-click → caret appears in place → type → text grows from the
+ * anchor without the surrounding layout shifting underneath the user.
+ * Commit on Enter / Esc / click-outside. No "jumping" of the overlay,
+ * no surprise scroll, no caret races.
+ *
+ * Three engineering decisions deliver that feel:
+ *
+ * 1. **No live-commit during edit.** The single biggest source of
+ *    "jumpy" behaviour was writing each keystroke into the Zustand
+ *    store via `lens.write`. That triggered a React rerender of the
+ *    template subtree → the source element's text changed → its
+ *    parent's layout reflowed → the source's bounding rect shifted →
+ *    the rAF position-sync loop dragged the overlay to the new spot →
+ *    the user saw their text leap mid-stroke. Photoshop's Type Tool
+ *    keeps the underlying text frame static during edit and commits on
+ *    exit — we now match that. Local React state holds the typed value;
+ *    `lens.write` runs once on commit (blur / Esc / Cmd+Enter).
+ *
+ * 2. **Source text + box are frozen during edit.** The source element
+ *    is rendered with `color: transparent`, so the user only sees the
+ *    overlay. Because we no longer mutate the data store during edit,
+ *    the source's content (and therefore its bounding box) is rock
+ *    stable. The overlay grows freely (CSS-grid auto-sizing) without
+ *    chasing a moving target. On commit, the source rerenders with the
+ *    new text — but by then the overlay is gone, so any layout shift
+ *    happens AFTER the user has committed and is expected.
+ *
+ * 3. **`focus({ preventScroll: true })`.** Default `focus()` triggers
+ *    the browser's "scroll into view" behaviour, which pans the canvas
+ *    by a few pixels the moment the textarea mounts. Even though the
+ *    rAF loop catches the shift and re-syncs, the user perceives it as
+ *    the text "jumping". `preventScroll: true` blocks the auto-scroll
+ *    entirely — the canvas stays put.
+ *
+ * # Other invariants worth preserving
+ *
  *   - The textarea AUTO-GROWS via the CSS-grid replicated-content
  *     trick: a hidden `<div>` mirroring the typed text shares the same
  *     grid cell, and the grid track sizes to the taller child. No JS
@@ -19,12 +51,19 @@
  *   - Focus + select-all run inside `useLayoutEffect`, NOT
  *     `requestAnimationFrame`, so they commit BEFORE the browser paints
  *     the overlay. Otherwise the user sees one frame of an unfocused,
- *     mis-sized editor — that's the "bouncing" feel.
+ *     mis-sized editor — the "bouncing" feel.
+ *   - The rAF position-sync loop is STILL needed to handle EXTERNAL
+ *     shifts (canvas scroll, parent zoom, sibling section reflow). Now
+ *     that the source's text is frozen, the loop almost never triggers
+ *     a re-render — but it's there as insurance.
  *   - **Enter inserts a newline** — same as a normal text input.
- *     Cmd/Ctrl+Enter commits early. Esc cancels (no save).
- *     Click-outside (blur) commits.
+ *     Esc / Cmd-Enter / click-outside all COMMIT and exit. There is no
+ *     "revert" path — matches Photoshop, Figma, Illustrator, Canva
+ *     (the canvas-tool convention). Web-form muscle memory says Esc
+ *     cancels, but the canvas convention is the stronger pull here
+ *     (prior research at research/text-in-container-ux/).
  *
- * Why an overlay instead of contentEditable in place?
+ * # Why an overlay instead of contentEditable in place?
  *   1. **No template refactor.** Templates render `<h1>{name}</h1>` with
  *      whatever styling fits the design. Adding `contentEditable` to
  *      every text node across all templates would be a deep rewrite.
@@ -95,35 +134,70 @@ export function InlineTextEditor() {
   const [text, setText] = useState("");
 
   // Reference + saved styles for the source element so we can hide its
-  // text during edit and restore it on close. Stored in a ref so the
-  // cleanup effect can run without re-querying the DOM.
-  // `originalText` snapshots the value at edit-start so Esc can revert
-  // the live-committed changes.
+  // text during edit AND lock its outer box during edit, then restore
+  // both on close. Stored in a ref so the cleanup effect can run
+  // without re-querying the DOM.
+  //
+  // The original* fields snapshot the inline-style strings BEFORE we
+  // mutate them. Restore writes the snapshots back verbatim, which
+  // naturally returns the element to "no inline override" if it had
+  // no override originally, OR to the original override if it did
+  // (e.g. a template-level inline color). Empty string clears the
+  // inline property entirely.
+  //
+  // Note: we no longer snapshot `originalText` because we no longer
+  // mutate the data store during edit (the typed value lives in local
+  // React state until commit). Nothing to revert.
   const sourceRef = useRef<{
     el: HTMLElement;
     originalColor: string;
-    originalText: string;
+    originalWidth: string;
+    originalHeight: string;
+    originalMinWidth: string;
+    originalMinHeight: string;
+    originalMaxWidth: string;
+    originalMaxHeight: string;
   } | null>(null);
+
+  // Latest value typed into the textarea, available to commit handlers
+  // (blur, Esc, Cmd+Enter) without going through React's stale-closure
+  // dance. We always read this ref when committing so the final write
+  // reflects the very last keystroke even if React batched the state
+  // update.
+  const latestTextRef = useRef("");
+
+  // Guards against double-commit. The same edit session can route
+  // through commit() (Esc / Cmd+Enter / blur handler) AND through the
+  // useLayoutEffect cleanup (when editingElementId changes). Both
+  // would otherwise write the typed value to the store. The flag is
+  // reset to false on each edit-session setup; flipped to true on the
+  // first commit; checked by every subsequent commit attempt.
+  //
+  // Strict-mode safety: React 18 strict mode double-invokes effects.
+  // The first cleanup pass would commit immediately (with the initial
+  // text, equal to lens.read()). The flag prevents that no-op from
+  // burning a write.
+  const committedRef = useRef(false);
 
   // Resolve the lens for the active element-id.
   const lens = editingElementId
     ? elementTextLens(editingElementId, data, { setPersonal, updateSection })
     : null;
 
-  // Capture rect + font + hide source text when an edit starts.
+  // Capture rect + font + hide source text when an edit starts; the
+  // returned cleanup commits the typed value AND restores the source on
+  // exit (whether the exit is a user blur, a programmatic
+  // setEditingElementId(null), or the user double-clicking a different
+  // element directly without first committing). Putting cleanup in the
+  // effect's return function (rather than a top-of-effect
+  // `if (!editingElementId)` branch) is what makes the A→B switch
+  // correct — React runs the previous cleanup before the next setup.
+  //
   // useLayoutEffect commits synchronously after DOM mutation but BEFORE
   // the browser paints, so the overlay never appears in an intermediate
   // "not yet focused / not yet sized" state.
   useLayoutEffect(() => {
-    if (!editingElementId) {
-      setOverlay(null);
-      // Restore the source element's text colour if we were editing.
-      if (sourceRef.current) {
-        sourceRef.current.el.style.color = sourceRef.current.originalColor;
-        sourceRef.current = null;
-      }
-      return;
-    }
+    if (!editingElementId) return;
     const el = document.querySelector(
       `[data-element-id="${cssEscape(editingElementId)}"]`,
     ) as HTMLElement | null;
@@ -161,18 +235,88 @@ export function InlineTextEditor() {
     });
     const initialText = lens.read();
     setText(initialText);
+    latestTextRef.current = initialText;
     // Hide the source element's text — its box stays in place (so the
     // template's layout doesn't shift) but no rendered text shows
-    // underneath the overlay. We snapshot the original text too so Esc
-    // can revert any live-committed changes (we now write each
-    // keystroke to the data store so the source's wrapper grows with
-    // the text — Photoshop / Figma "Hug contents" behavior).
+    // underneath the overlay. The source's text + computed styles
+    // remain unchanged for the entire edit session because we no
+    // longer write to the data store on every keystroke (see file
+    // header). The overlay grows freely above a perfectly still source
+    // — that's the "Photoshop feel" behaviour.
+    // Snapshot original inline styles BEFORE we mutate them. Lock the
+    // source's outer box to its measured pre-edit dimensions: this is
+    // belt-and-braces insurance against any unrelated React rerender
+    // (autosave status flicker, parent prop change, focus highlight)
+    // shifting the source's box while editing — which would feed the
+    // rAF rect-sync loop and look like the text "jumping". The
+    // intrinsic (pre-scale) width/height come from offsetWidth /
+    // offsetHeight; the source's parent layout (flex / grid / inline)
+    // sees the same numbers it had before edit, so siblings don't
+    // reflow.
     sourceRef.current = {
       el,
       originalColor: el.style.color,
-      originalText: initialText,
+      originalWidth: el.style.width,
+      originalHeight: el.style.height,
+      originalMinWidth: el.style.minWidth,
+      originalMinHeight: el.style.minHeight,
+      originalMaxWidth: el.style.maxWidth,
+      originalMaxHeight: el.style.maxHeight,
     };
+    const lockW = `${el.offsetWidth}px`;
+    const lockH = `${el.offsetHeight}px`;
     el.style.color = "transparent";
+    el.style.width = lockW;
+    el.style.height = lockH;
+    el.style.minWidth = lockW;
+    el.style.minHeight = lockH;
+    el.style.maxWidth = lockW;
+    el.style.maxHeight = lockH;
+    committedRef.current = false;
+
+    // Snapshot lens + el + every original style so the cleanup closure
+    // works regardless of any subsequent re-render that produces a new
+    // lens for a different editingElementId. Without snapshotting, a
+    // fast A→B switch could see the cleanup fire with B's lens and
+    // write A's typed text into B's field — silent data corruption.
+    const editingLens = lens;
+    const editingEl = el;
+    const snap = sourceRef.current;
+    return () => {
+      // Commit typed text into the data store IF this edit session
+      // hasn't already been committed by Esc / Cmd+Enter / blur (the
+      // other commit paths). The committedRef guard makes commit
+      // exactly-once per session and tolerates the React-18-strict-
+      // mode double-effect cycle without burning a no-op write.
+      if (!committedRef.current) {
+        committedRef.current = true;
+        const next = latestTextRef.current;
+        try {
+          if (next !== editingLens.read()) editingLens.write(next);
+        } catch {
+          // Lens read/write failure (e.g. the section was deleted
+          // while editing). Swallow — the source restore below is
+          // more important than the write.
+        }
+      }
+      // Restore every inline style we mutated. Reads from the
+      // snapshotted closure so we always restore the element we
+      // actually mutated, never a fresher one a parallel edit might
+      // have set up. Belt-and-braces: also clear sourceRef.current if
+      // it still points at the same element so the unmount safety
+      // effect doesn't double-restore.
+      editingEl.style.color = snap.originalColor;
+      editingEl.style.width = snap.originalWidth;
+      editingEl.style.height = snap.originalHeight;
+      editingEl.style.minWidth = snap.originalMinWidth;
+      editingEl.style.minHeight = snap.originalMinHeight;
+      editingEl.style.maxWidth = snap.originalMaxWidth;
+      editingEl.style.maxHeight = snap.originalMaxHeight;
+      if (sourceRef.current?.el === editingEl) {
+        sourceRef.current = null;
+      }
+      setOverlay(null);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingElementId]);
 
@@ -216,13 +360,24 @@ export function InlineTextEditor() {
     return () => cancelAnimationFrame(raf);
   }, [editingElementId]);
 
-  // Restore source colour on unmount as a safety net.
+  // Restore source on InlineTextEditor unmount as a safety net for
+  // the case where the editor page navigates away mid-edit. The main
+  // effect's cleanup already handles the normal exit paths, so this
+  // only fires when sourceRef survives that path (rare — requires the
+  // editing-element node to be removed from the DOM between the
+  // effect setup and unmount).
   useEffect(() => {
     return () => {
-      if (sourceRef.current) {
-        sourceRef.current.el.style.color = sourceRef.current.originalColor;
-        sourceRef.current = null;
-      }
+      const s = sourceRef.current;
+      if (!s) return;
+      s.el.style.color = s.originalColor;
+      s.el.style.width = s.originalWidth;
+      s.el.style.height = s.originalHeight;
+      s.el.style.minWidth = s.originalMinWidth;
+      s.el.style.minHeight = s.originalMinHeight;
+      s.el.style.maxWidth = s.originalMaxWidth;
+      s.el.style.maxHeight = s.originalMaxHeight;
+      sourceRef.current = null;
     };
   }, []);
 
@@ -231,13 +386,43 @@ export function InlineTextEditor() {
   // never sees the unfocused intermediate state. requestAnimationFrame
   // would delay focus to the NEXT frame which is exactly the visible
   // flash that read as "bouncing" in the previous implementation.
+  //
+  // **`preventScroll: true` is critical.** The browser's default
+  // focus-into-view behaviour pans the canvas a few pixels the moment
+  // the textarea mounts, which then propagates as the source's rect
+  // shifting, the rAF loop chasing it, and the user perceiving a
+  // "jump". Suppressing the auto-scroll is the cleanest fix — the
+  // user doesn't need the canvas to scroll because they're already
+  // looking at the element they double-clicked.
+  //
+  // We only run focus once per edit session (initial mount), not on
+  // every overlay rect tick. Re-focusing on every rAF re-render of
+  // the overlay would steal focus while the user is mid-keystroke if
+  // anything else briefly grabs focus. The dependency on
+  // `editingElementId` (rather than `overlay`) ensures one focus per
+  // session.
   useLayoutEffect(() => {
-    if (!overlay) return;
+    if (!editingElementId) return;
     const ta = taRef.current;
     if (!ta) return;
-    ta.focus();
+    ta.focus({ preventScroll: true });
     ta.select();
-  }, [overlay]);
+  }, [editingElementId]);
+
+  // Commit the latest typed value via lens.write and close the overlay.
+  // Reads from the ref (not React state) because blur / keyboard
+  // commits can fire in the same microtask as a keystroke; the ref is
+  // updated synchronously inside onTextChange while React state is
+  // batched. Skip the write entirely if the text is unchanged from the
+  // initial value — avoids a no-op store mutation that would still
+  // trigger autosave.
+  function commit() {
+    const next = latestTextRef.current;
+    if (lens && next !== lens.read()) {
+      lens.write(next);
+    }
+    setEditingElementId(null);
+  }
 
   // Keyboard, matching the industry convention (Figma + Photoshop) per
   // the commit-cancel research:
@@ -246,36 +431,33 @@ export function InlineTextEditor() {
   //                           Esc cancels, but the canvas convention is
   //                           the stronger pull and matches Figma /
   //                           Canva / Illustrator.
-  //   - Enter (plain)       → newline (textarea default)
+  //   - Enter (plain)       → newline (textarea default — left alone)
   //   - Cmd/Ctrl + Enter    → commit + exit
   // Click-outside / blur is also commit (the universal default).
-  //
-  // Live-commit (every keystroke writes the typed text into the data
-  // store via lens.write) means we don't need a separate "commit" step
-  // — the data is already saved per-keystroke, debounced through the
-  // editor's autosave. Esc / blur just close the overlay; the typed
-  // text is already in the store.
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
-      setEditingElementId(null);
+      commit();
       return;
     }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      setEditingElementId(null);
+      commit();
       return;
     }
   }
 
-  /** Live-commit each keystroke into the data store. Two-phase write:
-   *  local React state for the textarea's `value` + lens.write into
-   *  Zustand for the source's wrapper to grow. The source rerenders
-   *  with the new text, its CSS-driven width auto-grows, and our rAF
-   *  rect-sync loop keeps the overlay glued to the new bounds. */
+  /** Update the textarea's local value. We deliberately do NOT write
+   *  through to the data store here — that's the source of the
+   *  "jumping" feel (every keystroke triggered a Zustand update →
+   *  React rerender → source's bounding box shifted → overlay re-
+   *  synced to the new rect). Instead we mirror the value into a ref
+   *  for the commit handlers to pick up. The source's text + box stay
+   *  perfectly still for the entire edit session; the overlay grows
+   *  freely above it via CSS-grid auto-sizing. */
   function onTextChange(next: string) {
     setText(next);
-    if (lens) lens.write(next);
+    latestTextRef.current = next;
   }
 
   if (!editingElementId || !overlay || !lens) return null;
@@ -377,7 +559,7 @@ export function InlineTextEditor() {
           ref={taRef}
           value={text}
           onChange={(e) => onTextChange(e.target.value)}
-          onBlur={() => setEditingElementId(null)}
+          onBlur={commit}
           onKeyDown={onKeyDown}
           rows={1}
           style={{
@@ -409,7 +591,7 @@ export function InlineTextEditor() {
         <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
           Esc
         </kbd>{" "}
-        cancel{"  ·  "}
+        save{"  ·  "}
         <span className="opacity-80">click outside to save</span>
       </div>
     </>

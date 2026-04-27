@@ -47,3 +47,12 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / agent tooling — installed locally per developer.
+# .mcp.json and skills-lock.json (the manifest + lockfile) ARE tracked;
+# only the resolved skill content + per-IDE views stay local so the repo
+# isn't bloated with multiple copies of the same docs.
+.agents/
+.claude/
+.windsurf/
+skills/

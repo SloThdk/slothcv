@@ -164,7 +164,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 )}
               </div>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="ghost"

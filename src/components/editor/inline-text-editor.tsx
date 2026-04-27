@@ -10,8 +10,16 @@
  *     shift, but its rendered text is invisible — when the user types
  *     longer than the original, the overlay can grow without "bleeding
  *     over" still-visible underlying text.
- *   - The textarea AUTO-GROWS as the user types. We resize on every
- *     input event using `scrollHeight`, growing downward.
+ *   - The textarea AUTO-GROWS via the CSS-grid replicated-content
+ *     trick: a hidden `<div>` mirroring the typed text shares the same
+ *     grid cell, and the grid track sizes to the taller child. No JS
+ *     scrollHeight resize, no per-keystroke flicker. The technique is
+ *     widely documented (CSS-Tricks: "The Cleanest Trick for
+ *     Autogrowing Textareas").
+ *   - Focus + select-all run inside `useLayoutEffect`, NOT
+ *     `requestAnimationFrame`, so they commit BEFORE the browser paints
+ *     the overlay. Otherwise the user sees one frame of an unfocused,
+ *     mis-sized editor — that's the "bouncing" feel.
  *   - **Enter inserts a newline** — same as a normal text input.
  *     Cmd/Ctrl+Enter commits early. Esc cancels (no save).
  *     Click-outside (blur) commits.
@@ -47,11 +55,12 @@ interface OverlayRect {
   /** Computed font styles copied from the source element. Pixel values
    *  are CSS px (pre-scale) — visualScale is applied at render time.
    *  All four paddings are captured so the editing overlay never has
-   *  text touching the focus ring edge (cramped feel that the previous
-   *  paddingRight:0 / paddingBottom:0 default produced on tight
-   *  elements like H1s with no native padding). borderRadius is read
-   *  so the box-shadow focus ring follows the template's corner shape
-   *  instead of always being rectangular. */
+   *  text touching the focus ring edge. borderRadius is read so the
+   *  box-shadow ring follows the template's corner shape. The extended
+   *  metrics (fontFeatureSettings / fontVariantNumeric / fontKerning /
+   *  tabSize) are read because UA defaults differ from the source's
+   *  typography settings — without copying them you get sub-pixel
+   *  character drift on mount, which the eye reads as a "twitch". */
   font: {
     fontFamily: string;
     fontSize: number;
@@ -67,6 +76,10 @@ interface OverlayRect {
     paddingRight: number;
     paddingBottom: number;
     borderRadius: string;
+    fontFeatureSettings: string;
+    fontVariantNumeric: string;
+    fontKerning: string;
+    tabSize: string;
   };
 }
 
@@ -95,6 +108,9 @@ export function InlineTextEditor() {
     : null;
 
   // Capture rect + font + hide source text when an edit starts.
+  // useLayoutEffect commits synchronously after DOM mutation but BEFORE
+  // the browser paints, so the overlay never appears in an intermediate
+  // "not yet focused / not yet sized" state.
   useLayoutEffect(() => {
     if (!editingElementId) {
       setOverlay(null);
@@ -134,6 +150,10 @@ export function InlineTextEditor() {
         paddingRight: parseFloat(cs.paddingRight) || 0,
         paddingBottom: parseFloat(cs.paddingBottom) || 0,
         borderRadius: cs.borderRadius || "0",
+        fontFeatureSettings: cs.fontFeatureSettings || "normal",
+        fontVariantNumeric: cs.fontVariantNumeric || "normal",
+        fontKerning: cs.fontKerning || "auto",
+        tabSize: cs.tabSize || "8",
       },
     });
     setText(lens.read());
@@ -144,7 +164,7 @@ export function InlineTextEditor() {
     // overlapping still-visible old text.
     sourceRef.current = {
       el,
-      originalColor: el.style.color, // inline style only — class colors are unaffected
+      originalColor: el.style.color,
     };
     el.style.color = "transparent";
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,34 +180,18 @@ export function InlineTextEditor() {
     };
   }, []);
 
-  // Auto-focus + select-all on enter, and apply initial auto-grow.
-  useEffect(() => {
+  // Focus + select-all in useLayoutEffect — runs synchronously after
+  // the overlay mounts but BEFORE the browser paints, so the user
+  // never sees the unfocused intermediate state. requestAnimationFrame
+  // would delay focus to the NEXT frame which is exactly the visible
+  // flash that read as "bouncing" in the previous implementation.
+  useLayoutEffect(() => {
     if (!overlay) return;
-    requestAnimationFrame(() => {
-      const ta = taRef.current;
-      if (!ta) return;
-      ta.focus();
-      ta.select();
-      // Trigger auto-grow once with the prefilled value.
-      autoGrow(ta);
-    });
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.select();
   }, [overlay]);
-
-  /** Resize the textarea to fit its content. Called on every input event
-   *  and once on initial mount. Reset to "auto" first so the scrollHeight
-   *  reflects the natural required height (without baseline + previous
-   *  height-set distortion). */
-  function autoGrow(ta: HTMLTextAreaElement) {
-    ta.style.height = "auto";
-    // Use scrollHeight for natural fit. Min-clamp to the source rect
-    // height so single-line fields stay visually anchored — the
-    // overlay box mirrors the source rect EXACTLY (no expansion) so
-    // narrow elements like date strings don't overflow into adjacent
-    // template content.
-    const min = overlay?.rect.height ?? 0;
-    const next = Math.max(min, ta.scrollHeight);
-    ta.style.height = `${next}px`;
-  }
 
   // Keyboard:
   //   - Esc                 → cancel (no save)
@@ -232,90 +236,112 @@ export function InlineTextEditor() {
     ? `${parseFloat(ls) * sc}px`
     : ls;
 
+  // Shared typography style applied to BOTH the textarea AND the
+  // hidden replica div so they wrap and lay out IDENTICALLY. Per-
+  // element overrides (caret color, focus outline, visibility) diverge
+  // below in their respective inline `style` props.
+  const sharedStyle: React.CSSProperties = {
+    fontFamily: overlay.font.fontFamily,
+    fontSize: `${fontSizePx}px`,
+    fontWeight: overlay.font.fontWeight as React.CSSProperties["fontWeight"],
+    fontStyle: overlay.font.fontStyle as React.CSSProperties["fontStyle"],
+    color: overlay.font.color,
+    textAlign: overlay.font.textAlign as React.CSSProperties["textAlign"],
+    lineHeight,
+    letterSpacing,
+    textTransform:
+      overlay.font.textTransform as React.CSSProperties["textTransform"],
+    paddingLeft: overlay.font.paddingLeft * sc,
+    paddingTop: overlay.font.paddingTop * sc,
+    paddingRight: overlay.font.paddingRight * sc,
+    paddingBottom: overlay.font.paddingBottom * sc,
+    margin: 0,
+    border: "none",
+    background: "transparent",
+    fontFeatureSettings: overlay.font.fontFeatureSettings,
+    fontVariantNumeric:
+      overlay.font.fontVariantNumeric as React.CSSProperties["fontVariantNumeric"],
+    fontKerning: overlay.font.fontKerning as React.CSSProperties["fontKerning"],
+    tabSize: overlay.font.tabSize as React.CSSProperties["tabSize"],
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+    overflowWrap: "break-word",
+  };
+
   return (
     <>
-      <textarea
-        ref={taRef}
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          autoGrow(e.currentTarget);
-        }}
-        onBlur={commitAndExit}
-        onKeyDown={onKeyDown}
+      {/* Wrapper carries the focus ring + position. Inside it, the
+          replica div and the textarea share grid cell 1/1 — the
+          replica's natural height drives the row, the textarea
+          stretches to fill via grid's default `align-self:stretch`. */}
+      <div
         style={{
           position: "fixed",
-          // Box mirrors the source rect EXACTLY — no outward expansion.
-          // Earlier code expanded by 6px L/R + 4px T/B for a "breathing"
-          // ring effect, but on narrow elements (date strings, short
-          // labels in dense layouts) that 12px width add overlapped
-          // adjacent template content. The focus ring still feels
-          // generous because it lives in box-shadow space below, which
-          // extends visually beyond the box without affecting layout.
           left: overlay.rect.left,
           top: overlay.rect.top,
           width: overlay.rect.width,
+          // Source rect is the floor; grid grows above it as content
+          // wraps. The wrapper never shrinks below the original element
+          // so single-line fields stay visually anchored.
           minHeight: overlay.rect.height,
-          // Faint surface tint so the editing field is distinguishable
-          // from the surrounding template content without obscuring
-          // anything behind it. Works on light + dark templates because
-          // alpha is low and neutral.
+          display: "grid",
+          // Faint surface tint distinguishes the active edit from
+          // surrounding template content without obscuring it. Works
+          // on light + dark templates because alpha is low.
           background: "rgb(255 255 255 / 0.04)",
-          // Layered box-shadow ring instead of `outline`. Outline can't
-          // follow border-radius and snaps in flat; box-shadow inherits
-          // the source element's corner radius, gets a soft outer glow
-          // at low opacity, plus a subtle drop shadow for elevation.
-          // The 140ms cubic-bezier matches Linear / Notion / Figma's
-          // micro-interaction pacing.
-          outline: "none",
+          // Layered box-shadow ring inherits the source's border-radius
+          // (outline can't follow border-radius and snaps in flat).
+          // 140 ms cubic-bezier matches Linear / Notion / Figma pacing.
           borderRadius: overlay.font.borderRadius,
           boxShadow:
             "0 0 0 1.5px rgb(37 99 235 / 0.6), 0 0 0 5px rgb(37 99 235 / 0.10), 0 6px 16px -8px rgb(0 0 0 / 0.18)",
           transition:
             "box-shadow 140ms cubic-bezier(0.4, 0, 0.2, 1), background-color 140ms ease-out",
-          fontFamily: overlay.font.fontFamily,
-          fontSize: `${fontSizePx}px`,
-          fontWeight:
-            overlay.font.fontWeight as React.CSSProperties["fontWeight"],
-          fontStyle:
-            overlay.font.fontStyle as React.CSSProperties["fontStyle"],
-          color: overlay.font.color,
-          textAlign:
-            overlay.font.textAlign as React.CSSProperties["textAlign"],
-          lineHeight,
-          letterSpacing,
-          textTransform:
-            overlay.font.textTransform as React.CSSProperties["textTransform"],
-          // All four paddings copied from the source's computed style
-          // (scaled by the preview's visual scale). The earlier code
-          // hard-coded paddingRight/paddingBottom to 0 so the cursor
-          // touched the focus ring on the right + bottom edges — fixed.
-          // No artificial padding boost: the typed text lands EXACTLY
-          // where the template rendered it (no visual jump on edit
-          // start), and tight elements like H1s without native padding
-          // get their breathing-room signal from the focus ring rather
-          // than from a forced inset.
-          paddingLeft: overlay.font.paddingLeft * sc,
-          paddingTop: overlay.font.paddingTop * sc,
-          paddingRight: overlay.font.paddingRight * sc,
-          paddingBottom: overlay.font.paddingBottom * sc,
-          margin: 0,
-          border: "none",
-          resize: "none",
-          // overflow:hidden + auto-growing height = no inner scrollbar.
-          overflow: "hidden",
-          // Allow soft-wrapping but break-all so a long unbreakable
-          // string doesn't horizontally overflow the textarea (which
-          // would itself bleed past the bounding box).
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          caretColor: overlay.font.color,
+          // Layout containment: sizing changes inside the wrapper
+          // don't trigger ancestor reflows. Cheap perf insurance for
+          // typing-heavy editing in a heavily-styled template tree.
+          contain: "layout style",
           zIndex: 10000,
         }}
-        spellCheck={true}
-      />
-      {/* Status hint — pinned to viewport bottom-center, NOT attached to
-          the textarea, so it never overlaps the document text below
+      >
+        {/* Hidden replica — the natural content height drives the grid
+            track size. Trailing newline matches the textarea's
+            "Enter at end of line grows the box" behavior. aria-hidden
+            because screen readers should only see the textarea. */}
+        <div
+          aria-hidden
+          style={{
+            ...sharedStyle,
+            gridArea: "1 / 1 / 2 / 2",
+            visibility: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {text + "\n"}
+        </div>
+        <textarea
+          ref={taRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commitAndExit}
+          onKeyDown={onKeyDown}
+          rows={1}
+          style={{
+            ...sharedStyle,
+            gridArea: "1 / 1 / 2 / 2",
+            outline: "none",
+            resize: "none",
+            // overflow:hidden — the replica drives the height, the
+            // textarea is always exactly as tall as it needs to be,
+            // so an inner scrollbar should never appear.
+            overflow: "hidden",
+            caretColor: overlay.font.color,
+          }}
+          spellCheck={true}
+        />
+      </div>
+      {/* Status hint — pinned to viewport bottom-center, NOT attached
+          to the textarea, so it never overlaps the document text below
           the field being edited. Reads like an editor's status bar:
           informational, not in the way. */}
       <div

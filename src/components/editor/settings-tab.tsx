@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, FileJson, FileText, LogOut, Trash2 } from "lucide-react";
+import { Download, FileJson, FileText, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
@@ -156,11 +156,6 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           Delete this CV
         </Button>
       </Group>
-
-      {/* Suppress unused import if the SettingsTab never renders LogOut. */}
-      <span className="hidden">
-        <LogOut className="hidden h-0 w-0" />
-      </span>
     </div>
   );
 }

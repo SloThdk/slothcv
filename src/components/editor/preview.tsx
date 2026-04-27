@@ -39,7 +39,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Maximize2, Move, MousePointerClick, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize2, Move, MousePointerClick } from "lucide-react";
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -794,7 +794,6 @@ export function Preview() {
           style={{
             width: pageWidthPx * scale,
             height: mmToPx(dims.h) * scale,
-            cursor: "pointer",
           }}
         >
           <div
@@ -822,11 +821,6 @@ export function Preview() {
           </div>
         </div>
       </div>
-      {/* avoid `import React` lint */}
-      <span className="sr-only">
-        <ZoomIn className="hidden h-0 w-0" />
-        <ZoomOut className="hidden h-0 w-0" />
-      </span>
       {/* Inline-edit overlay — single global instance. Reads
           `editingElementId` from the store and renders a textarea over
           the source element only when one is set. Sits at the very end

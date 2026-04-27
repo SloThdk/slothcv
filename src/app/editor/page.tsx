@@ -244,7 +244,7 @@ function EditorInner() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px-44px)] flex-col">
+    <div className="flex h-[calc(100dvh-56px-44px)] flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-2">
@@ -289,10 +289,15 @@ function EditorInner() {
         </div>
       </div>
 
-      {/* Mobile pane toggle */}
-      <div className="flex border-t border-border bg-surface md:hidden">
+      {/* Mobile pane toggle. `aria-pressed` exposes the active state to
+          screen readers; the visual text-fg/text-subtle distinction is
+          invisible to AT without it. `pb-[env(safe-area-inset-bottom)]`
+          adds breathing room above the iOS home indicator so the
+          buttons aren't touched by accident. */}
+      <div className="flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
         <button
           type="button"
+          aria-pressed={mobilePane === "edit"}
           className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-sm font-medium ${mobilePane === "edit" ? "text-fg" : "text-subtle"}`}
           onClick={() => setMobilePane("edit")}
         >
@@ -300,6 +305,7 @@ function EditorInner() {
         </button>
         <button
           type="button"
+          aria-pressed={mobilePane === "preview"}
           className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-sm font-medium ${mobilePane === "preview" ? "text-fg" : "text-subtle"}`}
           onClick={() => setMobilePane("preview")}
         >
@@ -343,9 +349,15 @@ function Tabs({
             className={`relative flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
               active ? "text-fg" : "text-muted hover:text-fg"
             }`}
+            aria-label={it.label}
+            title={it.label}
           >
             <Icon className="h-3.5 w-3.5" />
-            <span>{it.label}</span>
+            {/* Hide label on narrow viewports — at 393px, 5 cells +
+                icon + label wraps awkwardly. The `aria-label` and
+                `title` above keep accessibility + tooltip discoverability
+                intact. Show again at sm: (640px). */}
+            <span className="hidden sm:inline">{it.label}</span>
             {active && (
               // 2px slab at the bottom edge. layoutId="editor-tab-active"
               // means framer-motion treats every render of this element

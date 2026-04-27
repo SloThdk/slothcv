@@ -4,7 +4,7 @@
  * descendant can call `useAuth()` without prop-drilling.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
@@ -26,6 +26,22 @@ export const metadata: Metadata = {
     description: "Free, beautiful CVs. No signup walls, no watermarks.",
     type: "website",
   },
+};
+
+// CRITICAL FOR MOBILE: without this iOS Safari falls back to its legacy
+// 980px viewport — every mobile user sees the site zoomed out with bleed
+// past the edges. `viewportFit:"cover"` lets the page extend under the
+// notch / dynamic island so we can apply env(safe-area-inset-*) to the
+// site header / mobile toggle bars instead of letting iOS reserve gutters
+// for us. Tailwind's responsive prefixes (`sm:` etc.) only work after
+// the viewport meta tag is present.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  // Allow user zoom — accessibility requirement (WCAG 1.4.4 Resize Text).
+  // Maximum-scale capped only because Safari double-tap-to-zoom can
+  // disorient users mid-edit; user pinch-zoom is unrestricted.
 };
 
 export default function RootLayout({

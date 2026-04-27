@@ -24,6 +24,7 @@ import { create } from "zustand";
 import { saveResumeData } from "@/lib/resumes";
 import {
   defaultCustomElement,
+  defaultDesignForTemplate,
   defaultResumeData,
   defaultSection,
 } from "@/lib/resume-defaults";
@@ -383,11 +384,24 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         delete (next as { overrides?: unknown }).overrides;
         return next;
       });
+      // Apply the new template's intended design tokens (accent color,
+      // fonts, page background, photo defaults, etc). Without this, the
+      // user lands on Aurora's dark sidebar layout but with Berlin's
+      // light blue palette — the template doesn't look like the gallery
+      // card promised, and per-template intent (Eclipse=warm dark serif,
+      // Manhattan=navy/gold) is silently dropped. This matches what
+      // the Templates tab gallery card renders, so card → editor parity
+      // is kept. Power users who customised colours will need to re-set
+      // them after a template swap; the explicit "Reset to defaults"
+      // button in the Design tab uses the same factory function so this
+      // is the consistent behaviour.
+      const newDesign = defaultDesignForTemplate(template);
       return {
         data: {
           ...s.data,
           meta: { ...s.data.meta, template },
           sections,
+          design: newDesign,
           // Element-level offsets are even more template-coupled than
           // section-level ones, so they go too.
           elementOverrides: {},

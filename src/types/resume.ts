@@ -18,62 +18,82 @@
 
 // ---------- Top-level ----------
 
-/** Identifier of the active visual template. Templates render the same
- *  ResumeData differently — swapping never destroys content. */
-export type TemplateId =
-  | "scratch"
-  | "berlin"
-  | "helsinki"
-  | "tokyo"
-  | "oslo"
-  | "madrid"
-  | "reykjavik"
-  | "aurora"
-  | "eclipse"
-  | "copenhagen"
-  | "vienna"
-  | "manhattan"
-  | "cambridge"
-  | "blank"
+/** Single source of truth for which template ids exist.
+ *
+ *  HARD-LEARNED LESSON (2026-04-27): the Zod schema in
+ *  src/lib/schemas/resume.ts had its own duplicated `z.enum([...])` of
+ *  the 14 original ids. When the 30 enterprise-expansion templates
+ *  were added, only this type and the registry got updated — the Zod
+ *  schema was missed. parseResumeData() then returned null on every
+ *  CV with a new template id, the editor silently fell back to
+ *  defaultResumeData(), and users saw "Your name / No experience yet"
+ *  on every newly-created Carbon / Linear / Stripe / etc. CV.
+ *
+ *  Fix: this array is the canonical list. The TemplateId union below
+ *  is derived from it, AND the Zod schema imports + uses the same
+ *  array via z.enum(...). Adding a new template = add the id here +
+ *  the registry row + the renderer entry. The Zod schema stays in
+ *  sync automatically. */
+export const TEMPLATE_IDS = [
+  "scratch",
+  "berlin",
+  "helsinki",
+  "tokyo",
+  "oslo",
+  "madrid",
+  "reykjavik",
+  "aurora",
+  "eclipse",
+  "copenhagen",
+  "vienna",
+  "manhattan",
+  "cambridge",
+  "blank",
   // ── Enterprise expansion (30 new templates, mid-2026) ─────────────
   // Modern minimalist
-  | "helvetica"
-  | "geist"
-  | "notion"
-  | "linear"
-  | "stripe"
+  "helvetica",
+  "geist",
+  "notion",
+  "linear",
+  "stripe",
   // Dark / editorial
-  | "obsidian"
-  | "carbon"
-  | "midnight"
-  | "onyx"
-  | "graphite"
+  "obsidian",
+  "carbon",
+  "midnight",
+  "onyx",
+  "graphite",
   // Sidebar / two-column
-  | "geneva"
-  | "zurich"
-  | "frankfurt"
-  | "singapore"
-  | "dubai"
+  "geneva",
+  "zurich",
+  "frankfurt",
+  "singapore",
+  "dubai",
   // Bento / grid / dashboard
-  | "bento"
-  | "mosaic"
-  | "dashboard"
-  | "atlas"
-  | "heidelberg"
+  "bento",
+  "mosaic",
+  "dashboard",
+  "atlas",
+  "heidelberg",
   // Academic
-  | "boston"
-  | "stanford"
+  "boston",
+  "stanford",
   // Executive / finance
-  | "madison"
-  | "mayfair"
-  | "davos"
+  "madison",
+  "mayfair",
+  "davos",
   // Creative / portfolio
-  | "atelier"
-  | "studio"
-  | "canvas"
+  "atelier",
+  "studio",
+  "canvas",
   // Industry-specific
-  | "scrubs"
-  | "founder";
+  "scrubs",
+  "founder",
+] as const;
+
+/** Identifier of the active visual template. Templates render the same
+ *  ResumeData differently — swapping never destroys content. Derived
+ *  from TEMPLATE_IDS so the runtime list and the type stay locked. */
+export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
 /** Locale for default placeholder copy AND date formatting fallback. */
 export type LocaleId = "da" | "en";

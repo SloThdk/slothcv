@@ -13,7 +13,11 @@
  */
 
 import { z } from "zod";
-import { RESUME_SCHEMA_VERSION, type ResumeData } from "@/types/resume";
+import {
+  RESUME_SCHEMA_VERSION,
+  TEMPLATE_IDS,
+  type ResumeData,
+} from "@/types/resume";
 
 // --- Atomic primitives ---
 
@@ -25,22 +29,12 @@ const idSchema = z.string().min(1).max(64);
 
 const localeSchema = z.enum(["da", "en"]);
 
-const templateSchema = z.enum([
-  "scratch",
-  "berlin",
-  "helsinki",
-  "tokyo",
-  "oslo",
-  "madrid",
-  "reykjavik",
-  "aurora",
-  "eclipse",
-  "copenhagen",
-  "vienna",
-  "manhattan",
-  "cambridge",
-  "blank",
-]);
+// Use the canonical TEMPLATE_IDS array from src/types/resume.ts as the
+// SINGLE source of truth. The previous duplicated enum (14 ids) silently
+// drifted when 30 new templates were added — every CV with a new template
+// id failed Zod validation, parseResumeData() returned null, and the
+// editor fell back to defaultResumeData(). See the comment on TEMPLATE_IDS.
+const templateSchema = z.enum(TEMPLATE_IDS);
 
 // --- Design ---
 

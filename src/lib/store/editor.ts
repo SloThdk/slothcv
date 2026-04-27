@@ -147,22 +147,35 @@ interface EditorState {
 
 // ---------- Save scheduling ----------
 //
-// AUTO-SAVE IS DISABLED. Earlier versions wrote every keystroke to
-// Supabase via a 1-second debounce; users found that pinned them to
-// experimental edits (template swaps, exploration). Now the only path
-// to persist is the explicit Save button (`flushPendingSave()`).
+// AUTO-SAVE IS ENABLED — 800 ms debounce per the commit-cancel research
+// (NN/G threshold for "feels instant" on text autosave is 1000 ms; we
+// pick 800 to land just under). The marketing copy on the landing
+// promises "auto-saves the second you stop typing" and re-enabling
+// makes that true.
 //
-// `scheduleSave()` is kept as a NO-OP so existing call sites in mutators
-// don't have to be unwound. The dirty flag still gets set so the save
-// indicator reads "Unsaved" until the user hits Save. The browser's
-// `beforeunload` listener (in editor/page.tsx) prompts on tab close
-// when there are unsaved changes — defense in depth against data loss.
+// The earlier disable-autosave move was an over-correction. The real
+// issue was that template-swap snapshotted unwanted state. The fix
+// for THAT is to let the user explicitly opt in to a swap (a confirm
+// modal in the templates tab, separate from autosave). Auto-saving
+// every other change is the right default — undo (Cmd+Z) protects
+// against regret.
+//
+// Debounce semantics: every store mutation calls scheduleSave() which
+// arms a 800 ms timer. Subsequent mutations within the window reset
+// the timer. When the timer fires, we issue exactly one save with the
+// latest data. flushPendingSave() force-fires the timer (used by the
+// beforeunload guard so a closing tab still saves what's pending).
 
+const AUTOSAVE_DEBOUNCE_MS = 800;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleSave() {
-  // Intentionally empty. Save happens only when the user clicks Save.
-  // We keep the function so we don't have to remove every call site.
+  if (typeof window === "undefined") return;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    void flushSave();
+  }, AUTOSAVE_DEBOUNCE_MS);
 }
 
 // ---------- Undo / redo history ----------

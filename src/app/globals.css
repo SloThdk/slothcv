@@ -169,6 +169,41 @@ body.slothcv-resizing * {
   -webkit-user-select: none !important;
 }
 
+/*
+ * Cursor affordances for clickable elements.
+ *
+ * Tailwind v4 (and the underlying Preflight reset) removed the default
+ * `cursor: pointer` on <button> for an accessibility-first reasoning —
+ * native buttons get keyboard focus, the cursor change is "purely
+ * visual." But for a visual product editor the missing pointer cursor
+ * reads as "is this clickable or not?" The dismiss-cost is real:
+ * confused first-time users.
+ *
+ * Restore pointer on every interactive element except disabled ones.
+ * Disabled gets `not-allowed` so the user perceives the difference.
+ */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+[role="menuitem"]:not(:disabled),
+[role="tab"]:not(:disabled),
+[role="switch"]:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="file"]:not(:disabled),
+select:not(:disabled),
+summary,
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 /* prefers-reduced-motion guard.
  *
  * The user's OS-level setting "Reduce motion" (Windows: Settings →

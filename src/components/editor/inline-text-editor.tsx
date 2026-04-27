@@ -97,9 +97,12 @@ export function InlineTextEditor() {
   // Reference + saved styles for the source element so we can hide its
   // text during edit and restore it on close. Stored in a ref so the
   // cleanup effect can run without re-querying the DOM.
+  // `originalText` snapshots the value at edit-start so Esc can revert
+  // the live-committed changes.
   const sourceRef = useRef<{
     el: HTMLElement;
     originalColor: string;
+    originalText: string;
   } | null>(null);
 
   // Resolve the lens for the active element-id.
@@ -156,18 +159,61 @@ export function InlineTextEditor() {
         tabSize: cs.tabSize || "8",
       },
     });
-    setText(lens.read());
+    const initialText = lens.read();
+    setText(initialText);
     // Hide the source element's text — its box stays in place (so the
     // template's layout doesn't shift) but no rendered text shows
-    // underneath the overlay. This means when the user types longer
-    // than the original, the overlay can grow downward without
-    // overlapping still-visible old text.
+    // underneath the overlay. We snapshot the original text too so Esc
+    // can revert any live-committed changes (we now write each
+    // keystroke to the data store so the source's wrapper grows with
+    // the text — Photoshop / Figma "Hug contents" behavior).
     sourceRef.current = {
       el,
       originalColor: el.style.color,
+      originalText: initialText,
     };
     el.style.color = "transparent";
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingElementId]);
+
+  // KEEP THE OVERLAY GLUED TO THE SOURCE while editing.
+  //
+  // The original implementation captured the source's bounding rect ONCE
+  // on edit-start and used `position: fixed` with frozen left/top. That
+  // broke the moment ANYTHING shifted the source's screen position:
+  //   - User scrolls the preview canvas → overlay floats to wrong spot.
+  //   - Sibling sections grow / shrink → source reflows, overlay drifts.
+  //   - Page-zoom changes mid-edit → overlay's visualScale is stale.
+  //   - Typing causes the wrapper to grow (paragraph wrap) → mismatch.
+  //
+  // Fix: rAF loop that reads `el.getBoundingClientRect()` every frame
+  // while editing and re-syncs `overlay.rect` if it changed. Cheap (one
+  // bounding-rect read + a maybe-setState) and 100 % robust to whatever
+  // makes the source move. Stops on edit-end.
+  useEffect(() => {
+    if (!editingElementId) return;
+    const el = sourceRef.current?.el;
+    if (!el) return;
+    let raf = 0;
+    let lastKey = "";
+    const tick = () => {
+      const r = el.getBoundingClientRect();
+      const intrinsicW = el.offsetWidth || r.width || 1;
+      const visualScale = r.width / intrinsicW || 1;
+      // Stable key encodes everything that matters for re-render. Skip
+      // setState when nothing changed so React doesn't churn at 60 fps
+      // when the source is genuinely still.
+      const key = `${Math.round(r.left * 100) / 100}|${Math.round(r.top * 100) / 100}|${Math.round(r.width * 100) / 100}|${Math.round(r.height * 100) / 100}|${visualScale.toFixed(3)}`;
+      if (key !== lastKey) {
+        lastKey = key;
+        setOverlay((prev) =>
+          prev ? { ...prev, rect: r, visualScale } : prev,
+        );
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [editingElementId]);
 
   // Restore source colour on unmount as a safety net.
@@ -193,35 +239,43 @@ export function InlineTextEditor() {
     ta.select();
   }, [overlay]);
 
-  // Keyboard:
-  //   - Esc                 → cancel (no save)
-  //   - Enter (plain)       → newline (textarea default — DON'T preventDefault)
-  //   - Cmd/Ctrl + Enter    → commit early (power-user shortcut)
-  // Commit on blur is the standard exit gesture.
+  // Keyboard, matching the industry convention (Figma + Photoshop) per
+  // the commit-cancel research:
+  //   - Esc                 → commit + exit (NOT revert). Universal in
+  //                           canvas tools. Web-form muscle memory says
+  //                           Esc cancels, but the canvas convention is
+  //                           the stronger pull and matches Figma /
+  //                           Canva / Illustrator.
+  //   - Enter (plain)       → newline (textarea default)
+  //   - Cmd/Ctrl + Enter    → commit + exit
+  // Click-outside / blur is also commit (the universal default).
+  //
+  // Live-commit (every keystroke writes the typed text into the data
+  // store via lens.write) means we don't need a separate "commit" step
+  // — the data is already saved per-keystroke, debounced through the
+  // editor's autosave. Esc / blur just close the overlay; the typed
+  // text is already in the store.
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
-      // Clear without writing — sourceRef cleanup happens via the
-      // editingElementId useLayoutEffect when it sees null.
       setEditingElementId(null);
       return;
     }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      commitAndExit();
-      return;
-    }
-    // Plain Enter: don't preventDefault — let the textarea insert a
-    // newline naturally. Browsers default to "\n" insertion.
-  }
-
-  function commitAndExit() {
-    if (!lens) {
       setEditingElementId(null);
       return;
     }
-    lens.write(text);
-    setEditingElementId(null);
+  }
+
+  /** Live-commit each keystroke into the data store. Two-phase write:
+   *  local React state for the textarea's `value` + lens.write into
+   *  Zustand for the source's wrapper to grow. The source rerenders
+   *  with the new text, its CSS-driven width auto-grows, and our rAF
+   *  rect-sync loop keeps the overlay glued to the new bounds. */
+  function onTextChange(next: string) {
+    setText(next);
+    if (lens) lens.write(next);
   }
 
   if (!editingElementId || !overlay || !lens) return null;
@@ -322,8 +376,8 @@ export function InlineTextEditor() {
         <textarea
           ref={taRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commitAndExit}
+          onChange={(e) => onTextChange(e.target.value)}
+          onBlur={() => setEditingElementId(null)}
           onKeyDown={onKeyDown}
           rows={1}
           style={{

@@ -27,7 +27,7 @@ import {
   type Section,
   type TemplateId,
 } from "@/types/resume";
-import { defaultDesign } from "@/lib/resume-defaults";
+import { defaultDesign, defaultDesignForTemplate } from "@/lib/resume-defaults";
 
 // ---------------------------------------------------------------------------
 // Avatar generation
@@ -153,12 +153,28 @@ export function sampleResumeData(template: TemplateId): ResumeData {
   }
 }
 
-/** Re-stamp a persona's `meta.template` so it dispatches to the requested
- *  layout. We can't just feed Aurora's persona to the Helvetica renderer
- *  directly — TemplateRenderer reads `data.meta.template` to switch, so
- *  the template id has to match the desired layout. */
+/** Re-stamp a persona for a different template: dispatch to the target
+ *  layout AND apply the target's intended design tokens.
+ *
+ *  Why both: the persona builders (auroraPersona, manhattanPersona, etc.)
+ *  bake in their OWN design (Aurora's dark navy + mint + "CV" watermark,
+ *  Manhattan's navy + gold). Re-stamping only `meta.template` left those
+ *  tokens in place, so e.g. `overrideTemplate(auroraPersona(), "helvetica")`
+ *  rendered a Swiss-minimal layout on Aurora's dark navy with Aurora's
+ *  watermark — visually identical to Aurora itself. WYSIWYG broke: the
+ *  gallery card lied about what the editor would produce.
+ *
+ *  By overlaying `defaultDesignForTemplate(target)` we make the gallery
+ *  card render with the EXACT design tokens the editor's `setTemplate`
+ *  mutator will produce on selection. One source of truth for "what does
+ *  template X look like out of the box" — the gallery and the editor
+ *  agree. */
 function overrideTemplate(base: ResumeData, target: TemplateId): ResumeData {
-  return { ...base, meta: { ...base.meta, template: target } };
+  return {
+    ...base,
+    meta: { ...base.meta, template: target },
+    design: defaultDesignForTemplate(target),
+  };
 }
 
 /** Eclipse — dark editorial. Reuses Aurora's persona but with a warm

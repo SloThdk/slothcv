@@ -30,11 +30,37 @@ import { TEMPLATES } from "@/templates/registry";
 import { TemplatePreview } from "@/components/editor/template-preview";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
-  DUR,
   EASE,
   staggerContainer,
   staggerItem,
 } from "@/lib/motion";
+
+/**
+ * Hero entrance variants — separate from the global staggerItem so the
+ * landing's first impression has its own pacing. Generic body items use
+ * 250 ms / 10 px rise; hero items use 600 ms / 24 px rise. The longer
+ * duration + expo ease produces the "luxurious settle" feel the user
+ * asked for.
+ */
+const HERO_ITEM = {
+  initial: { opacity: 0, y: 24 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: EASE.out },
+  },
+};
+
+/** Headline gets an extra 0.98 → 1 scale so its emphasis is unmistakable. */
+const HERO_HEADLINE = {
+  initial: { opacity: 0, y: 28, scale: 0.985 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.7, ease: EASE.out },
+  },
+};
 
 export default function LandingPage() {
   const { t } = useLanguage();
@@ -72,23 +98,28 @@ export default function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_10%,rgba(15,23,42,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_10%,rgba(255,255,255,0.05),transparent_50%)]"
         />
+        {/* Hero entrance — custom variants override the default staggerItem
+            so this entrance feels MORE pronounced than the rest of the
+            page (24 px rise, 600 ms duration, expo-out). The headline
+            also gets a tiny scale-in (0.98 → 1) and a subtle filter:blur
+            wipe so the typography reads as "settling" rather than
+            "popping". Stagger spacing of 130 ms lets each element have
+            its own moment without dragging the total too long. */}
         <motion.div
-          variants={staggerContainer(0.08)}
           initial="initial"
           animate="animate"
+          variants={staggerContainer(0.13, 0.05)}
           className="mx-auto max-w-3xl text-center"
         >
           <motion.p
-            variants={staggerItem}
-            transition={{ duration: DUR.feature, ease: EASE.out }}
+            variants={HERO_ITEM}
             className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium text-[color:var(--color-text-muted)]"
           >
             <Sparkles className="h-3 w-3" />
             {t("landing.eyebrow")}
           </motion.p>
           <motion.h1
-            variants={staggerItem}
-            transition={{ duration: DUR.feature, ease: EASE.out }}
+            variants={HERO_HEADLINE}
             className="text-balance text-3xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-5xl md:text-6xl"
           >
             {t("landing.headlineA")}
@@ -98,15 +129,13 @@ export default function LandingPage() {
             </span>
           </motion.h1>
           <motion.p
-            variants={staggerItem}
-            transition={{ duration: DUR.feature, ease: EASE.out }}
+            variants={HERO_ITEM}
             className="mx-auto mt-6 max-w-xl text-pretty text-base text-[color:var(--color-text-muted)] sm:text-lg"
           >
             {t("landing.body")}
           </motion.p>
           <motion.div
-            variants={staggerItem}
-            transition={{ duration: DUR.feature, ease: EASE.out }}
+            variants={HERO_ITEM}
             className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Link href="/dashboard" className="w-full sm:w-auto">

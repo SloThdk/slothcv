@@ -126,13 +126,21 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="cursor-grab"
                 style={elementStyle(data, "personal.photo")}
               >
+                {/* Square aspect + object-cover + object-top so the face
+                    stays visible regardless of source image aspect. The
+                    earlier `h-32 w-full object-cover` baked in a 128 px
+                    height that, combined with the cell's wide width on
+                    large pages, cropped the top + bottom of any portrait
+                    image — Philip noticed his head being chopped off.
+                    Square + top-anchor matches the convention every CV
+                    template that ships avatars uses. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={personal.photoUrl}
                   alt=""
                   referrerPolicy="no-referrer"
                   draggable={false}
-                  className="h-32 w-full rounded-xl object-cover"
+                  className="aspect-square w-full rounded-xl object-cover object-top"
                 />
               </div>
             )}

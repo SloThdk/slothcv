@@ -805,7 +805,20 @@ export function Preview() {
               height: mmToPx(dims.h),
             }}
           >
-            <TemplateRenderer data={data} fixedSize={true} />
+            {/* `key` forced to the template id so React fully unmounts
+                the previous template's tree on swap. Without this, when
+                the user switches templates from the modal, the new
+                Component reference is selected but the lazy-loaded chunk
+                machinery + section position state from the previous
+                template can leave stale DOM mounted. The remount-on-swap
+                is cheap (the new chunk loads in <100ms; existing chunks
+                are cached) and eliminates the "checkmark moved but
+                preview still shows old template" bug. */}
+            <TemplateRenderer
+              key={data.meta.template}
+              data={data}
+              fixedSize={true}
+            />
           </div>
         </div>
       </div>

@@ -26,6 +26,13 @@ import {
 export function TemplatesTab() {
   const current = useEditorStore((s) => s.data.meta.template);
   const setTemplate = useEditorStore((s) => s.setTemplate);
+  // The user's full resume data — passed to each thumbnail so the
+  // gallery shows what their actual CV will look like in each layout.
+  // Without this, thumbnails used per-template sample personas (Sam
+  // Carter etc. with stock SVG avatars) and the post-swap editor
+  // preview rendered the user's real data — different photos, different
+  // names, different content density. WYSIWYG matters in a CV builder.
+  const userData = useEditorStore((s) => s.data);
   // Read save status so the swap modal can warn the user when they're
   // about to throw away unsaved work.
   const saveStatus = useEditorStore((s) => s.saveStatus);
@@ -73,7 +80,23 @@ export function TemplatesTab() {
             onClick={() => pick(t.id)}
             className={`group relative flex flex-col overflow-hidden rounded-lg border bg-surface text-left transition-shadow duration-200 hover:shadow-md ${current === t.id ? "border-fg ring-2 ring-fg" : "border-border"}`}
           >
-            <TemplatePreview id={t.id} className="aspect-[3/4] w-full" />
+            {/* Aspect MUST match the real A4 page ratio (210/297). Earlier
+                code overrode this to aspect-[3/4] to make cards more compact,
+                but that clips the bottom 6% of every template — users picked
+                a template that looked one way in the thumbnail, then saw
+                content they hadn't seen in the gallery once selected. The
+                A4 ratio is also what TemplatePreview's internal width-based
+                scale loop assumes; any other ratio either clips the page
+                (taller-than-A4 ratio) or wastes horizontal space (wider).
+                Passing `data={userData}` ensures every card renders the
+                user's REAL content with the card's layout — no surprise
+                personas / stock avatars in the thumbnail that vanish on
+                selection. */}
+            <TemplatePreview
+              id={t.id}
+              className="aspect-[210/297] w-full"
+              data={userData}
+            />
             <div className="p-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">{t.name}</span>

@@ -545,6 +545,48 @@ export function defaultDesignForTemplate(
         headerStyle: "uppercase",
         photo: { enabled: true, shape: "square", position: "top-right" },
       };
+
+    // ── Visual / executive expansion (late 2026) ───────────────────────
+    case "capitol":
+      return {
+        ...base,
+        accentColor: "#1e3a8a",
+        secondaryColor: "#475569",
+        pageBg: "#ffffff",
+        textColor: "#0f172a",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        skillBarStyle: "bar",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
+    case "vesterbro":
+      return {
+        ...base,
+        accentColor: "#2563eb",
+        secondaryColor: "#64748b",
+        pageBg: "#fdfdfb",
+        textColor: "#0f172a",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "titlecase",
+        skillBarStyle: "dots",
+        languageStyle: "dots",
+        photo: { enabled: true, shape: "circle", position: "top-center" },
+      };
+    case "marina":
+      return {
+        ...base,
+        accentColor: "#0f766e",
+        secondaryColor: "#475569",
+        pageBg: "#ffffff",
+        textColor: "#0f172a",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        skillBarStyle: "bar",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
   }
 }
 

@@ -125,6 +125,10 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateComponentProps>> = {
   canvas: lazyTemplate(() => import("./canvas"), "CanvasTemplate"),
   scrubs: lazyTemplate(() => import("./scrubs"), "ScrubsTemplate"),
   founder: lazyTemplate(() => import("./founder"), "FounderTemplate"),
+  // ── Visual / executive expansion (late 2026) ──────────────────────
+  capitol: lazyTemplate(() => import("./capitol"), "CapitolTemplate"),
+  vesterbro: lazyTemplate(() => import("./vesterbro"), "VesterbroTemplate"),
+  marina: lazyTemplate(() => import("./marina"), "MarinaTemplate"),
 };
 
 interface RendererProps {

@@ -150,6 +150,21 @@ export function sampleResumeData(template: TemplateId): ResumeData {
       return overrideTemplate(reykjavikPersona(), template);
     case "founder":
       return overrideTemplate(berlinPersona(), template);
+    // ── Visual / executive expansion (late 2026) ─────────────────────
+    // Capitol — corporate executive, dark navy band + photo. Berlin's
+    //           polished sidebar persona maps cleanly: same exec tone,
+    //           photo enabled, sections a mix of narrative + chips.
+    // Vesterbro — Danish-friendly two-column with centered photo. Use
+    //             Berlin's persona — content fits, layout reorders into
+    //             the new badged-section grid.
+    // Marina — dark teal header + sidebar layout, marketing-flavored.
+    //          Madrid's creative-director persona is the closest fit
+    //          (photo, headline, narrative-heavy experience).
+    case "capitol":
+    case "vesterbro":
+      return overrideTemplate(berlinPersona(), template);
+    case "marina":
+      return overrideTemplate(madridPersona(), template);
   }
 }
 

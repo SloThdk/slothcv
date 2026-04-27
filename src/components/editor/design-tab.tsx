@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-modal";
 import { FONT_GROUPS, FONT_NAMES } from "@/lib/fonts/registry";
 import { defaultDesignForTemplate } from "@/lib/resume-defaults";
+import { DESIGN_HINT, designLabel } from "@/lib/design-labels";
 import { TEMPLATE_IDS, type TemplateId } from "@/types/resume";
 import { TEMPLATES_BY_ID } from "@/templates/registry";
 import { RotateCcw } from "lucide-react";
@@ -389,7 +390,8 @@ export function DesignTab() {
 
       <Section title={t("design.sectionStyle")} onReset={() => onResetGroup("sections")}>
         <ChipRow
-          label="Header style"
+          label="Section title style"
+          hint={DESIGN_HINT.headerStyle}
           value={design.headerStyle}
           options={[
             "uppercase",
@@ -401,7 +403,8 @@ export function DesignTab() {
           onChange={(v) => setDesign({ headerStyle: v })}
         />
         <ChipRow
-          label="Divider"
+          label="Divider under each title"
+          hint={DESIGN_HINT.dividerStyle}
           value={design.dividerStyle}
           options={[
             "none",
@@ -413,7 +416,8 @@ export function DesignTab() {
           onChange={(v) => setDesign({ dividerStyle: v })}
         />
         <ChipRow
-          label="Bullet style"
+          label="Bullet glyph"
+          hint={DESIGN_HINT.bulletStyle}
           value={design.bulletStyle}
           options={["disc", "dash", "arrow", "square", "none"] as BulletStyle[]}
           onChange={(v) => setDesign({ bulletStyle: v })}
@@ -422,7 +426,8 @@ export function DesignTab() {
 
       <Section title={t("design.specialty")}>
         <ChipRow
-          label="Skill bar"
+          label="Skill display"
+          hint={DESIGN_HINT.skillBarStyle}
           value={design.skillBarStyle}
           options={[
             "bar",
@@ -435,13 +440,15 @@ export function DesignTab() {
           onChange={(v) => setDesign({ skillBarStyle: v })}
         />
         <ChipRow
-          label="Language"
+          label="Language display"
+          hint={DESIGN_HINT.languageStyle}
           value={design.languageStyle}
           options={["bar", "dots", "text", "cefr-badges"] as LanguageStyle[]}
           onChange={(v) => setDesign({ languageStyle: v })}
         />
         <ChipRow
           label="Date format"
+          hint={DESIGN_HINT.dateFormat}
           value={design.dateFormat}
           options={[
             "Mon YYYY",
@@ -490,7 +497,7 @@ export function DesignTab() {
           <div className="flex items-center gap-2">
             <Input
               value={design.watermarkColor ?? ""}
-              placeholder="(falls back to accent)"
+              placeholder="Using accent color"
               maxLength={64}
               onChange={(e) => setDesign({ watermarkColor: e.target.value })}
               className="font-mono text-xs"
@@ -1143,94 +1150,25 @@ function SliderRow({
 }
 
 /**
- * Map kebab-case / shorthand chip values to human-friendly Title-Case labels.
- * Falls back to a sensible auto-Title-Case if no explicit override exists.
+ * ChipRow — labelled chip group with friendly labels and an optional
+ * plain-English hint underneath. Friendly labels come from the shared
+ * `design-labels.ts` so the global Design tab and the per-section
+ * SectionDesignOverrides panel stay in lockstep — fixing a token's
+ * label here updates both surfaces.
  *
- * Centralised so we can tweak naming in one place and every ChipRow updates.
+ * `hint` text reads as "what does this control do?" — short, spoken in
+ * second person, no jargon. Empty / undefined hint hides the line so
+ * self-evident controls (page size etc.) stay tight.
  */
-const FRIENDLY: Record<string, string> = {
-  // Photo position
-  "top-left": "Top left",
-  "top-center": "Top center",
-  "top-right": "Top right",
-  "sidebar": "In sidebar",
-  // Photo shape
-  "square": "Square",
-  "circle": "Circle",
-  "rounded": "Rounded",
-  "arch": "Arch",
-  // Layout
-  "single": "Single column",
-  "two-col": "Two columns",
-  "sidebar-left": "Sidebar left",
-  "sidebar-right": "Sidebar right",
-  "sidebar-with-header": "Sidebar + top header",
-  // Page margin
-  "narrow": "Narrow",
-  "normal": "Normal",
-  "wide": "Wide",
-  "custom": "Custom",
-  // Letter spacing
-  "tight": "Tight",
-  // Header style
-  "uppercase": "All caps",
-  "titlecase": "Title Case",
-  "underline": "Underlined",
-  "box": "Filled box",
-  "accent-block": "Accent block",
-  // Divider style
-  "none": "None",
-  "line": "Solid line",
-  "dashed": "Dashed",
-  "dotted": "Dotted",
-  "accent-bar": "Accent bar",
-  // Bullet style
-  "disc": "● Dot",
-  "dash": "– Dash",
-  "arrow": "→ Arrow",
-  // Skill bar style
-  "bar": "Progress bar",
-  "dots": "Dots",
-  "stars": "Stars",
-  "circles": "Circles",
-  "text-only": "Text only",
-  "pills": "Chips",
-  // Language style
-  "text": "Text label",
-  "cefr-badges": "CEFR badge",
-  // Date format examples (shown as-is, they're already readable)
-  "Mon YYYY": "Mar 2024",
-  "MM/YYYY": "03/2024",
-  "YYYY-MM": "2024-03",
-  "Mon 'YY": "Mar '24",
-  "locale": "Local format",
-  // Page size
-  "A4": "A4",
-  "Letter": "Letter (US)",
-  "Legal": "Legal (US)",
-  // Watermark position
-  "off": "Off",
-  "bottom-left": "Bottom left",
-  "bottom-right": "Bottom right",
-};
-
-function friendly(s: string): string {
-  return (
-    FRIENDLY[s] ??
-    s
-      .split(/[-_]/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ")
-  );
-}
-
 function ChipRow<T extends string>({
   label,
+  hint,
   value,
   options,
   onChange,
 }: {
   label: string;
+  hint?: string;
   value: T;
   options: T[];
   onChange: (v: T) => void;
@@ -1247,11 +1185,15 @@ function ChipRow<T extends string>({
             size="sm"
             className="h-7 text-xs"
             onClick={() => onChange(o)}
+            title={designLabel(o)}
           >
-            {friendly(o)}
+            {designLabel(o)}
           </Button>
         ))}
       </div>
+      {hint && (
+        <p className="mt-1 text-[10px] leading-relaxed text-subtle">{hint}</p>
+      )}
     </div>
   );
 }

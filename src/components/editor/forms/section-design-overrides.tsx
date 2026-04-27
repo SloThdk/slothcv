@@ -30,6 +30,7 @@ import type {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DESIGN_HINT, designLabel } from "@/lib/design-labels";
 
 const ACCENT_PRESETS = [
   "#0f172a",
@@ -99,7 +100,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
           {/* Accent color override */}
           <div className="mb-3">
             <div className="flex items-baseline justify-between">
-              <Label>Accent (this section only)</Label>
+              <Label>Accent color</Label>
               {ov.accentColor !== undefined && (
                 <button
                   type="button"
@@ -107,7 +108,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                   className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted hover:text-fg"
                 >
                   <RotateCcw className="h-3 w-3" />
-                  reset
+                  Use template default
                 </button>
               )}
             </div>
@@ -121,7 +122,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
               />
               <Input
                 value={ov.accentColor ?? ""}
-                placeholder="(falls back to global)"
+                placeholder="Using template default"
                 onChange={(e) =>
                   patch(
                     "accentColor",
@@ -143,6 +144,10 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                 ))}
               </div>
             </div>
+            <p className="mt-1 text-[10px] leading-relaxed text-subtle">
+              {DESIGN_HINT.accentColor} Only changes THIS section — other
+              sections keep using the template&rsquo;s palette.
+            </p>
             {pickingColor && (
               <div className="mt-2">
                 <HexColorPicker
@@ -165,7 +170,12 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
           </div>
 
           {/* Header style override */}
-          <Row label="Header style" present={ov.headerStyle !== undefined} onReset={() => patch("headerStyle", undefined)}>
+          <Row
+            label="Section title style"
+            hint={DESIGN_HINT.headerStyle}
+            present={ov.headerStyle !== undefined}
+            onReset={() => patch("headerStyle", undefined)}
+          >
             <ChipPick
               value={ov.headerStyle}
               options={[
@@ -180,7 +190,12 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
           </Row>
 
           {/* Bullet style override */}
-          <Row label="Bullet style" present={ov.bulletStyle !== undefined} onReset={() => patch("bulletStyle", undefined)}>
+          <Row
+            label="Bullet glyph"
+            hint={DESIGN_HINT.bulletStyle}
+            present={ov.bulletStyle !== undefined}
+            onReset={() => patch("bulletStyle", undefined)}
+          >
             <ChipPick
               value={ov.bulletStyle}
               options={["disc", "dash", "arrow", "square", "none"] as BulletStyle[]}
@@ -188,10 +203,16 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
             />
           </Row>
 
-          {/* Skill bar override (only useful for skills sections, but we
-              show it everywhere — harmless if unused). */}
+          {/* Skill bar override — show only on skills sections; on others
+              the chip would be a no-op (the underlying renderer doesn't
+              read this for non-skills). */}
           {section.type === "skills" && (
-            <Row label="Skill display" present={ov.skillBarStyle !== undefined} onReset={() => patch("skillBarStyle", undefined)}>
+            <Row
+              label="Skill display"
+              hint={DESIGN_HINT.skillBarStyle}
+              present={ov.skillBarStyle !== undefined}
+              onReset={() => patch("skillBarStyle", undefined)}
+            >
               <ChipPick
                 value={ov.skillBarStyle}
                 options={["bar", "dots", "stars", "circles", "text-only", "pills"] as SkillBarStyle[]}
@@ -355,13 +376,18 @@ function PositionRow({
   );
 }
 
+/** A labelled control row with optional reset + plain-English hint.
+ *  Reset button reads "Use template default" not "reset" so the action
+ *  is self-explanatory — users who skim know what flipping it does. */
 function Row({
   label,
+  hint,
   present,
   onReset,
   children,
 }: {
   label: string;
+  hint?: string;
   present: boolean;
   onReset: () => void;
   children: React.ReactNode;
@@ -377,15 +403,24 @@ function Row({
             className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted hover:text-fg"
           >
             <RotateCcw className="h-3 w-3" />
-            reset
+            Use template default
           </button>
         )}
       </div>
       <div className="mt-1">{children}</div>
+      {hint && (
+        <p className="mt-1 text-[10px] leading-relaxed text-subtle">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
 
+/** Chip picker — each chip face shows the friendly label from
+ *  design-labels.ts (e.g. "ALL CAPS", "● Dot") instead of the raw token
+ *  ("uppercase", "disc"). The Photoshop / Figma feel: chip TELLS you
+ *  what it does, not what it's called internally. */
 function ChipPick<T extends string>({
   value,
   options,
@@ -405,8 +440,9 @@ function ChipPick<T extends string>({
           size="sm"
           className="h-7 text-xs"
           onClick={() => onPick(o)}
+          title={designLabel(o)}
         >
-          {o}
+          {designLabel(o)}
         </Button>
       ))}
     </div>

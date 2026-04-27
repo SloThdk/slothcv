@@ -19,10 +19,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { UrlInput } from "@/components/ui/url-input";
+import { NO_PHOTO_TEMPLATES } from "@/lib/design-labels";
 
 export function PersonalForm() {
   const personal = useEditorStore((s) => s.data.personal);
   const setPersonal = useEditorStore((s) => s.setPersonal);
+  // Pull the active template too — text-only templates skip rendering
+  // the uploaded photo, so we surface a hint when the user is on one.
+  // Without this, uploading a photo on Helsinki / Cambridge / etc. just
+  // silently does nothing in the preview.
+  const activeTemplate = useEditorStore((s) => s.data.meta.template);
+  const photoEnabled = useEditorStore((s) => s.data.design.photo.enabled);
+  const setDesign = useEditorStore((s) => s.setDesign);
+  const templateSkipsPhoto = NO_PHOTO_TEMPLATES.has(activeTemplate);
+
+  /** Auto-enable photo on a photo-capable template when the user supplies
+   *  one. The factory defaults turn `photo.enabled` off on most templates;
+   *  uploading a photo while disabled silently does nothing in the
+   *  preview. Treat the upload as the user's intent — flip enabled on if
+   *  the template can actually render it. NO_PHOTO_TEMPLATES is left
+   *  alone (the warning UI below covers that case). */
+  function maybeAutoEnablePhoto() {
+    if (!templateSkipsPhoto && !photoEnabled) {
+      const current = useEditorStore.getState().data.design.photo;
+      setDesign({ photo: { ...current, enabled: true } });
+    }
+  }
   const { t } = useLanguage();
   const [uploading, setUploading] = useState(false);
   const [showUrlField, setShowUrlField] = useState(false);
@@ -38,6 +60,7 @@ export function PersonalForm() {
     // error) so the browser can free the memory holding the file bytes.
     const localUrl = URL.createObjectURL(file);
     setPersonal({ photoUrl: localUrl });
+    maybeAutoEnablePhoto();
     setUploading(true);
     try {
       const url = await uploadResumePhoto(file);
@@ -174,6 +197,19 @@ export function PersonalForm() {
           </div>
         </div>
         <p className="mt-1.5 text-[11px] text-subtle">{t("personal.photoHint")}</p>
+        {/* Capability warning — the active template won't render the
+            photo. Show only when the template is in the no-photo set
+            (intentionally text-only / classical layouts). The user can
+            still upload — the photo persists for when they swap to a
+            template that does render it — but they should know it
+            won't appear right now. */}
+        {(templateSkipsPhoto || !photoEnabled) && personal.photoUrl && (
+          <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+            {templateSkipsPhoto
+              ? "Heads up: this template doesn't display photos. Switch to a template with a photo slot (Berlin, Aurora, Capitol, Marina, …) to see your image."
+              : "Photo is currently turned OFF in Design → Personal. Toggle it back on to show your image."}
+          </div>
+        )}
         {!showUrlField ? (
           <button
             type="button"
@@ -187,9 +223,11 @@ export function PersonalForm() {
             <UrlInput
               id="p-photo-url"
               value={personal.photoUrl ?? ""}
-              onChange={(e) =>
-                setPersonal({ photoUrl: e.target.value.trim() || undefined })
-              }
+              onChange={(e) => {
+                const trimmed = e.target.value.trim();
+                setPersonal({ photoUrl: trimmed || undefined });
+                if (trimmed) maybeAutoEnablePhoto();
+              }}
               placeholder="https://…"
               className="font-mono text-xs"
             />

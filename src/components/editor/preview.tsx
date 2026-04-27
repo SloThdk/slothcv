@@ -49,6 +49,12 @@ import { elementTextLens } from "@/lib/element-text-lens";
 import { uploadResumePhoto } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { InlineTextEditor } from "@/components/editor/inline-text-editor";
+import { SnapGuidesOverlay } from "@/components/editor/snap-guides-overlay";
+import {
+  buildSnapCandidates,
+  snap as runSnap,
+  type SnapRect,
+} from "@/lib/editor-snap";
 
 type ZoomMode = "50" | "75" | "100" | "fit";
 
@@ -127,6 +133,17 @@ export function Preview() {
 
   const dims = PAGE_DIMENSIONS_MM[data.design.pageSize];
   const pageWidthPx = mmToPx(dims.w);
+  const pageHeightPx = mmToPx(dims.h);
+  // Mirror page dims into refs so the window-level drag handler can read
+  // them at click-time without re-subscribing whenever the page-size
+  // setting changes. Snap candidates use these to add the page itself
+  // as a virtual snap target (page edges + page center).
+  const pageWidthRef = useRef(pageWidthPx);
+  const pageHeightRef = useRef(pageHeightPx);
+  useEffect(() => {
+    pageWidthRef.current = pageWidthPx;
+    pageHeightRef.current = pageHeightPx;
+  }, [pageWidthPx, pageHeightPx]);
 
   // Recompute fit scale on container resize. Strategy: fit by WIDTH only.
   // The user wants the working scale of the visual designer to stay big
@@ -168,6 +185,13 @@ export function Preview() {
         pendingX: number;
         pendingY: number;
         rafId: number | null;
+        /** Pre-built snap candidate list. For custom-element drags we
+         *  populate this on mousedown so each move only does the snap
+         *  pass, not the rebuild. Empty for non-custom drags. */
+        snapCandidates: SnapRect[];
+        /** Dragged element's w/h in page coords — needed for snap math. */
+        snapW: number;
+        snapH: number;
       })
     | null
   >(null);
@@ -203,6 +227,18 @@ export function Preview() {
       m.set(el.id, { x: el.x, y: el.y });
     }
     customElementsRef.current = m;
+  }, [data.customElements]);
+
+  // Live snap-rect mirror: id → {x, y, w, h} of every visible custom
+  // element. Read at mousedown to seed the snap-candidate list. Lives in
+  // a ref because onMouseDown is a useCallback with `[]` deps — accessing
+  // `data.customElements` directly inside it would close over the FIRST
+  // render's value and never update.
+  const customRectsRef = useRef<SnapRect[]>([]);
+  useEffect(() => {
+    customRectsRef.current = (data.customElements ?? [])
+      .filter((c) => c.visible !== false)
+      .map((c) => ({ id: c.id, x: c.x, y: c.y, w: c.w, h: c.h }));
   }, [data.customElements]);
 
   // Keyboard shortcuts on the preview. Photoshop-style.
@@ -371,6 +407,19 @@ export function Preview() {
       if (isCustom) {
         const customId = elementHit.id.slice("custom.".length);
         const cur = customElementsRef.current.get(customId) ?? { x: 0, y: 0 };
+        // Build the snap-candidate list ONCE on press — the candidates
+        // don't move during a single drag (we're moving THIS element,
+        // not them). On every move we just run the snap pass against
+        // this list. Skipped for non-custom drags since their position
+        // model uses transforms not absolute x/y.
+        const allRects = customRectsRef.current;
+        const dragged = allRects.find((c) => c.id === customId);
+        const snapCandidates = buildSnapCandidates(
+          allRects,
+          customId,
+          pageWidthRef.current,
+          pageHeightRef.current,
+        );
         // Selecting the element on press is what makes the inspector panel
         // light up — Canva-grade "click to select" behaviour. Setting it
         // here (before drag commits) means a no-movement click also selects.
@@ -390,6 +439,9 @@ export function Preview() {
           pendingX: cur.x,
           pendingY: cur.y,
           rafId: null,
+          snapCandidates,
+          snapW: dragged?.w ?? 0,
+          snapH: dragged?.h ?? 0,
         };
         return;
       }
@@ -406,6 +458,9 @@ export function Preview() {
         pendingX: 0,
         pendingY: 0,
         rafId: null,
+        snapCandidates: [],
+        snapW: 0,
+        snapH: 0,
       };
       return;
     }
@@ -426,6 +481,9 @@ export function Preview() {
         pendingX: 0,
         pendingY: 0,
         rafId: null,
+        snapCandidates: [],
+        snapW: 0,
+        snapH: 0,
       };
       return;
     }
@@ -442,7 +500,11 @@ export function Preview() {
       pendingX: 0,
       pendingY: 0,
       rafId: null,
+      snapCandidates: [],
+      snapW: 0,
+      snapH: 0,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Window-level move + up so dragging out of the preview pane still works.
@@ -464,16 +526,40 @@ export function Preview() {
     function onMove(e: MouseEvent) {
       const drag = dragRef.current;
       if (!drag) return;
-      const dx = e.clientX - drag.startX;
-      const dy = e.clientY - drag.startY;
+      let dx = e.clientX - drag.startX;
+      let dy = e.clientY - drag.startY;
       if (!drag.hasMoved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      // Shift = constrain to 8 directions (axis + 45° diagonals).
+      // Photoshop / Affinity / Figma all do this — snap the cursor delta
+      // to the nearest 45° direction, preserving magnitude. Live-evaluated
+      // each frame so the user can press/release Shift mid-drag.
+      if (e.shiftKey) {
+        const mag = Math.hypot(dx, dy);
+        if (mag > 0) {
+          const angle = Math.atan2(dy, dx);
+          const snappedAngle =
+            Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+          dx = mag * Math.cos(snappedAngle);
+          dy = mag * Math.sin(snappedAngle);
+        }
+      }
       if (!drag.hasMoved) {
-        // Cross threshold → commit to drag mode. Lock the cursor so the
-        // OS doesn't flicker between text-select / pointer / grab.
+        // Cross threshold → commit to drag mode. We swap to the
+        // Photoshop / Affinity / Figma drag-isolation model:
+        //   - `body.slothcv-dragging` class triggers the CSS in
+        //     globals.css that sets `pointer-events: none` on every
+        //     preview-stage child EXCEPT the dragged one. With pointer
+        //     events disabled, `:hover` no longer fires on siblings
+        //     the cursor passes over — no more "every overlapping
+        //     element lights up" noise during a drag.
+        //   - `data-being-dragged="true"` on the dragged el keeps it
+        //     responsive for any same-element pointer logic and lets
+        //     the CSS exempt it from the global pointer-events: none.
+        //   - cursor + user-select are now driven by CSS too so we
+        //     don't have to fight inline-style precedence.
         drag.hasMoved = true;
-        document.body.style.cursor = "grabbing";
-        // Block text selection inside the preview while we drag.
-        document.body.style.userSelect = "none";
+        document.body.classList.add("slothcv-dragging");
+        if (drag.el) drag.el.setAttribute("data-being-dragged", "true");
       }
       if (drag.kind === "background" || !drag.el) return;
 
@@ -497,8 +583,33 @@ export function Preview() {
         // span the whole A4 page — but we DO clamp to the wider Zod
         // bounds (-200..2000 / -200..3000) so a runaway drag can't push
         // the element into "save fails" territory.
-        const nx = drag.startPos.x + dx / sc;
-        const ny = drag.startPos.y + dy / sc;
+        let nx = drag.startPos.x + dx / sc;
+        let ny = drag.startPos.y + dy / sc;
+
+        // Smart-guide snap. Disabled while Ctrl/Cmd is held — Photoshop
+        // / Affinity / Figma all use Ctrl as the universal "ignore snap
+        // this drag" override. The snap engine returns a corrected
+        // position + the active guides; we apply both. Empty guides
+        // means no snap fired and we draw nothing.
+        const snapping = !(e.ctrlKey || e.metaKey);
+        if (snapping && drag.snapW > 0 && drag.snapH > 0) {
+          const result = runSnap(
+            { id: drag.id, x: nx, y: ny, w: drag.snapW, h: drag.snapH },
+            drag.snapCandidates,
+          );
+          nx = result.x;
+          ny = result.y;
+          window.dispatchEvent(
+            new CustomEvent("slothcv:snap-guides", {
+              detail: { guides: result.guides },
+            }),
+          );
+        } else {
+          // Hold-Ctrl bypass — explicitly clear guides so the overlay
+          // doesn't strand the last set on screen.
+          window.dispatchEvent(new CustomEvent("slothcv:snap-guides-end"));
+        }
+
         const cx = Math.max(-200, Math.min(2000, nx));
         const cy = Math.max(-200, Math.min(3000, ny));
         const rx = Math.round(cx);
@@ -549,9 +660,17 @@ export function Preview() {
       if (!drag) {
         return;
       }
-      // Always restore the body cursor and selection state.
+      // Always restore body state — `slothcv-dragging` class drives
+      // pointer-events / cursor / user-select via globals.css. Removing
+      // the class restores all three at once. We also clean up any
+      // legacy inline cursor / userSelect we used to set so old code
+      // paths don't leave stuck state behind.
+      document.body.classList.remove("slothcv-dragging");
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+      if (drag.el) drag.el.removeAttribute("data-being-dragged");
+      // Clear any active snap guides — drag is over.
+      window.dispatchEvent(new CustomEvent("slothcv:snap-guides-end"));
 
       if (drag.hasMoved && drag.el) {
         // Single store write at the end of the drag — one React rerender
@@ -627,11 +746,61 @@ export function Preview() {
       dragRef.current = null;
     }
 
+    // Escape during a drag = abort, don't commit. Restores body state
+    // and clears dragRef so onUp's eventual fire is a no-op. Mirrors
+    // Photoshop / Figma — Esc bails out of any active gesture.
+    function onKey(e: KeyboardEvent) {
+      const drag = dragRef.current;
+      if (!drag || e.key !== "Escape") return;
+      // Roll the dragged element back to its original position via
+      // direct DOM mutation — the next React render will produce the
+      // same outcome from store data, so no flicker.
+      if (drag.el) {
+        if (drag.kind === "custom") {
+          drag.el.style.left = `${drag.startPos.x}px`;
+          drag.el.style.top = `${drag.startPos.y}px`;
+        } else {
+          drag.el.style.transform =
+            drag.startPos.x === 0 && drag.startPos.y === 0
+              ? ""
+              : `translate(${drag.startPos.x}px, ${drag.startPos.y}px)`;
+        }
+        drag.el.style.willChange = "";
+        drag.el.removeAttribute("data-being-dragged");
+      }
+      document.body.classList.remove("slothcv-dragging");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.dispatchEvent(new CustomEvent("slothcv:snap-guides-end"));
+      dragRef.current = null;
+    }
+
+    // Window blur (alt-tab, Cmd-Tab) during a drag = abort. Same as
+    // Escape — without this, the user comes back to a half-stuck UI
+    // with the drag-isolation class still on the body.
+    function onBlur() {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (drag.el) {
+        drag.el.style.willChange = "";
+        drag.el.removeAttribute("data-being-dragged");
+      }
+      document.body.classList.remove("slothcv-dragging");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.dispatchEvent(new CustomEvent("slothcv:snap-guides-end"));
+      dragRef.current = null;
+    }
+
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("blur", onBlur);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onBlur);
     };
   }, [updateSection, setElementPosition, updateCustomElement, selectElement]);
 
@@ -797,6 +966,10 @@ export function Preview() {
           }}
         >
           <div
+            // Position relative so the SnapGuidesOverlay (absolute, full-
+            // sheet) lays itself out over the same coordinate space as
+            // the rendered template + custom elements.
+            className="relative"
             style={{
               transform: `scale(${scale})`,
               transformOrigin: "top left",
@@ -817,6 +990,13 @@ export function Preview() {
               key={data.meta.template}
               data={data}
               fixedSize={true}
+            />
+            {/* Magenta smart-guide lines drawn over the page during
+                snap-active drags. Renders nothing when there are no
+                active guides — zero cost when not in use. */}
+            <SnapGuidesOverlay
+              pageWidth={pageWidthPx}
+              pageHeight={mmToPx(dims.h)}
             />
           </div>
         </div>

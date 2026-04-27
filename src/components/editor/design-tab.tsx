@@ -35,7 +35,38 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-modal";
 import { FONT_GROUPS, FONT_NAMES } from "@/lib/fonts/registry";
 import { defaultDesignForTemplate } from "@/lib/resume-defaults";
+import { TEMPLATE_IDS, type TemplateId } from "@/types/resume";
+import { TEMPLATES_BY_ID } from "@/templates/registry";
 import { RotateCcw } from "lucide-react";
+
+// Pre-compute every template's palette + font pair so the
+// "Template palettes" + "Template font pairs" preset rows below have
+// constant data to render. Kept at module scope so the array isn't
+// rebuilt on every DesignTab render. The `defaultDesignForTemplate()`
+// switch is already exhaustive over TEMPLATE_IDS, so missing entries
+// are caught at compile time.
+const TEMPLATE_PRESETS: Array<{
+  id: TemplateId;
+  name: string;
+  accent: string;
+  secondary: string;
+  bg: string;
+  text: string;
+  titleFont: string;
+  bodyFont: string;
+}> = TEMPLATE_IDS.map((id) => {
+  const d = defaultDesignForTemplate(id);
+  return {
+    id,
+    name: TEMPLATES_BY_ID[id]?.name ?? id,
+    accent: d.accentColor,
+    secondary: d.secondaryColor,
+    bg: d.pageBg,
+    text: d.textColor,
+    titleFont: d.titleFont,
+    bodyFont: d.bodyFont,
+  };
+});
 
 /** 16-color preset palette — Tailwind 600s, designer-curated. */
 const ACCENT_PRESETS = [
@@ -163,6 +194,23 @@ export function DesignTab() {
         </Button>
       </div>
       <Section title="Color presets">
+        {/* Template palettes — every template's full palette as a
+            one-click apply. Lets users mix Carbon's IBM Blue on dark
+            grey with any layout, or Eclipse's amber on a different
+            template, etc. — without changing template. */}
+        <TemplatePalettePicker
+          presets={TEMPLATE_PRESETS}
+          activeAccent={design.accentColor}
+          activeBg={design.pageBg}
+          onApply={(p) =>
+            setDesign({
+              accentColor: p.accent,
+              secondaryColor: p.secondary,
+              pageBg: p.bg,
+              textColor: p.text,
+            })
+          }
+        />
         <PalettePicker
           onApply={(p) =>
             setDesign({
@@ -204,13 +252,26 @@ export function DesignTab() {
       </Section>
 
       <Section title={t("design.typography")} onReset={() => onResetGroup("typography")}>
-        {/* Body font drives EVERY paragraph + most labels in the templates.
-            Title font is intentionally NOT exposed — every template hard-
-            codes its own title typography for design identity (Manhattan
-            = Lora, Eclipse = Fraunces, Cambridge = EB Garamond, etc.).
-            Letting users override it would erase the template's character.
-            If a user wants a different title look, picking another
-            template is the right move. */}
+        {/* Title font drives every <h1>/<h2> and section heading the
+            templates have. Body font drives paragraphs + labels.
+            Both are now user-editable — earlier the title font was
+            locked "to preserve template character" but that meant
+            users couldn't, e.g., put Eclipse's Fraunces on a Davos
+            layout. The Reset button per-section restores both to the
+            current template's intended pairing if the user gets lost. */}
+        <TemplateFontPairPicker
+          presets={TEMPLATE_PRESETS}
+          activeTitle={design.titleFont}
+          activeBody={design.bodyFont}
+          onApply={(p) =>
+            setDesign({ titleFont: p.titleFont, bodyFont: p.bodyFont })
+          }
+        />
+        <FontPicker
+          label="Title font"
+          value={design.titleFont}
+          onChange={(v) => setDesign({ titleFont: v })}
+        />
         <FontPicker
           label="Body font"
           value={design.bodyFont}
@@ -591,31 +652,155 @@ function ColorRow({
   );
 }
 
-function SelectRow<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
+/** TemplateFontPairPicker — horizontal-scroll row of buttons, one per
+ *  template, each rendered in THAT template's title+body font pair.
+ *  Click applies that pairing to the current CV without changing the
+ *  template. Solves the "I want Eclipse's Fraunces on a Davos layout"
+ *  use case the title-font-lock previously blocked. */
+function TemplateFontPairPicker({
+  presets,
+  activeTitle,
+  activeBody,
+  onApply,
 }: {
-  label: string;
-  value: T;
-  options: T[];
-  onChange: (v: T) => void;
+  presets: Array<{
+    id: string;
+    name: string;
+    titleFont: string;
+    bodyFont: string;
+  }>;
+  activeTitle: string;
+  activeBody: string;
+  onApply: (p: { titleFont: string; bodyFont: string }) => void;
 }) {
   return (
     <div>
-      <Label>{label}</Label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-        className="flex h-9 w-full rounded-md border border-strong bg-surface px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <Label>Template font pairs</Label>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
+        {presets.map((p) => {
+          const isActive =
+            p.titleFont === activeTitle && p.bodyFont === activeBody;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() =>
+                onApply({ titleFont: p.titleFont, bodyFont: p.bodyFont })
+              }
+              title={`${p.name} — ${p.titleFont} + ${p.bodyFont}`}
+              className={`flex-shrink-0 rounded-md border bg-surface px-3 py-2 text-left transition-colors hover:bg-surface-hover ${
+                isActive
+                  ? "border-fg ring-2 ring-fg"
+                  : "border-strong"
+              }`}
+            >
+              <span
+                className="block text-sm font-semibold leading-tight text-fg"
+                style={{
+                  fontFamily: `var(--font-${slugifyFont(p.titleFont)}, system-ui)`,
+                }}
+              >
+                {p.name}
+              </span>
+              <span
+                className="mt-0.5 block text-[11px] leading-tight text-subtle"
+                style={{
+                  fontFamily: `var(--font-${slugifyFont(p.bodyFont)}, system-ui)`,
+                }}
+              >
+                {p.titleFont}/{p.bodyFont}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** TemplatePalettePicker — horizontal-scroll row of swatch cards, one
+ *  per template. Click = apply that template's full color palette
+ *  (accent / secondary / pageBg / textColor) to the current CV
+ *  WITHOUT changing the template's layout. Solves the "use Carbon's
+ *  IBM Blue on dark grey while keeping a different template" use
+ *  case the previous palette-only-curated-list blocked. */
+function TemplatePalettePicker({
+  presets,
+  activeAccent,
+  activeBg,
+  onApply,
+}: {
+  presets: Array<{
+    id: string;
+    name: string;
+    accent: string;
+    secondary: string;
+    bg: string;
+    text: string;
+  }>;
+  activeAccent: string;
+  activeBg: string;
+  onApply: (p: {
+    accent: string;
+    secondary: string;
+    bg: string;
+    text: string;
+  }) => void;
+}) {
+  return (
+    <div>
+      <Label>Template palettes</Label>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
+        {presets.map((p) => {
+          // "Active" only when BOTH accent + bg match — palette-level
+          // identity, not coincidental color reuse.
+          const isActive =
+            p.accent.toLowerCase() === activeAccent.toLowerCase() &&
+            p.bg.toLowerCase() === activeBg.toLowerCase();
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() =>
+                onApply({
+                  accent: p.accent,
+                  secondary: p.secondary,
+                  bg: p.bg,
+                  text: p.text,
+                })
+              }
+              title={`${p.name} — accent ${p.accent} on ${p.bg}`}
+              className={`group relative flex-shrink-0 overflow-hidden rounded-md border transition-shadow hover:shadow-md ${
+                isActive
+                  ? "border-fg ring-2 ring-fg"
+                  : "border-strong"
+              }`}
+              style={{ width: 96, height: 64 }}
+            >
+              {/* Bg-dominant rectangle, with accent + secondary chips
+                  in the bottom-right and the template name on top. */}
+              <div
+                className="h-full w-full"
+                style={{ background: p.bg }}
+              />
+              <div className="absolute inset-x-1 top-1 truncate text-[10px] font-semibold tracking-tight"
+                style={{ color: p.text }}>
+                {p.name}
+              </div>
+              <div className="absolute bottom-1 right-1 flex gap-0.5">
+                <span
+                  className="h-3 w-3 rounded-full ring-1 ring-black/20"
+                  style={{ background: p.accent }}
+                />
+                <span
+                  className="h-3 w-3 rounded-full ring-1 ring-black/20"
+                  style={{ background: p.secondary }}
+                />
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

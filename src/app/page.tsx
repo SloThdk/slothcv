@@ -67,7 +67,7 @@ export default function LandingPage() {
           so the headline + subhead + CTAs settle in sequence. Slightly
           slower than the rest of the site because hero is the moment
           the user decides whether they're staying. */}
-      <section className="relative mx-auto max-w-6xl px-4 pt-16 pb-16 sm:pt-24 sm:pb-20">
+      <section className="relative mx-auto max-w-6xl px-4 pt-10 pb-12 sm:pt-24 sm:pb-20">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_10%,rgba(15,23,42,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_10%,rgba(255,255,255,0.05),transparent_50%)]"
@@ -89,7 +89,7 @@ export default function LandingPage() {
           <motion.h1
             variants={staggerItem}
             transition={{ duration: DUR.feature, ease: EASE.out }}
-            className="text-balance text-4xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-6xl"
+            className="text-balance text-3xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-5xl md:text-6xl"
           >
             {t("landing.headlineA")}
             <br />

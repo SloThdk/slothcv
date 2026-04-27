@@ -58,6 +58,7 @@ import {
   authErrorTranslationKey,
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
+import { waitForFreshCaptchaToken } from "@/lib/captcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,6 +98,10 @@ export function SignupForm() {
   // through a CAPTCHA challenge.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  // Same auto-retry coordination as LoginForm — when Supabase rejects
+  // a token we wait for a fresh one and retry once before surfacing
+  // the captcha-failed error to the user. See src/lib/captcha.ts.
+  const captchaResolveRef = useRef<((token: string) => void) | null>(null);
 
   // bfcache safety: same as LoginForm — Google OAuth navigates away, back
   // button restores from bfcache with React state preserved. Reset the
@@ -163,20 +168,32 @@ export function SignupForm() {
       toast.error(t("signup.errFirstNameRequired"));
       return;
     }
-    // CAPTCHA gate — same as LoginForm. Refuse early if no token.
-    if (TURNSTILE_SITE_KEY && !captchaToken) {
-      toast.error(t("auth.errCaptchaFailed"));
-      return;
-    }
+    // CAPTCHA gate — same race-safe pattern as LoginForm. If the user
+    // submits before Turnstile has issued its first token (Enter key on
+    // a fresh page, or rapid resubmit while the widget is mid-reset),
+    // enter the loading state and wait up to 8s for the next token
+    // before bouncing them back with a misleading "we couldn't verify"
+    // toast. Managed-mode tokens usually arrive in 1-2s.
     setSubmittingMagic(true);
+    let tokenForCall: string | null = captchaToken;
+    if (TURNSTILE_SITE_KEY && !tokenForCall) {
+      tokenForCall = await waitForFreshCaptchaToken(captchaResolveRef);
+      if (!tokenForCall) {
+        setSubmittingMagic(false);
+        toast.error(t("auth.errCaptchaFailed"));
+        return;
+      }
+      setCaptchaToken(tokenForCall);
+    }
     const supabase = createClient();
 
     // ── Step 1: provider-aware existence check via public.email_status ──
-    // RPC returns {is_registered, has_email, has_google}. SECURITY DEFINER
-    // reads auth.users + auth.identities with one round trip, no captcha
-    // consumed, no magic-link side effect. The provider booleans drive
-    // the banner copy below so we tell the user EXACTLY which method to
-    // use ("you signed up with Google" vs "with magic link" vs "either").
+    // RPC returns {is_registered, is_confirmed, has_email, has_google}.
+    // SECURITY DEFINER reads auth.users + auth.identities with one round
+    // trip, no captcha consumed, no magic-link side effect. The four
+    // booleans drive both the BLOCK decision (only block CONFIRMED
+    // accounts — see below) and the banner copy ("you signed up with
+    // Google" vs "with magic link" vs "either").
     const probe = await supabase.rpc("email_status", {
       check_email: cleanEmail,
     });
@@ -190,16 +207,33 @@ export function SignupForm() {
     }
 
     const status = (probe.data as
-      | { is_registered: boolean; has_email: boolean; has_google: boolean }[]
+      | {
+          is_registered: boolean;
+          is_confirmed: boolean;
+          has_email: boolean;
+          has_google: boolean;
+        }[]
       | null)?.[0] ?? {
       is_registered: false,
+      is_confirmed: false,
       has_email: false,
       has_google: false,
     };
 
-    if (status.is_registered) {
-      // Existing account — block, no magic link sent. Banner picks the
-      // provider-specific body via existingHasEmail / existingHasGoogle.
+    // Block ONLY when the email belongs to a CONFIRMED account. The
+    // signInWithOtp call (Step 2) creates an auth.users row IMMEDIATELY
+    // when sending the magic link, so an unclicked-but-link-sent signup
+    // also returns is_registered:true. Blocking that case stranded users
+    // mid-signup ("I never clicked anything, why does it say it exists?").
+    // For unconfirmed users we fall through to Step 2, where Supabase
+    // resends the magic link to the same pending user — same UX as a
+    // first-time signup, just a fresh link.
+    //
+    // Google OAuth users are confirmed instantly (Google's email is
+    // pre-verified), so is_confirmed:true is the natural state for them.
+    if (status.is_registered && status.is_confirmed) {
+      // Confirmed existing account — block, no magic link sent. Banner
+      // picks the provider-specific body via existingHasEmail / existingHasGoogle.
       setSubmittingMagic(false);
       setExistingAccount(true);
       setExistingHasEmail(status.has_email);
@@ -209,21 +243,41 @@ export function SignupForm() {
     }
 
     // ── Step 2: real signup ────────────────────────────────────────────
-    // Email is genuinely new. Send the magic link. The captcha token is
-    // still fresh because step 1 was a plain RPC, not an auth call.
+    // Email is genuinely new (or pending-unconfirmed → resend). Send
+    // the magic link. The captcha token is still fresh because step 1
+    // was a plain RPC, not an auth call.
+    //
+    // Auto-retry on captcha_failed (single-use exhausted, expired at
+    // the 5-minute boundary, etc.): reset widget, wait up to 8s for
+    // the next fresh token, retry once before surfacing any error to
+    // the user. Same pattern as LoginForm.
     const fullName = fullNameFrom(firstName, lastName);
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: callback,
-        ...(captchaToken ? { captchaToken } : {}),
-        data: {
-          full_name: fullName,
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
+    const callOtp = (token: string | null) =>
+      supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          emailRedirectTo: callback,
+          ...(token ? { captchaToken: token } : {}),
+          data: {
+            full_name: fullName,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+          },
         },
-      },
-    });
+      });
+
+    let { error: err } = await callOtp(tokenForCall);
+
+    if (err?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
+      const fresh = await waitForFreshCaptchaToken(captchaResolveRef);
+      if (fresh) {
+        setCaptchaToken(fresh);
+        ({ error: err } = await callOtp(fresh));
+      }
+    }
+
     turnstileRef.current?.reset();
     setCaptchaToken(null);
     setSubmittingMagic(false);
@@ -408,7 +462,14 @@ export function SignupForm() {
               <Turnstile
                 ref={turnstileRef}
                 siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setCaptchaToken(token)}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                  // Unblock any in-flight auto-retry waiting for a fresh token.
+                  if (captchaResolveRef.current) {
+                    captchaResolveRef.current(token);
+                    captchaResolveRef.current = null;
+                  }
+                }}
                 onError={() => setCaptchaToken(null)}
                 onExpire={() => setCaptchaToken(null)}
                 options={{ theme: "auto", size: "normal" }}

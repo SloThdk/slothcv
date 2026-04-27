@@ -23,6 +23,7 @@ import {
   authErrorTranslationKey,
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
+import { waitForFreshCaptchaToken } from "@/lib/captcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/google-icon";
@@ -55,6 +56,13 @@ export function LoginForm() {
   // one. Tokens expire after 5 minutes per Cloudflare default.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  // Coordinates a "wait for the next fresh token" promise. Used to auto-
+  // retry signInWithOtp after a captcha_failed: reset() + wait for the
+  // widget's next onSuccess (or timeout) instead of bouncing the error
+  // back to the user. A managed-mode token has a 5-minute TTL but
+  // Cloudflare's verifier sometimes rejects tokens that are right at
+  // the edge — auto-retry hides the rough edge.
+  const captchaResolveRef = useRef<((token: string) => void) | null>(null);
 
   // bfcache safety: when the user starts the Google OAuth redirect, the
   // browser navigates away — but pressing the back arrow can restore this
@@ -130,15 +138,27 @@ export function LoginForm() {
     const cleanEmail = email.trim();
     if (!cleanEmail) return;
     // CAPTCHA gate: Supabase rejects with `captcha_failed` if missing.
-    // Refuse early so the user sees the specific "couldn't verify human"
-    // toast instead of the generic backend error. The managed-mode
-    // widget auto-passes for low-risk users (no visible UI), so this
-    // rarely blocks honest visitors. Only enforce if sitekey configured.
-    if (TURNSTILE_SITE_KEY && !captchaToken) {
-      toast.error(t("auth.errCaptchaFailed"));
-      return;
-    }
+    // Race-safe: if the user submits faster than Turnstile can issue
+    // the FIRST token (common when typing email + Enter on a fresh
+    // page load, or right after a previous submit when the widget is
+    // still mid-reset), enter the loading state and WAIT up to 8s for
+    // the next token instead of bouncing the user back with a
+    // misleading "we couldn't verify you're human" toast. The widget
+    // is managed-mode so a fresh token usually arrives in 1-2s.
     setSubmittingMagic(true);
+    let tokenForCall: string | null = captchaToken;
+    if (TURNSTILE_SITE_KEY && !tokenForCall) {
+      tokenForCall = await waitForFreshCaptchaToken(captchaResolveRef);
+      if (!tokenForCall) {
+        // Genuinely no token after the wait — widget probably failed
+        // (network drop, sitekey wrong, etc.). NOW the captcha-failed
+        // toast is appropriate.
+        setSubmittingMagic(false);
+        toast.error(t("auth.errCaptchaFailed"));
+        return;
+      }
+      setCaptchaToken(tokenForCall);
+    }
     const supabase = createClient();
 
     // ── Step 1: provider-aware existence check via public.email_status ──
@@ -160,9 +180,15 @@ export function LoginForm() {
       return;
     }
     const status = (probe.data as
-      | { is_registered: boolean; has_email: boolean; has_google: boolean }[]
+      | {
+          is_registered: boolean;
+          is_confirmed: boolean;
+          has_email: boolean;
+          has_google: boolean;
+        }[]
       | null)?.[0] ?? {
       is_registered: false,
+      is_confirmed: false,
       has_email: false,
       has_google: false,
     };
@@ -190,15 +216,37 @@ export function LoginForm() {
     // Email is registered. shouldCreateUser:false is still passed as a
     // belt-and-suspenders guard against a race (account deleted between
     // step 1 and step 2) — Supabase will refuse rather than auto-create.
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: callback,
-        shouldCreateUser: false,
-        ...(captchaToken ? { captchaToken } : {}),
-      },
-    });
-    // Reset Turnstile so the next attempt has a fresh single-use token.
+    //
+    // Auto-retry on captcha_failed: Turnstile tokens are single-use AND
+    // have a 5-minute TTL with non-trivial clock skew on the Cloudflare
+    // verifier. If our cached token is rejected we transparently reset
+    // the widget, wait up to 8s for a fresh one, and try once more
+    // before surfacing any error. The user shouldn't have to think
+    // about this.
+    const callOtp = (token: string | null) =>
+      supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          emailRedirectTo: callback,
+          shouldCreateUser: false,
+          ...(token ? { captchaToken: token } : {}),
+        },
+      });
+
+    let { error: err } = await callOtp(tokenForCall);
+
+    if (err?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
+      // First token rejected — reset and wait for the next one.
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
+      const fresh = await waitForFreshCaptchaToken(captchaResolveRef);
+      if (fresh) {
+        setCaptchaToken(fresh);
+        ({ error: err } = await callOtp(fresh));
+      }
+    }
+
+    // Reset Turnstile so any subsequent submit gets a fresh single-use token.
     turnstileRef.current?.reset();
     setCaptchaToken(null);
     setSubmittingMagic(false);
@@ -311,7 +359,14 @@ export function LoginForm() {
               <Turnstile
                 ref={turnstileRef}
                 siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setCaptchaToken(token)}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                  // Unblock any auto-retry that's waiting for a fresh token.
+                  if (captchaResolveRef.current) {
+                    captchaResolveRef.current(token);
+                    captchaResolveRef.current = null;
+                  }
+                }}
                 onError={() => setCaptchaToken(null)}
                 onExpire={() => setCaptchaToken(null)}
                 options={{ theme: "auto", size: "normal" }}

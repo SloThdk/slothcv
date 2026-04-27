@@ -161,7 +161,12 @@ export function authErrorTranslationKey(
       case "user_already_exists":
         return "signup.errAccountExists";
       case "identity_already_exists":
-        return "login.errAccountExistsOtherMethod";
+        // Reached when GoTrue surfaces our prevent_provider_mixing trigger
+        // exception or its own native identity-collision check during a
+        // signInWithOAuth flow. The only way we hit this in slothcv is
+        // "Continue with Google" against an existing magic-link account
+        // — so we can pick the specific copy that names the method.
+        return "login.errAccountUseMagicLink";
       case "user_banned":
         return "auth.errUserBanned";
       case "email_not_confirmed":
@@ -254,6 +259,13 @@ export function exchangeErrorToCallbackCode(error: AuthError | { message?: strin
         return "link_used";
       case "flow_state_not_found":
         return "different_browser";
+      case "identity_already_exists":
+        // Native GoTrue collision check OR our prevent_provider_mixing
+        // trigger surfacing as identity_already_exists. The only path to
+        // this in slothcv is "Continue with Google" with an email that
+        // already has a magic-link account, so we surface the specific
+        // "use the magic link" copy via account_exists_use_magic_link.
+        return "account_exists_use_magic_link";
       default:
         return "exchange_failed";
     }
@@ -270,6 +282,31 @@ export function exchangeErrorToCallbackCode(error: AuthError | { message?: strin
   }
   if (m.includes("already") && (m.includes("used") || m.includes("redeem"))) {
     return "link_used";
+  }
+  // Trigger / GoTrue native collision wrapped in various forms. The
+  // canonical Supabase phrasing for our prevent_provider_mixing trigger
+  // firing during OAuth identity insert is "Error creating identity"
+  // (verified empirically 2026-04-27). The other patterns cover other
+  // wrappings and our own message tags. See /auth/callback/page.tsx for
+  // the matching URL-param list (kept in sync with this list).
+  if (
+    m.includes("error creating identity") ||
+    m.includes("identity already") ||
+    m.includes("identity_already_exists") ||
+    m.includes("user already") ||
+    m.includes("database error saving new user") ||
+    m.includes("database error saving identity") ||
+    m.includes("database error linking") ||
+    m.includes("error saving new user") ||
+    m.includes("error saving identity") ||
+    m.includes("23505") ||
+    m.includes("duplicate key") ||
+    m.includes("unique_violation") ||
+    m.includes("unique constraint") ||
+    m.includes("account_exists_other_method") ||
+    m.includes("provider_mixing")
+  ) {
+    return "account_exists_use_magic_link";
   }
   return "exchange_failed";
 }
@@ -299,7 +336,15 @@ export function callbackErrorTranslationKey(
     case "missing_code":
       return "login.errInterrupted";
     case "account_exists_other_method":
+      // Legacy/fallback code — kept for backwards compatibility. New
+      // OAuth-collision flows use the more specific account_exists_use_
+      // magic_link below.
       return "login.errAccountExistsOtherMethod";
+    case "account_exists_use_magic_link":
+      // Specific copy: "you signed up with magic link, use it." Reached
+      // when prevent_provider_mixing trigger fires during Continue-with-
+      // Google for an email that has a magic-link account.
+      return "login.errAccountUseMagicLink";
     case "oauth_declined":
       return "login.errOAuthDeclined";
     default:

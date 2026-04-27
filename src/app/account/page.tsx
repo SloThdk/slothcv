@@ -3,11 +3,20 @@
  *
  * Sections (top to bottom):
  *   1. Profile  — avatar (upload/remove), display name, email (read-only).
- *   2. Password — change password (length-validated client-side, server
- *                  re-validates + re-issues session via supabase.auth.updateUser).
+ *   2. Sign out — sign out of the current session.
  *   3. Danger zone — permanently delete account (double-confirm, cascades
  *                  to profile + every CV via FK ON DELETE CASCADE; storage
  *                  is purged client-side then again server-side by the RPC).
+ *
+ * Why no password section: slothcv enforces strict provider separation
+ * (every account has exactly one auth method — magic-link OR Google).
+ * Letting magic-link users add a password as a "backup" silently gives
+ * the same email two ways in, which violates the rule. If a user loses
+ * inbox access we'd rather they recover via support than via a password
+ * they didn't really opt into. See LESSONS.md → SUPABASE MAGIC-LINK +
+ * OAUTH for the full rationale. The `changePassword` helper in
+ * src/lib/profile.ts is left in place (not exported by anything) in
+ * case Supabase admin flows ever need it.
  *
  * AuthGate gates the whole page, so anonymous visitors are bounced to /login.
  */
@@ -26,7 +35,6 @@ import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
-  changePassword,
   deleteMyAccount,
   getMyProfile,
   removeAvatar,
@@ -47,10 +55,6 @@ function AccountInner() {
   const [displayName, setDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  const [pw1, setPw1] = useState("");
-  const [pw2, setPw2] = useState("");
-  const [savingPw, setSavingPw] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -120,28 +124,6 @@ function AccountInner() {
     }
   }
 
-  async function onChangePassword(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (pw1.length < 8) {
-      toast.error(t("account.toastPasswordTooShort"));
-      return;
-    }
-    if (pw1 !== pw2) {
-      toast.error(t("account.toastPasswordMismatch"));
-      return;
-    }
-    setSavingPw(true);
-    try {
-      await changePassword(pw1);
-      setPw1("");
-      setPw2("");
-      toast.success(t("account.toastPasswordChanged"));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("account.toastPasswordFailed"));
-    } finally {
-      setSavingPw(false);
-    }
-  }
 
   async function onDeleteAccount() {
     if (deleteConfirm !== "DELETE") {
@@ -267,43 +249,8 @@ function AccountInner() {
         </div>
       </Section>
 
-      {/* ---------- Password ---------- */}
-      <Section title={t("account.section.password")}>
-        <form onSubmit={onChangePassword} className="space-y-3">
-          <div>
-            <Label htmlFor="pw1">{t("account.newPassword")}</Label>
-            <Input
-              id="pw1"
-              type="password"
-              value={pw1}
-              onChange={(e) => setPw1(e.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-              required
-              placeholder={t("account.newPasswordPlaceholder")}
-            />
-          </div>
-          <div>
-            <Label htmlFor="pw2">{t("account.confirmPassword")}</Label>
-            <Input
-              id="pw2"
-              type="password"
-              value={pw2}
-              onChange={(e) => setPw2(e.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={savingPw || pw1.length < 8 || pw1 !== pw2}
-          >
-            {savingPw ? t("account.savingPassword") : t("account.changePassword")}
-          </Button>
-          <p className="text-xs text-subtle">{t("account.passwordHint")}</p>
-        </form>
-      </Section>
+      {/* Password section removed: slothcv enforces strict provider
+          separation. See top-of-file docstring for the rationale. */}
 
       {/* ---------- Sign out ---------- */}
       <Section title={t("account.section.session")}>

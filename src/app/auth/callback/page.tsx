@@ -42,11 +42,37 @@ function CallbackInner() {
     if (errorDescription) {
       const lower = errorDescription.toLowerCase();
       let mapped = "exchange_failed";
-      if (lower.includes("user already") || lower.includes("identity already")) {
+      // Detect prevent_provider_mixing trigger / GoTrue's native collision
+      // check. GoTrue wraps Postgres trigger exceptions before passing
+      // them to the OAuth redirect — the literal phrase Supabase emits
+      // is "Error creating identity" (verified empirically 2026-04-27),
+      // NOT the trigger's own message text. The other patterns below
+      // cover other wrappings GoTrue uses for related auth-DB failures
+      // and our own custom tags.
+      if (
+        lower.includes("error creating identity") ||
+        lower.includes("user already") ||
+        lower.includes("identity already") ||
+        lower.includes("identity_already_exists") ||
+        lower.includes("database error saving new user") ||
+        lower.includes("database error saving identity") ||
+        lower.includes("database error linking") ||
+        lower.includes("error saving new user") ||
+        lower.includes("error saving identity") ||
+        lower.includes("23505") ||
+        lower.includes("duplicate key") ||
+        lower.includes("unique_violation") ||
+        lower.includes("unique constraint") ||
+        lower.includes("account_exists_other_method") ||
+        lower.includes("provider_mixing")
+      ) {
         // Google OAuth attempted with an email that already belongs to a
-        // magic-link / different-provider account. Tell them to sign in
-        // through the original method.
-        mapped = "account_exists_other_method";
+        // magic-link account. The only path that reaches /auth/callback
+        // with a DB-layer error in slothcv is the prevent_provider_mixing
+        // trigger blocking the identity insert, so we route everything
+        // matching the wide net above to the specific "use magic link"
+        // toast.
+        mapped = "account_exists_use_magic_link";
       } else if (lower.includes("access_denied") || lower.includes("denied")) {
         // User declined the OAuth consent screen.
         mapped = "oauth_declined";

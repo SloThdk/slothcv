@@ -144,6 +144,10 @@ export const TRANSLATIONS = {
     en: "An account with this email already exists. Try signing in with the method you used originally (Google or magic link).",
     da: "Der findes allerede en konto med denne e-mail. Log ind med den metode, du brugte oprindeligt (Google eller magisk link).",
   },
+  "login.errAccountUseMagicLink": {
+    en: "You signed up with magic link. Type your email below and click \"Send link\" — you'll get a fresh sign-in link in your inbox.",
+    da: "Du oprettede kontoen med magisk link. Skriv din e-mail nedenfor og klik \"Send link\" — du får et nyt login-link i din indbakke.",
+  },
   "login.errOAuthOnlyGoogle": {
     en: "You signed up with Google. Use \"Continue with Google\" below — magic-link sign-in isn't enabled for this account.",
     da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" nedenfor — login via magisk link er ikke aktiveret for denne konto.",

@@ -349,6 +349,31 @@ export const TEMPLATES: TemplateMeta[] = [
     thumbGradient: "from-violet-50 to-orange-50",
     swatch: { primary: "#6d28d9", bg: "#ffffff" },
   },
+  // ── Visual / executive expansion (late 2026) ──────────────────────
+  {
+    id: "capitol",
+    name: "Capitol",
+    blurb:
+      "Dark navy header band with circular photo, vertical-timeline body where each section anchors to an accent dot.",
+    thumbGradient: "from-slate-900 to-blue-900",
+    swatch: { primary: "#1e3a8a", bg: "#ffffff" },
+  },
+  {
+    id: "vesterbro",
+    name: "Vesterbro",
+    blurb:
+      "Centered photo at top, two-column body, soft blue accent badges with section icons. Danish-friendly.",
+    thumbGradient: "from-sky-50 to-blue-100",
+    swatch: { primary: "#2563eb", bg: "#fdfdfb" },
+  },
+  {
+    id: "marina",
+    name: "Marina",
+    blurb:
+      "Dark teal header with photo + soft radial highlight, tinted-gray sidebar carrying contact + skills, white narrative column.",
+    thumbGradient: "from-teal-900 to-cyan-100",
+    swatch: { primary: "#0f766e", bg: "#ffffff" },
+  },
 ];
 
 export const TEMPLATES_BY_ID: Record<TemplateId, TemplateMeta> =

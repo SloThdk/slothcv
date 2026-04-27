@@ -88,6 +88,16 @@ export const TEMPLATE_IDS = [
   // Industry-specific
   "scrubs",
   "founder",
+  // ── Visual / executive expansion (late 2026) ──────────────────────
+  // Capitol — dark navy header band + circular photo + vertical
+  //           timeline body with section-icon anchors.
+  // Vesterbro — Danish-friendly two-column with centered photo and
+  //             section-icon badges. Soft accent tones.
+  // Marina — dark teal header with photo + soft radial highlight,
+  //          two-rail body (gray sidebar + white content).
+  "capitol",
+  "vesterbro",
+  "marina",
 ] as const;
 
 /** Identifier of the active visual template. Templates render the same

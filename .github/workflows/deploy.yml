@@ -1,0 +1,82 @@
+# Auto-deploy slothcv to Cloudflare Pages on every push to master.
+#
+# Why GitHub Actions and not the Cloudflare Pages "Connect to Git"
+# integration? The CF git-connect path requires clicking through the
+# dashboard for first-time setup AND it pins each deployment to a
+# specific commit hash visible to anyone who finds the .pages.dev
+# preview URL. Running wrangler from Actions keeps the deploy
+# trigger in this repo (auditable in PRs), uses a scoped CF API
+# token (rotatable from one place), and produces clean preview
+# URLs without exposing build internals.
+#
+# Required repo secrets (set via `gh secret set` — already done):
+#   - CLOUDFLARE_API_TOKEN          — scoped Pages:Edit token
+#   - CLOUDFLARE_ACCOUNT_ID         — slothcv lives in Philip's account
+#   - NEXT_PUBLIC_SUPABASE_URL      — public, but needed at build for
+#   - NEXT_PUBLIC_SUPABASE_ANON_KEY     the static export to inline
+#   - NEXT_PUBLIC_TURNSTILE_SITE_KEY    these into the JS bundle.
+
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [master]
+  # Manual trigger from the Actions tab — useful for re-deploying
+  # after a config change without needing a code commit.
+  workflow_dispatch: {}
+
+# Single in-flight deploy per branch. A second push while one is
+# running cancels the older job — we only ever care about the latest
+# commit's output, never want two deploys racing on the same project.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      # GITHUB_TOKEN needs deployments:write so the workflow can post
+      # the deploy URL back to the commit (Actions tab → "Deployments").
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        # `npm ci` enforces a clean install from package-lock.json —
+        # it fails if package.json and the lockfile disagree, which
+        # is the production-correct posture (no surprise version drift
+        # between local dev and the deployed bundle).
+        run: npm ci
+
+      - name: Build static export
+        # next build with `output: 'export'` writes the static site to
+        # `out/` — that's what wrangler ships to Pages. The three
+        # NEXT_PUBLIC_* vars are inlined into the JS bundle at this
+        # step, so they MUST be available here, not at deploy time.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        # cloudflare/wrangler-action keeps wrangler version-pinned to
+        # the workflow rather than whatever's in package.json — means
+        # a future wrangler breaking change in this repo's deps can't
+        # silently break the deploy pipeline. `--branch master` makes
+        # the deploy a Production deployment (not a preview).
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name slothcv --branch master --commit-dirty=true

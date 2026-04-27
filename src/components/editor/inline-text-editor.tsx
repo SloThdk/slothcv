@@ -1,7 +1,8 @@
 /**
- * InlineTextEditor — absolutely-positioned textarea that overlays the
- * element being edited. Activated by double-clicking any text element
- * with a registered lens (see `src/lib/element-text-lens.ts`).
+ * InlineTextEditor — absolutely-positioned `<div contenteditable>` that
+ * overlays the source text element being edited. Activated by double-
+ * clicking any text element with a registered lens (see
+ * `src/lib/element-text-lens.ts`).
  *
  * # Why this looks the way it does (Photoshop polish)
  *
@@ -11,20 +12,45 @@
  * Commit on Enter / Esc / click-outside. No "jumping" of the overlay,
  * no surprise scroll, no caret races.
  *
- * Three engineering decisions deliver that feel:
+ * Four engineering decisions deliver that feel:
  *
- * 1. **No live-commit during edit.** The single biggest source of
- *    "jumpy" behaviour was writing each keystroke into the Zustand
- *    store via `lens.write`. That triggered a React rerender of the
- *    template subtree → the source element's text changed → its
- *    parent's layout reflowed → the source's bounding rect shifted →
- *    the rAF position-sync loop dragged the overlay to the new spot →
- *    the user saw their text leap mid-stroke. Photoshop's Type Tool
- *    keeps the underlying text frame static during edit and commits on
- *    exit — we now match that. Local React state holds the typed value;
- *    `lens.write` runs once on commit (blur / Esc / Cmd+Enter).
+ * 1. **The editor is a `<div contenteditable="plaintext-only">`, NOT a
+ *    `<textarea>`.** This is the single most important decision and
+ *    the cure for the residual "text jumps DOWN at edit-start" bug
+ *    that lingered after every other fix. Why textarea was wrong:
+ *      a) `<textarea>` is an HTML REPLACED element. Inside CSS Grid,
+ *         `align-self: normal` resolves to `start` for replaced
+ *         elements (vs. `stretch` for regular blocks). The replica
+ *         `<div>` next to it stretches; the textarea didn't —
+ *         vertical mismatch baked into the layout step.
+ *      b) Chrome / Firefox both ship a 1-2 px UA caret-affordance
+ *         offset baked into textarea's INTERNAL text rendering. It's
+ *         not configurable from CSS (Mozilla bugs 1099204, 157846).
+ *         Identical font-family / font-size / line-height between
+ *         `<textarea>` and `<h1>`/`<span>`/`<p>` STILL produces a
+ *         visible 1-15 px glyph-position shift, depending on the
+ *         user's lineSpacing in Design tab.
+ *    A `<div contenteditable>` is not replaced, has no UA caret
+ *    offset, and stretches like any other block — its glyphs land at
+ *    EXACTLY the same baseline as the source `<h1>` / `<span>` it
+ *    overlays. Webflow / Framer / Penpot / Plasmic / TipTap /
+ *    ProseMirror all use this approach. (Excalidraw uses `<textarea>`
+ *    and works around the same bug with a 5 % height buffer hack —
+ *    we can do better.)
  *
- * 2. **Source text + box are frozen during edit.** The source element
+ * 2. **No live-commit during edit.** The textarea fix above kills the
+ *    mount-time jump. This kills the mid-typing jump: writing each
+ *    keystroke into the Zustand store via `lens.write` was triggering
+ *    a React rerender of the template subtree → the source element's
+ *    text changed → its parent's layout reflowed → the source's
+ *    bounding rect shifted → the rAF position-sync loop dragged the
+ *    overlay to the new spot → the user saw their text leap mid-
+ *    stroke. Photoshop's Type Tool keeps the underlying text frame
+ *    static during edit and commits on exit — we now match that.
+ *    Local React state holds the typed value; `lens.write` runs once
+ *    on commit (blur / Esc / Cmd+Enter).
+ *
+ * 3. **Source text + box are frozen during edit.** The source element
  *    is rendered with `color: transparent`, so the user only sees the
  *    overlay. Because we no longer mutate the data store during edit,
  *    the source's content (and therefore its bounding box) is rock
@@ -33,35 +59,47 @@
  *    new text — but by then the overlay is gone, so any layout shift
  *    happens AFTER the user has committed and is expected.
  *
- * 3. **`focus({ preventScroll: true })`.** Default `focus()` triggers
+ * 4. **`focus({ preventScroll: true })`.** Default `focus()` triggers
  *    the browser's "scroll into view" behaviour, which pans the canvas
- *    by a few pixels the moment the textarea mounts. Even though the
+ *    by a few pixels the moment the editor mounts. Even though the
  *    rAF loop catches the shift and re-syncs, the user perceives it as
  *    the text "jumping". `preventScroll: true` blocks the auto-scroll
  *    entirely — the canvas stays put.
  *
  * # Other invariants worth preserving
  *
- *   - The textarea AUTO-GROWS via the CSS-grid replicated-content
- *     trick: a hidden `<div>` mirroring the typed text shares the same
- *     grid cell, and the grid track sizes to the taller child. No JS
+ *   - The editor AUTO-GROWS via the CSS-grid replicated-content trick:
+ *     a hidden `<div>` mirroring the typed text shares the same grid
+ *     cell, and the grid track sizes to the taller child. No JS
  *     scrollHeight resize, no per-keystroke flicker. The technique is
  *     widely documented (CSS-Tricks: "The Cleanest Trick for
- *     Autogrowing Textareas").
+ *     Autogrowing Textareas") — it works EVEN BETTER with two
+ *     `<div>`s than with a `<div>` + `<textarea>` because both
+ *     children now lay out identically.
+ *   - The contentEditable's content is set IMPERATIVELY via
+ *     `innerText` in the focus useLayoutEffect — React doesn't
+ *     reconcile its children. This is the universal pattern for
+ *     contentEditable + React (passing `text` as children would have
+ *     React clobber the user's caret on every rerender; see
+ *     facebook/react#2047, #955).
  *   - Focus + select-all run inside `useLayoutEffect`, NOT
- *     `requestAnimationFrame`, so they commit BEFORE the browser paints
- *     the overlay. Otherwise the user sees one frame of an unfocused,
- *     mis-sized editor — the "bouncing" feel.
+ *     `requestAnimationFrame`, so they commit BEFORE the browser
+ *     paints the overlay. Otherwise the user sees one frame of an
+ *     unfocused, mis-sized editor — the "bouncing" feel. select-all
+ *     uses the Range API (contentEditable has no `.select()`).
  *   - The rAF position-sync loop is STILL needed to handle EXTERNAL
- *     shifts (canvas scroll, parent zoom, sibling section reflow). Now
- *     that the source's text is frozen, the loop almost never triggers
- *     a re-render — but it's there as insurance.
- *   - **Enter inserts a newline** — same as a normal text input.
- *     Esc / Cmd-Enter / click-outside all COMMIT and exit. There is no
- *     "revert" path — matches Photoshop, Figma, Illustrator, Canva
- *     (the canvas-tool convention). Web-form muscle memory says Esc
- *     cancels, but the canvas convention is the stronger pull here
- *     (prior research at research/text-in-container-ux/).
+ *     shifts (canvas scroll, parent zoom, sibling section reflow).
+ *     Now that the source's text is frozen, the loop almost never
+ *     triggers a re-render — but it's there as insurance.
+ *   - **Enter inserts a newline** — `contenteditable="plaintext-only"`
+ *     makes Enter insert "\n" into innerText (matches textarea
+ *     behaviour). Esc / Cmd-Enter / click-outside all COMMIT and
+ *     exit. There is no "revert" path — matches Photoshop, Figma,
+ *     Illustrator, Canva (the canvas-tool convention). Web-form
+ *     muscle memory says Esc cancels, but the canvas convention is
+ *     the stronger pull here (prior research at
+ *     research/text-in-container-ux/ and
+ *     research/inline-edit-jump-deep-dive/).
  *
  * # Why an overlay instead of contentEditable in place?
  *   1. **No template refactor.** Templates render `<h1>{name}</h1>` with
@@ -130,7 +168,19 @@ export function InlineTextEditor() {
   const setEditingElementId = useEditorStore((s) => s.setEditingElementId);
 
   const [overlay, setOverlay] = useState<OverlayRect | null>(null);
-  const taRef = useRef<HTMLTextAreaElement | null>(null);
+  // Editor element is a `<div contenteditable>` (NOT a `<textarea>`),
+  // because textarea is a REPLACED element and inside CSS Grid that
+  // resolves `align-self: normal → start` for replaced elements (vs.
+  // `stretch` for regular blocks like the replica), and on top of that
+  // Chrome / Firefox bake a 1-2 px UA caret-affordance offset into the
+  // textarea's internal text rendering — the two effects together make
+  // the textarea's first-line glyphs render visibly LOWER than the
+  // source `<h1>` / `<span>` / `<p>` it overlays. A `<div
+  // contenteditable>` is not replaced, has no UA-internal text offset,
+  // and stretches to fill the grid cell — its glyphs land at exactly
+  // the same baseline as the source. Same trick used by Webflow /
+  // Framer / Penpot / Plasmic / TipTap / ProseMirror.
+  const taRef = useRef<HTMLDivElement | null>(null);
   const [text, setText] = useState("");
 
   // Reference + saved styles for the source element so we can hide its
@@ -381,38 +431,61 @@ export function InlineTextEditor() {
     };
   }, []);
 
-  // Focus + select-all in useLayoutEffect — runs synchronously after
-  // the overlay mounts but BEFORE the browser paints, so the user
-  // never sees the unfocused intermediate state. requestAnimationFrame
-  // would delay focus to the NEXT frame which is exactly the visible
-  // flash that read as "bouncing" in the previous implementation.
+  // Initial-content + focus + select-all in useLayoutEffect — runs
+  // synchronously after the overlay mounts but BEFORE the browser
+  // paints, so the user never sees the unfocused intermediate state.
+  //
+  // We initialize the contentEditable's content imperatively via
+  // `innerText` rather than passing `text` as React children. This is
+  // the "uncontrolled input" pattern for contentEditable: React
+  // doesn't manage the editing div's children, so subsequent renders
+  // (e.g. from rAF rect-sync, replica resize) cannot clobber the
+  // user's caret position or selection. The latestTextRef + local
+  // `text` state mirror the value for the commit path and the
+  // replica's auto-grow display.
   //
   // **`preventScroll: true` is critical.** The browser's default
   // focus-into-view behaviour pans the canvas a few pixels the moment
-  // the textarea mounts, which then propagates as the source's rect
+  // the editor mounts, which then propagates as the source's rect
   // shifting, the rAF loop chasing it, and the user perceiving a
   // "jump". Suppressing the auto-scroll is the cleanest fix — the
   // user doesn't need the canvas to scroll because they're already
   // looking at the element they double-clicked.
   //
+  // For select-all we use the Range API (contentEditable has no
+  // `.select()`). selectNodeContents covers all text nodes in the
+  // editing div, mimicking textarea's select-all behaviour.
+  //
   // We only run focus once per edit session (initial mount), not on
   // every overlay rect tick. Re-focusing on every rAF re-render of
-  // the overlay would steal focus while the user is mid-keystroke if
-  // anything else briefly grabs focus. The dependency on
-  // `editingElementId` (rather than `overlay`) ensures one focus per
-  // session.
+  // the overlay would steal focus / collapse selection while the user
+  // is mid-keystroke if anything else briefly grabs focus. The
+  // dependency on `editingElementId` (rather than `overlay`) ensures
+  // one setup per session.
   useLayoutEffect(() => {
     if (!editingElementId) return;
-    const ta = taRef.current;
-    if (!ta) return;
-    ta.focus({ preventScroll: true });
-    ta.select();
+    const el = taRef.current;
+    if (!el) return;
+    // Set initial content. Empty string is normal — happens when the
+    // user double-clicks an empty placeholder field.
+    el.innerText = latestTextRef.current;
+    el.focus({ preventScroll: true });
+    // Select all so the user's first keystroke replaces the text —
+    // matches textarea / browser-form behaviour for "I just opened
+    // this for editing, I'm about to retype."
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
   }, [editingElementId]);
 
   // Commit the latest typed value via lens.write and close the overlay.
   // Reads from the ref (not React state) because blur / keyboard
   // commits can fire in the same microtask as a keystroke; the ref is
-  // updated synchronously inside onTextChange while React state is
+  // updated synchronously inside onContentInput while React state is
   // batched. Skip the write entirely if the text is unchanged from the
   // initial value — avoids a no-op store mutation that would still
   // trigger autosave.
@@ -431,10 +504,13 @@ export function InlineTextEditor() {
   //                           Esc cancels, but the canvas convention is
   //                           the stronger pull and matches Figma /
   //                           Canva / Illustrator.
-  //   - Enter (plain)       → newline (textarea default — left alone)
+  //   - Enter (plain)       → newline (browser default in
+  //                           contentEditable=plaintext-only — inserts
+  //                           "\n" into innerText, which the replica
+  //                           picks up on the next onInput tick)
   //   - Cmd/Ctrl + Enter    → commit + exit
   // Click-outside / blur is also commit (the universal default).
-  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
       commit();
@@ -447,15 +523,19 @@ export function InlineTextEditor() {
     }
   }
 
-  /** Update the textarea's local value. We deliberately do NOT write
-   *  through to the data store here — that's the source of the
-   *  "jumping" feel (every keystroke triggered a Zustand update →
-   *  React rerender → source's bounding box shifted → overlay re-
-   *  synced to the new rect). Instead we mirror the value into a ref
-   *  for the commit handlers to pick up. The source's text + box stay
-   *  perfectly still for the entire edit session; the overlay grows
-   *  freely above it via CSS-grid auto-sizing. */
-  function onTextChange(next: string) {
+  /** Mirror the contentEditable's current `innerText` into local
+   *  React state + the latestTextRef. The contentEditable itself is
+   *  uncontrolled — the browser owns its DOM children, React doesn't
+   *  reconcile them. We only read from it (here) and on commit. This
+   *  is the universal contentEditable pattern — passing `text` as
+   *  children would cause React to clobber the user's caret on every
+   *  rerender (proven anti-pattern, e.g. facebook/react#2047).
+   *
+   *  Setting React state here re-renders the component, which updates
+   *  the replica `<div>` (it IS controlled by `text`) so the auto-
+   *  grow grid track stays in sync with the typed content. */
+  function onContentInput(e: React.FormEvent<HTMLDivElement>) {
+    const next = (e.currentTarget as HTMLDivElement).innerText;
     setText(next);
     latestTextRef.current = next;
   }
@@ -562,25 +642,55 @@ export function InlineTextEditor() {
         >
           {text + " "}
         </div>
-        <textarea
+        {/* The editing surface. `<div contenteditable="plaintext-only">`
+            instead of `<textarea>`: the textarea was rendering its
+            first-line glyphs 1-15 px LOWER than the source `<h1>` /
+            `<span>` / `<p>` it overlays, because (a) textarea is a
+            REPLACED element so CSS Grid resolves its `align-self:
+            normal → start` (vs `stretch` for regular blocks like the
+            replica beside it), and (b) Chrome / Firefox bake an
+            internal caret-affordance offset into textarea text
+            rendering that's not configurable from CSS. The
+            contentEditable div is not replaced, has no UA caret
+            offset, and lays out identically to a `<div>` (which is
+            what the source elements are). Webflow / Framer / Penpot /
+            Plasmic / TipTap / ProseMirror all use this approach.
+
+            React doesn't reconcile its children — we set `innerText`
+            imperatively in the focus useLayoutEffect, the user's
+            typing mutates the DOM directly, we mirror back to React
+            state via `onContentInput` so the replica auto-grows. No
+            `children` prop here intentionally. */}
+        <div
           ref={taRef}
-          value={text}
-          onChange={(e) => onTextChange(e.target.value)}
+          contentEditable="plaintext-only"
+          suppressContentEditableWarning
+          spellCheck={true}
+          onInput={onContentInput}
           onBlur={commit}
           onKeyDown={onKeyDown}
-          rows={1}
           style={{
             ...sharedStyle,
             gridArea: "1 / 1 / 2 / 2",
             outline: "none",
-            resize: "none",
+            // Stretch to fill the cell (matches the replica's stretch
+            // behaviour). Grid's default `align-self: normal` resolves
+            // to `stretch` for non-replaced blocks — explicit here for
+            // clarity, in case any global CSS overrides it later.
+            alignSelf: "stretch",
             // overflow:hidden — the replica drives the height, the
-            // textarea is always exactly as tall as it needs to be,
-            // so an inner scrollbar should never appear.
+            // editor is always exactly as tall as it needs to be, so
+            // an inner scrollbar should never appear.
             overflow: "hidden",
             caretColor: overlay.font.color,
+            // Browsers can break-line in unexpected places inside
+            // contentEditable; pre-wrap + word-break match the
+            // textarea's wrapping behaviour and the replica's. (Also
+            // already in sharedStyle but explicit here is defence in
+            // depth.)
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
           }}
-          spellCheck={true}
         />
       </div>
       {/* Status hint — pinned to viewport bottom-center, NOT attached

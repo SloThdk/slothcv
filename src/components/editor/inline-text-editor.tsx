@@ -243,16 +243,24 @@ export function InlineTextEditor() {
     // longer write to the data store on every keystroke (see file
     // header). The overlay grows freely above a perfectly still source
     // — that's the "Photoshop feel" behaviour.
-    // Snapshot original inline styles BEFORE we mutate them. Lock the
-    // source's outer box to its measured pre-edit dimensions: this is
-    // belt-and-braces insurance against any unrelated React rerender
-    // (autosave status flicker, parent prop change, focus highlight)
-    // shifting the source's box while editing — which would feed the
-    // rAF rect-sync loop and look like the text "jumping". The
-    // intrinsic (pre-scale) width/height come from offsetWidth /
-    // offsetHeight; the source's parent layout (flex / grid / inline)
-    // sees the same numbers it had before edit, so siblings don't
-    // reflow.
+    // Snapshot original inline styles BEFORE we mutate them. We
+    // INTENTIONALLY DO NOT lock the source's width / height — even
+    // though the agent's research suggested it as insurance, in
+    // practice setting an explicit width on a flex / grid child
+    // causes the parent's layout algorithm to re-run with a different
+    // basis, and the source can end up at a SLIGHTLY different
+    // position. The rAF rect-sync loop then chases the new position
+    // and the user sees the overlay (and the visible edit text) jump
+    // down a few pixels at edit start.
+    //
+    // Without the lock, the source's box stays exactly where the
+    // browser already had it. Because we no longer write to the data
+    // store on every keystroke (see file header), the source's text
+    // doesn't change either, so its box has no reason to shift. The
+    // rAF loop is still there as insurance for genuine external
+    // changes (canvas scroll / zoom / sibling reflow from a different
+    // edit), but for the common case of "user types into one field"
+    // the source is pinned by virtue of nothing asking it to move.
     sourceRef.current = {
       el,
       originalColor: el.style.color,
@@ -263,15 +271,7 @@ export function InlineTextEditor() {
       originalMaxWidth: el.style.maxWidth,
       originalMaxHeight: el.style.maxHeight,
     };
-    const lockW = `${el.offsetWidth}px`;
-    const lockH = `${el.offsetHeight}px`;
     el.style.color = "transparent";
-    el.style.width = lockW;
-    el.style.height = lockH;
-    el.style.minWidth = lockW;
-    el.style.minHeight = lockH;
-    el.style.maxWidth = lockW;
-    el.style.maxHeight = lockH;
     committedRef.current = false;
 
     // Snapshot lens + el + every original style so the cleanup closure
@@ -540,10 +540,17 @@ export function InlineTextEditor() {
           zIndex: 10000,
         }}
       >
-        {/* Hidden replica — the natural content height drives the grid
-            track size. Trailing newline matches the textarea's
-            "Enter at end of line grows the box" behavior. aria-hidden
-            because screen readers should only see the textarea. */}
+        {/* Hidden replica — its natural content height drives the
+            grid track size. The trailing SPACE (not newline) is the
+            canonical CSS-Tricks pattern: it ensures any trailing
+            newline in `text` still produces an inhabited last line so
+            the box accounts for it, BUT it doesn't add a phantom
+            extra line for ordinary single-line text the way "\n"
+            does. With "\n", a one-line h1 was rendered into a
+            two-line tall edit box, which the user reads as the text
+            having "jumped down" into a taller container.
+            aria-hidden because screen readers should only see the
+            textarea. */}
         <div
           aria-hidden
           style={{
@@ -553,7 +560,7 @@ export function InlineTextEditor() {
             pointerEvents: "none",
           }}
         >
-          {text + "\n"}
+          {text + " "}
         </div>
         <textarea
           ref={taRef}

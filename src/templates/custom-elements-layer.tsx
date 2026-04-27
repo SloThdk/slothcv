@@ -27,7 +27,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useEditorStore } from "@/lib/store/editor";
 import type {
   ArrowElement,
@@ -114,6 +114,107 @@ function CustomElementNode({
   // updateCustomElement path the inspector panel uses, so undo history
   // and saveStatus dirtying both work correctly.
   const updateCustomElement = useEditorStore((s) => s.updateCustomElement);
+  // Wrapper ref + tracked local-coord bounds. The wrapper's nominal
+  // size is el.w × el.h, but a ResizeObserver lets us catch any
+  // CSS-driven shrink (responsive layout, font load, container query
+  // breakpoint flip, etc.) and re-position handles to match. Without
+  // this, handles park at stale (el.w, el.h) coords after the wrapper
+  // visually reflows — the "dots not following" symptom.
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [bounds, setBounds] = useState<{ w: number; h: number }>({
+    w: el.w,
+    h: el.h,
+  });
+
+  // Track the wrapper's actual rendered size in LOCAL coords (i.e.
+  // pre-zoom-scale). ResizeObserver's `contentRect` reports the box
+  // model in CSS px — the same coordinate space our handles are
+  // positioned in via `left: cx - 12`. Update only on real change so
+  // we don't re-render every frame.
+  useEffect(() => {
+    const node = wrapperRef.current;
+    if (!node) return;
+    const ro = new ResizeObserver(() => {
+      // offsetWidth / offsetHeight reflect the LOCAL CSS pixel size
+      // (excluding any ancestor transform: scale()), which is what
+      // we need for child absolute positioning to align. Skip when
+      // the wrapper isn't laid out yet.
+      const w = node.offsetWidth;
+      const h = node.offsetHeight;
+      if (!w || !h) return;
+      setBounds((prev) =>
+        Math.abs(prev.w - w) < 0.5 && Math.abs(prev.h - h) < 0.5
+          ? prev
+          : { w, h },
+      );
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, []);
+
+  // Image element with `fit: contain` and a non-matching wrapper aspect
+  // would render the IMG letterboxed — IMG visibly smaller than the
+  // wrapper, with handles wrapping the (larger) wrapper. That's the
+  // "dots forming a 3×3 grid bigger than the photo" bug.
+  //
+  // Fix: snap the wrapper to the image's natural aspect on first load
+  // (and whenever fit / url changes). This makes the wrapper, the
+  // visible image, and the resize handles all coincide — Photoshop's
+  // "the bounding box IS the image" feel.
+  //
+  // We preserve the element's pixel area, so a 200×300 wrapper holding
+  // a 16:9 image becomes ~283×159 (same area, image aspect). User can
+  // still freely resize after — Shift on a corner handle locks the
+  // aspect to keep the image looking right.
+  //
+  // Extract image-only fields to top-level vars so the dependency array
+  // stays statically analyzable (no inline ternaries — exhaustive-deps
+  // can't track them).
+  const imgUrl = el.kind === "image" ? el.url : undefined;
+  const imgFit = el.kind === "image" ? el.fit : undefined;
+  const elKind = el.kind;
+  const elId = el.id;
+  const elW = el.w;
+  const elH = el.h;
+  useLayoutEffect(() => {
+    if (elKind !== "image") return;
+    if (!imgUrl || (imgFit ?? "cover") !== "contain") return;
+    const node = wrapperRef.current;
+    if (!node) return;
+    const imgEl = node.querySelector("img");
+    if (!imgEl) return;
+    const apply = () => {
+      const nw = imgEl.naturalWidth;
+      const nh = imgEl.naturalHeight;
+      if (!nw || !nh) return;
+      const naturalAspect = nw / nh;
+      const wrapperAspect = elW / elH;
+      // Tolerance: 1 % of natural aspect. Float math + integer pixel
+      // rounding will never make the two exactly equal even after a
+      // snap, so without a tolerance the effect would loop.
+      if (
+        Math.abs(naturalAspect - wrapperAspect) <
+        0.01 * naturalAspect
+      ) {
+        return;
+      }
+      // Preserve area so the user doesn't see a sudden size jump:
+      //   newW × newH = elW × elH, newW / newH = naturalAspect
+      // → newW = sqrt(area × aspect), newH = sqrt(area / aspect).
+      const area = elW * elH;
+      const newW = Math.round(Math.sqrt(area * naturalAspect));
+      const newH = Math.round(Math.sqrt(area / naturalAspect));
+      if (newW < 8 || newH < 8) return;
+      updateCustomElement(elId, { w: newW, h: newH });
+    };
+    if (imgEl.complete && imgEl.naturalWidth) {
+      apply();
+    } else {
+      imgEl.addEventListener("load", apply, { once: true });
+      return () => imgEl.removeEventListener("load", apply);
+    }
+  }, [elId, elKind, elW, elH, imgUrl, imgFit, updateCustomElement]);
+
   if (!el.visible) return null;
 
   // Common positioning style. `transform` is reserved for the drag
@@ -142,6 +243,13 @@ function CustomElementNode({
   // toggling it on/off doesn't reflow the page. Outline-offset puts
   // a 1px gap between the element and the ring so the ring doesn't
   // blend into the element's edges.
+  //
+  // Three-tier visual language (per design research, Photoshop / Figma
+  // convention): idle has no ring, hover gets a thin 1 px tinted ring,
+  // selected gets the full 2 px solid ring + halo. The body.slothcv-
+  // dragging CSS in globals.css disables the hover ring on every
+  // element except the one being dragged so passing the cursor over
+  // siblings doesn't paint the page in hover noise.
   const selectedRingStyle: React.CSSProperties = selected
     ? {
         outline: "2px solid #2563eb",
@@ -155,6 +263,7 @@ function CustomElementNode({
 
   return (
     <div
+      ref={wrapperRef}
       data-element-id={`custom.${el.id}`}
       className={`group ${editing ? "cursor-text" : "cursor-grab"} transition-[outline-color,box-shadow] duration-100 ${ringClass}`}
       style={{ ...wrap, ...selectedRingStyle }}
@@ -171,16 +280,20 @@ function CustomElementNode({
     >
       {renderInner(el, editing, () => setEditing(false))}
       {selected && (
-        // Lines get a simpler 2-handle resize (just the endpoints),
-        // everything else gets the full 8-handle box. For now we render
-        // 8 handles even on lines — the user can resize the bounding
-        // box and the line stretches to match.
+        // Handles wrap the wrapper's actual rendered size (`bounds`)
+        // rather than the nominal `el.w/h` from data — they follow
+        // any CSS-driven reflow automatically. For images we also
+        // auto-fit the wrapper to the image's natural aspect (above)
+        // so wrapper / visible image / handle box all coincide.
         <ResizeHandles
           elementId={el.id}
           x={el.x}
           y={el.y}
-          w={el.w}
-          h={el.h}
+          w={bounds.w}
+          h={bounds.h}
+          aspectLock={
+            el.kind === "image" && (el.fit ?? "cover") === "contain"
+          }
           onCommit={(next) => updateCustomElement(el.id, next)}
         />
       )}
@@ -330,6 +443,7 @@ function ResizeHandles({
   y,
   w,
   h,
+  aspectLock,
   onCommit,
 }: {
   elementId: string;
@@ -337,6 +451,12 @@ function ResizeHandles({
   y: number;
   w: number;
   h: number;
+  /** Force aspect-ratio lock for this element regardless of Shift state.
+   *  Set true for image-with-contain so a freehand resize never breaks
+   *  the wrapper / image alignment we worked to establish via the
+   *  natural-aspect snap. Shift then INVERTS to "free" — same Shift-
+   *  inverted-meaning that PS Smart Objects use. */
+  aspectLock?: boolean;
   onCommit: (next: { x: number; y: number; w: number; h: number }) => void;
 }) {
   const positions: Array<{
@@ -368,6 +488,7 @@ function ResizeHandles({
           y={y}
           w={w}
           h={h}
+          aspectLock={aspectLock}
           onCommit={onCommit}
         />
       ))}
@@ -375,7 +496,23 @@ function ResizeHandles({
   );
 }
 
-/** Single resize handle. Owns its pointer-capture gesture lifecycle. */
+/** Single resize handle. Owns its pointer-capture gesture lifecycle.
+ *
+ *  Modifier keys (live-evaluated every move — Figma model, not the
+ *  PS-2019-locked-at-pointerdown model):
+ *
+ *    - **Shift** (or `aspectLock` prop): constrain aspect ratio. Holding
+ *      Shift inverts whichever default is active — if `aspectLock` is on,
+ *      Shift = freeform; if `aspectLock` is off, Shift = constrain. Mirrors
+ *      every pre-2019 design app convention.
+ *    - **Alt/Option**: scale from center — the OPPOSITE corner mirrors the
+ *      drag instead of staying anchored. Matches PS / Affinity / Figma.
+ *    - **Shift + Alt**: aspect-locked + center-anchored.
+ *
+ *  Clean-up is a body class, not inline styles, so the rest of the editor
+ *  picks up the resize cursor and gets pointer-events disabled (no hover
+ *  noise on siblings) via the CSS in globals.css.
+ */
 function ResizeHandle({
   corner,
   elementId,
@@ -386,6 +523,7 @@ function ResizeHandle({
   y,
   w,
   h,
+  aspectLock,
   onCommit,
 }: {
   corner: ResizeCorner;
@@ -397,6 +535,7 @@ function ResizeHandle({
   y: number;
   w: number;
   h: number;
+  aspectLock?: boolean;
   onCommit: (next: { x: number; y: number; w: number; h: number }) => void;
 }) {
   const handleRef = useRef<HTMLDivElement | null>(null);
@@ -412,6 +551,12 @@ function ResizeHandle({
     startY: number;
     startW: number;
     startH: number;
+    /** Centre of the bounding box at gesture start, used for Alt/center scale. */
+    centerX: number;
+    centerY: number;
+    /** Aspect ratio at gesture start (w/h). Re-applied each frame when
+     *  the user holds Shift (or aspectLock is on). */
+    startAspect: number;
     visualScale: number;
     wrap: HTMLElement;
     pendingX: number;
@@ -444,6 +589,9 @@ function ResizeHandle({
       startY: y,
       startW: w,
       startH: h,
+      centerX: x + w / 2,
+      centerY: y + h / 2,
+      startAspect: w / Math.max(1, h),
       visualScale: visualScale || 1,
       wrap,
       pendingX: x,
@@ -451,41 +599,94 @@ function ResizeHandle({
       pendingW: w,
       pendingH: h,
     };
-    // Visual cue while resizing — body cursor takes over so the user
-    // sees the resize cursor everywhere on the page until release.
+    // Drag-isolation body class — see the matching CSS in globals.css.
+    // Sets pointer-events: none on every preview-stage child except the
+    // one being resized so we don't paint hover rings everywhere as the
+    // box grows over siblings. Cursor is forced to the corner cursor.
+    document.body.classList.add("slothcv-resizing");
     document.body.style.cursor = cursor;
     document.body.style.userSelect = "none";
+    wrap.setAttribute("data-being-dragged", "true");
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     const g = gestureRef.current;
     if (!g || !g.active || e.pointerId !== g.pointerId) return;
+    // Modifiers — re-read every move so the user can tap Shift/Alt
+    // mid-drag and see the effect immediately. Aspect lock applies
+    // when EITHER the prop is set (image-with-contain) OR the user is
+    // holding Shift; Shift INVERTS the prop's default so a held Shift
+    // releases the aspect lock for one drag.
+    const aspect = aspectLock !== !!e.shiftKey;
+    const center = e.altKey;
+
     const dx = (e.clientX - g.startClientX) / g.visualScale;
     const dy = (e.clientY - g.startClientY) / g.visualScale;
-    let nw = g.startW;
-    let nh = g.startH;
-    let nx = g.startX;
-    let ny = g.startY;
-    if (corner === "e" || corner === "ne" || corner === "se") nw = g.startW + dx;
-    if (corner === "w" || corner === "nw" || corner === "sw") {
-      nw = g.startW - dx;
-      nx = g.startX + dx;
+    // Sign per axis: which way does this corner extend the box.
+    const sx = corner === "e" || corner === "ne" || corner === "se" ? 1 : corner === "w" || corner === "nw" || corner === "sw" ? -1 : 0;
+    const sy = corner === "s" || corner === "se" || corner === "sw" ? 1 : corner === "n" || corner === "nw" || corner === "ne" ? -1 : 0;
+
+    // For Alt/center-scale, drag delta is mirrored into the opposite
+    // side, doubling the apparent change. Width grows by 2 * sx * dx
+    // around the centre instead of 1 * sx * dx.
+    let nw: number;
+    let nh: number;
+    if (center) {
+      nw = g.startW + 2 * sx * dx;
+      nh = g.startH + 2 * sy * dy;
+    } else {
+      nw = g.startW + sx * dx;
+      nh = g.startH + sy * dy;
     }
-    if (corner === "s" || corner === "se" || corner === "sw") nh = g.startH + dy;
-    if (corner === "n" || corner === "nw" || corner === "ne") {
-      nh = g.startH - dy;
-      ny = g.startY + dy;
+    // For edge handles only one axis was driven; preserve the other.
+    if (sx === 0) nw = g.startW;
+    if (sy === 0) nh = g.startH;
+
+    if (aspect && (sx !== 0 || sy !== 0)) {
+      // Aspect-lock heuristic: the axis with the LARGER signed delta
+      // (in box-space, i.e. relative to the box's own dims) drives,
+      // and the other axis snaps to ratio. This matches Figma's "drive
+      // by the corner direction with bigger delta" feel — neither axis
+      // jitters when the cursor moves diagonally.
+      const ar = g.startAspect;
+      // Signed box-space deltas for the two axes (positive = grow box).
+      const wx = sx === 0 ? -Infinity : nw - g.startW;
+      const wy = sy === 0 ? -Infinity : nh - g.startH;
+      // Compare proportional change so different aspect ratios stay fair.
+      const propX = sx === 0 ? -Infinity : Math.abs(wx) / Math.max(1, g.startW);
+      const propY = sy === 0 ? -Infinity : Math.abs(wy) / Math.max(1, g.startH);
+      if (propX >= propY) {
+        nh = nw / ar;
+      } else {
+        nw = nh * ar;
+      }
     }
+
+    // Now derive the new top-left position. Two anchors:
+    //   - center mode: center stays put → x = centerX - w/2.
+    //   - default mode: the OPPOSITE corner stays put → recompute x/y
+    //     from anchor offsets.
+    let nx: number;
+    let ny: number;
+    if (center) {
+      nx = g.centerX - nw / 2;
+      ny = g.centerY - nh / 2;
+    } else {
+      // Anchor for x is the LEFT edge if we're growing east-side, else right.
+      nx = sx === -1 ? g.startX + g.startW - nw : g.startX;
+      ny = sy === -1 ? g.startY + g.startH - nh : g.startY;
+    }
+
     const minSize = 8;
     if (nw < minSize) {
       // Don't let the right edge cross the anchored left edge.
-      if (corner === "w" || corner === "nw" || corner === "sw") {
+      if (!center && sx === -1) {
         nx = g.startX + g.startW - minSize;
       }
       nw = minSize;
     }
     if (nh < minSize) {
-      if (corner === "n" || corner === "nw" || corner === "ne") {
+      if (!center && sy === -1) {
         ny = g.startY + g.startH - minSize;
       }
       nh = minSize;
@@ -510,8 +711,10 @@ function ResizeHandle({
     const g = gestureRef.current;
     if (!g || !g.active) return;
     g.active = false;
+    document.body.classList.remove("slothcv-resizing");
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+    g.wrap.removeAttribute("data-being-dragged");
     try {
       handleRef.current?.releasePointerCapture(e.pointerId);
     } catch {

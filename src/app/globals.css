@@ -110,6 +110,65 @@ body {
   transition-timing-function: ease-out;
 }
 
+/*
+ * Drag-isolation — Photoshop / Affinity / Figma all suppress hover
+ * affordances on every element except the one being dragged. Without
+ * this, when the user drags a text element across the canvas, every
+ * other section / element it passes over lights up its `:hover` state
+ * (background tint, ring, outline) — visually noisy and breaks the
+ * "this and only this is moving" perception.
+ *
+ * Implementation:
+ *   - `preview.tsx` toggles `body.slothcv-dragging` on threshold-cross
+ *     and removes it on mouseup / pointercancel / blur / Escape.
+ *   - `pointer-events: none` on every preview-stage child kills the
+ *     `:hover` pseudo entirely (no event = no state).
+ *   - The dragged element keeps `pointer-events: auto` via the
+ *     `data-being-dragged` attribute, but in practice the gesture is
+ *     tracked via window-level listeners so this is mostly defensive.
+ *   - Resize handles use `pointer-events: auto` always (their gesture
+ *     is independent and uses setPointerCapture).
+ *   - Cursor is forced grabbing site-wide so the OS cursor never
+ *     flickers between text-select / pointer / grab as the cursor
+ *     crosses different elements.
+ *
+ * Performance: one body classList toggle vs O(n) per-element cursor
+ * writes. Browser handles the cascade.
+ */
+body.slothcv-dragging .preview-stage * {
+  pointer-events: none;
+}
+
+body.slothcv-dragging .preview-stage [data-being-dragged="true"],
+body.slothcv-dragging .preview-stage [data-resize-handle] {
+  pointer-events: auto;
+}
+
+body.slothcv-dragging,
+body.slothcv-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Resize-active state — same lockdown but force resize cursor instead
+ * of grabbing. Set by ResizeHandle's onPointerDown; cleared on
+ * pointerup/cancel. The data-resize-cursor attr on the body carries
+ * which corner cursor to show (nwse-resize, ns-resize, etc.) so we
+ * don't have to write 8 separate CSS rules. */
+body.slothcv-resizing .preview-stage * {
+  pointer-events: none;
+}
+body.slothcv-resizing .preview-stage [data-resize-handle],
+body.slothcv-resizing .preview-stage [data-being-dragged="true"] {
+  pointer-events: auto;
+}
+body.slothcv-resizing,
+body.slothcv-resizing * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 /* prefers-reduced-motion guard.
  *
  * The user's OS-level setting "Reduce motion" (Windows: Settings →

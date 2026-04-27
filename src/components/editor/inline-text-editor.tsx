@@ -45,7 +45,13 @@ interface OverlayRect {
    *  actual rendered size. */
   visualScale: number;
   /** Computed font styles copied from the source element. Pixel values
-   *  are CSS px (pre-scale) — visualScale is applied at render time. */
+   *  are CSS px (pre-scale) — visualScale is applied at render time.
+   *  All four paddings are captured so the editing overlay never has
+   *  text touching the focus ring edge (cramped feel that the previous
+   *  paddingRight:0 / paddingBottom:0 default produced on tight
+   *  elements like H1s with no native padding). borderRadius is read
+   *  so the box-shadow focus ring follows the template's corner shape
+   *  instead of always being rectangular. */
   font: {
     fontFamily: string;
     fontSize: number;
@@ -58,6 +64,9 @@ interface OverlayRect {
     textTransform: string;
     paddingLeft: number;
     paddingTop: number;
+    paddingRight: number;
+    paddingBottom: number;
+    borderRadius: string;
   };
 }
 
@@ -122,6 +131,9 @@ export function InlineTextEditor() {
         textTransform: cs.textTransform,
         paddingLeft: parseFloat(cs.paddingLeft) || 0,
         paddingTop: parseFloat(cs.paddingTop) || 0,
+        paddingRight: parseFloat(cs.paddingRight) || 0,
+        paddingBottom: parseFloat(cs.paddingBottom) || 0,
+        borderRadius: cs.borderRadius || "0",
       },
     });
     setText(lens.read());
@@ -167,10 +179,11 @@ export function InlineTextEditor() {
    *  height-set distortion). */
   function autoGrow(ta: HTMLTextAreaElement) {
     ta.style.height = "auto";
-    // Use scrollHeight for natural fit. Min-clamp to the original rect
-    // height so single-line fields stay visually anchored to their
-    // original position.
-    const min = overlay?.rect.height ?? 0;
+    // Use scrollHeight for natural fit. Min-clamp to the expanded box
+    // height (source rect + the 8px vertical breathing room added below
+    // in the textarea style block) so single-line fields stay visually
+    // anchored to their original position.
+    const min = (overlay?.rect.height ?? 0) + 8;
     const next = Math.max(min, ta.scrollHeight);
     ta.style.height = `${next}px`;
   }
@@ -231,16 +244,33 @@ export function InlineTextEditor() {
         onKeyDown={onKeyDown}
         style={{
           position: "fixed",
-          left: overlay.rect.left,
-          top: overlay.rect.top,
-          width: overlay.rect.width,
-          // Initial height matches the source rect; autoGrow updates it
-          // on every input. min-height keeps single-line fields visually
-          // anchored.
-          minHeight: overlay.rect.height,
-          background: "transparent",
-          outline: "1.5px solid #2563eb",
-          outlineOffset: "1px",
+          // Expand the overlay box outward by 6px L/R and 4px T/B so the
+          // focus ring + breathing padding live OUTSIDE the source
+          // element's text position. The matching +6/+4 added to each
+          // padding below means typed text lands EXACTLY where the
+          // template rendered it — no visual jump on edit start, just
+          // a clean ring blooming around it.
+          left: overlay.rect.left - 6,
+          top: overlay.rect.top - 4,
+          width: overlay.rect.width + 12,
+          minHeight: overlay.rect.height + 8,
+          // Faint surface tint so the editing field is distinguishable
+          // from the surrounding template content without obscuring
+          // anything behind it. Works on both light and dark templates
+          // because alpha is low and neutral.
+          background: "rgb(255 255 255 / 0.04)",
+          // Layered box-shadow ring instead of `outline`. Outline can't
+          // follow border-radius and snaps in flat; box-shadow inherits
+          // the source element's corner radius, gets a soft outer glow
+          // at low opacity, plus a subtle drop shadow for elevation. The
+          // 140ms cubic-bezier transition matches the micro-interaction
+          // pacing in modern editors (Linear, Notion, Figma).
+          outline: "none",
+          borderRadius: overlay.font.borderRadius,
+          boxShadow:
+            "0 0 0 2px rgb(37 99 235 / 0.55), 0 0 0 6px rgb(37 99 235 / 0.12), 0 6px 16px -8px rgb(0 0 0 / 0.18)",
+          transition:
+            "box-shadow 140ms cubic-bezier(0.4, 0, 0.2, 1), background-color 140ms ease-out",
           fontFamily: overlay.font.fontFamily,
           fontSize: `${fontSizePx}px`,
           fontWeight:
@@ -254,10 +284,16 @@ export function InlineTextEditor() {
           letterSpacing,
           textTransform:
             overlay.font.textTransform as React.CSSProperties["textTransform"],
-          paddingLeft: overlay.font.paddingLeft * sc,
-          paddingTop: overlay.font.paddingTop * sc,
-          paddingRight: 0,
-          paddingBottom: 0,
+          // Source padding (scaled) + 6/4 to compensate for the box
+          // expansion above so the typed text stays anchored to the
+          // original template position. The +6/+4 also gives every
+          // edited element a minimum of 6px L/R + 4px T/B breathing
+          // room — no more "cursor touches the outline" feel on tight
+          // elements like H1s that have no native padding.
+          paddingLeft: overlay.font.paddingLeft * sc + 6,
+          paddingTop: overlay.font.paddingTop * sc + 4,
+          paddingRight: overlay.font.paddingRight * sc + 6,
+          paddingBottom: overlay.font.paddingBottom * sc + 4,
           margin: 0,
           border: "none",
           resize: "none",

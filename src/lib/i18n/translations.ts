@@ -39,8 +39,8 @@ export const TRANSLATIONS = {
 
   // ─── Footer ───────────────────────────────────────────────────────
   "footer.tagline": {
-    en: "Free, forever. No watermarks.",
-    da: "Gratis, altid. Ingen vandmærker.",
+    en: "Free. No watermarks.",
+    da: "Gratis. Ingen vandmærker.",
   },
   "footer.note": {
     en: "Hosted in the EU · Your data stays yours",
@@ -156,6 +156,19 @@ export const TRANSLATIONS = {
     en: "Google sign-in was cancelled. Try again or use the email option.",
     da: "Google-login blev annulleret. Prøv igen eller brug e-mail-mulighed.",
   },
+  // Surfaced when the realtime session-revocation listener
+  // (`AuthProvider` in src/lib/auth-context.tsx) detects that the
+  // signed-in user's row was deleted from auth.users. The bounce
+  // happens within ~500 ms of the deletion, so the wording avoids
+  // "session expired" (misleading — the session was actively
+  // revoked, not timed out). Also intentionally non-accusatory:
+  // the user might be a legitimate person whose account was
+  // deleted in error, so we point them at support rather than
+  // implying wrongdoing.
+  "login.errAccountDeleted": {
+    en: "You've been signed out — your account was deleted. If this looks wrong, contact support.",
+    da: "Du er blevet logget ud — din konto blev slettet. Hvis dette ser forkert ud, kontakt support.",
+  },
   "login.noAccount": {
     en: "Don't have an account?",
     da: "Har du ikke en konto?",
@@ -238,8 +251,8 @@ export const TRANSLATIONS = {
   // ─── Signup ───────────────────────────────────────────────────────
   "signup.title": { en: "Create your slothcv account", da: "Opret din slothcv-konto" },
   "signup.subtitle": {
-    en: "Free forever. Build up to 10 CVs, no credit card needed.",
-    da: "Gratis for altid. Lav op til 10 CV'er, uden betalingskort.",
+    en: "Free. Build up to 10 CVs, no credit card needed.",
+    da: "Gratis. Lav op til 10 CV'er, uden betalingskort.",
   },
   "signup.firstName": { en: "First name", da: "Fornavn" },
   "signup.firstNamePlaceholder": { en: "Philip", da: "Philip" },
@@ -376,6 +389,43 @@ export const TRANSLATIONS = {
   },
   "dashboard.toastDeleted": { en: "Deleted.", da: "Slettet." },
   "dashboard.toastDeleteFailed": { en: "Delete failed.", da: "Sletning mislykkedes." },
+  // Bulk-delete (Slet alle) — copy is intentionally heavy on the
+  // irreversibility wording. The danger of "delete every CV" warrants
+  // friction; cutesy microcopy here would be misleading. Both languages
+  // explicitly include "cannot be undone" / "kan ikke fortrydes" so a
+  // user mid-keyboard-flow can't accidentally confirm without reading.
+  "dashboard.deleteAllCvs": {
+    en: "Delete all CVs",
+    da: "Slet alle CV'er",
+  },
+  "dashboard.confirmDeleteAllTitle": {
+    en: "Delete all CVs?",
+    da: "Slet alle dine CV'er?",
+  },
+  "dashboard.confirmDeleteAllDesc": {
+    en: "Are you sure you want to delete all your CVs? Every CV, every variant, and every uploaded photo will be permanently removed. This cannot be undone.",
+    da: "Er du sikker på, at du vil slette alle dine CV'er? Hvert CV, hver variant og alle uploadede billeder vil blive fjernet permanent. Dette kan ikke fortrydes.",
+  },
+  "dashboard.confirmDeleteAllConfirm": {
+    en: "Yes, delete everything",
+    da: "Ja, slet alt",
+  },
+  // Two separate strings — naive `{n} CV{s}` interpolation breaks
+  // Danish plural morphology ("7 CVs" vs the correct "7 CV'er"). The
+  // caller picks `.one` / `.other` based on the count; the
+  // interpolator only handles the `{n}` substitution.
+  "dashboard.toastDeletedAll.one": {
+    en: "Deleted 1 CV.",
+    da: "Slettede 1 CV.",
+  },
+  "dashboard.toastDeletedAll.other": {
+    en: "Deleted {n} CVs.",
+    da: "Slettede {n} CV'er.",
+  },
+  "dashboard.toastDeleteAllFailed": {
+    en: "Bulk delete failed.",
+    da: "Massesletning mislykkedes.",
+  },
   "dashboard.toastDuplicated": { en: "Duplicated.", da: "Dupliceret." },
   "dashboard.toastDuplicateFailed": {
     en: "Duplicate failed.",
@@ -607,6 +657,26 @@ export const TRANSLATIONS = {
   "design.specialty": { en: "Specialty", da: "Specialitet" },
   "design.page": { en: "Page", da: "Side" },
   "design.watermark": { en: "Watermark", da: "Vandmærke" },
+
+  // ─── Footer + legal ───────────────────────────────────────────────
+  "footer.privacy": { en: "Privacy", da: "Privatlivspolitik" },
+  "footer.terms": { en: "Terms", da: "Vilkår" },
+  "footer.copyright": {
+    en: "© {year} slothcv",
+    da: "© {year} slothcv",
+  },
+
+  // ─── Cookie banner ────────────────────────────────────────────────
+  "cookies.message": {
+    en: "We use essential cookies to keep you signed in, plus your browser's local storage to remember your theme and language. No tracking, no analytics.",
+    da: "Vi bruger essentielle cookies til at holde dig logget ind, samt din browsers lokale lager til at huske dit tema og sprog. Ingen tracking, ingen analytics.",
+  },
+  "cookies.learnMore": { en: "Learn more", da: "Læs mere" },
+  "cookies.dismiss": { en: "Got it", da: "Forstået" },
+  "cookies.ariaLabel": {
+    en: "Cookie notice",
+    da: "Cookie-meddelelse",
+  },
 
   // ─── Common ───────────────────────────────────────────────────────
   "common.cancel": { en: "Cancel", da: "Annuller" },

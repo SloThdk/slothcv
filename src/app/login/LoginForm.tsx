@@ -259,21 +259,33 @@ export function LoginForm() {
   }
 
   async function handleGoogle() {
-    // No captcha gate: Supabase's signInWithOAuth doesn't take captchaToken
-    // and GoTrue doesn't enforce CAPTCHA on the /authorize endpoint —
-    // Google handles bot detection at its own consent screen. The
-    // Turnstile widget on this page is for the magic-link flow only.
+    // DIY OAuth — kick off the flow at our own /auth/google/init
+    // Cloudflare Pages Function instead of Supabase's broker. The
+    // Function generates state/nonce/PKCE, sets httpOnly cookies, and
+    // 302-redirects to Google with redirect_uri pointing back to our
+    // domain. Effect: Google's "Continue to" account chooser shows
+    // slothcv.pages.dev (or whatever this origin is) instead of the
+    // Supabase project subdomain.
+    //
+    // No captcha gate here either: Google handles bot detection on
+    // its own consent screen, and our init Function doesn't mutate
+    // any state until the user returns from Google with a valid code.
+    // Turnstile on this page stays gated to the magic-link flow.
+    //
+    // We hand off via window.location.href (full navigation) so the
+    // Function can issue Set-Cookie headers as part of the response —
+    // a fetch-then-redirect dance can't do that under cross-origin
+    // cookie rules. This also matches Supabase's broker behaviour
+    // (which also navigates the whole window away), so the UX of
+    // "click button, leave page" is identical.
     setSubmittingGoogle(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: callback },
-    });
-    if (err) {
-      setSubmittingGoogle(false);
-      toast.error(t("login.errGoogleFailed"));
-    }
-    // On success the browser is redirected away — no further state to set.
+    const initParams = new URLSearchParams();
+    if (next) initParams.set("next", next);
+    const initPath = `/auth/google/init${
+      initParams.toString() ? `?${initParams.toString()}` : ""
+    }`;
+    window.location.href = initPath;
+    // No further state to set — we're navigating away.
   }
 
   if (loading || user) {

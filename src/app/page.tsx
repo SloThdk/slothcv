@@ -163,7 +163,7 @@ export default function LandingPage() {
           variants={staggerContainer(0.08)}
           initial="initial"
           animate={featuresInView ? "animate" : "initial"}
-          className="grid gap-4 sm:grid-cols-3"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-3"
         >
           <FeatureTile
             icon={FileDown}
@@ -202,7 +202,14 @@ export default function LandingPage() {
           variants={staggerContainer(0.03)}
           initial="initial"
           animate={galleryInView ? "animate" : "initial"}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          // grid-cols-1 is load-bearing on mobile: without an explicit track,
+          // the implicit grid sizes columns to content, and the 794px-wide
+          // (A4 @96dpi) template stage inside each TemplatePreview blows out
+          // the column past the 375px viewport — even with overflow-hidden
+          // clipping the visual, the grid track is still 794px so users
+          // get horizontal page-scroll. `minmax(0, 1fr)` (what Tailwind's
+          // grid-cols-1 expands to) breaks that inflation.
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {TEMPLATES.map((tpl) => (
             <motion.div

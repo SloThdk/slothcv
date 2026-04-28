@@ -139,9 +139,11 @@ export interface ElementOffset {
 }
 
 /** Kind discriminator for free-form custom elements the user adds via
- *  the toolshelf. Mix of basic primitives (rect / ellipse / line) and
+ *  the toolshelf. Mix of basic primitives (rect / ellipse / line),
  *  named polygon shapes (triangle / star / hexagon / arrow) that share
- *  the same fill/stroke shape but render through different SVG paths. */
+ *  the same fill/stroke shape but render through different SVG paths,
+ *  and the "icon" kind which renders a brand glyph from
+ *  `src/lib/social-icons.ts`. */
 export type CustomElementKind =
   | "rect"
   | "ellipse"
@@ -156,7 +158,8 @@ export type CustomElementKind =
   | "cross"
   | "sparkle"
   | "text"
-  | "image";
+  | "image"
+  | "icon";
 
 /** Common properties every custom element has. Coordinates are in CSS
  *  pixels relative to the A4 page top-left (not the section). The
@@ -292,6 +295,27 @@ export interface ImageElement extends CustomElementBase {
   radius?: number;
 }
 
+/** Brand-glyph element — LinkedIn / Instagram / Telegram etc. The
+ *  toolshelf "Social Icons" palette drops these onto the canvas
+ *  pre-coloured with each network's brand hex; the inspector exposes
+ *  a color picker so users can recolour to match their CV palette.
+ *
+ *  `iconName` is a registry key in `src/lib/social-icons.ts`. The
+ *  Zod schema validates against the same registry so an unknown name
+ *  can't be persisted — without the gate, an old CV would render a
+ *  blank box if we removed an icon from the registry. */
+export interface IconElement extends CustomElementBase {
+  kind: "icon";
+  /** Registry identifier — see `SocialIconName` in
+   *  `src/lib/social-icons.ts`. Stored as a plain string here (not
+   *  the typed union) so this types module doesn't have to import
+   *  the registry — the runtime validation belongs to Zod. */
+  iconName: string;
+  /** Glyph fill color (hex / rgb / var). Defaults to the icon's
+   *  brand-canonical color when first dropped from the toolshelf. */
+  color: string;
+}
+
 export type CustomElement =
   | RectElement
   | EllipseElement
@@ -306,7 +330,8 @@ export type CustomElement =
   | CrossElement
   | SparkleElement
   | TextElement
-  | ImageElement;
+  | ImageElement
+  | IconElement;
 
 /** The full persisted document. */
 export interface ResumeData {

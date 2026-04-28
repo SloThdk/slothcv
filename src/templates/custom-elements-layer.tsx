@@ -29,6 +29,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useEditorStore } from "@/lib/store/editor";
+import { SOCIAL_ICONS_BY_NAME, isSocialIconName } from "@/lib/social-icons";
 import type {
   ArrowElement,
   CrossElement,
@@ -37,6 +38,7 @@ import type {
   EllipseElement,
   HeartElement,
   HexagonElement,
+  IconElement,
   ImageElement,
   LineElement,
   OctagonElement,
@@ -265,7 +267,16 @@ function CustomElementNode({
     <div
       ref={wrapperRef}
       data-element-id={`custom.${el.id}`}
-      className={`group ${editing ? "cursor-text" : "cursor-grab"} transition-[outline-color,box-shadow] duration-100 ${ringClass}`}
+      // duration-75 (was duration-100) — Photoshop-grade selection
+      // feels instant. The 100 ms easing on outline / box-shadow used
+      // to add a perceptible settle on every hover/select state change
+      // and stacked visually as the cursor passed across overlapping
+      // elements during a drag (each ring spent 100 ms fading out of
+      // its hover state, even with pointer-events disabled). The
+      // body.slothcv-dragging / -resizing rule in globals.css ALSO
+      // hard-disables transitions during a drag — this duration-75 is
+      // the steady-state value for hover/select transitions.
+      className={`group ${editing ? "cursor-text" : "cursor-grab"} transition-[outline-color,box-shadow] duration-75 ${ringClass}`}
       style={{ ...wrap, ...selectedRingStyle }}
       onDoubleClick={(e) => {
         // Text elements: double-click enters inline edit mode. Other
@@ -339,6 +350,8 @@ function renderInner(
       );
     case "image":
       return renderImage(el);
+    case "icon":
+      return renderIcon(el);
   }
 }
 
@@ -968,6 +981,61 @@ function renderSparkle(el: SparkleElement) {
   const path =
     "M 50 0 L 56 44 L 100 50 L 56 56 L 50 100 L 44 56 L 0 50 L 44 44 Z";
   return <ShapeSvg el={el} pathD={path} viewW={100} viewH={100} />;
+}
+
+/** Brand-glyph renderer. Looks the icon up in the registry, falls back
+ *  to a neutral placeholder if the registry doesn't know the name (the
+ *  Zod schema gates this at load time, but defensive rendering covers
+ *  the case where the registry is updated and an old in-memory CV
+ *  references a removed glyph during a hot-reload). The fill is driven
+ *  by `el.color`, so the inspector's color picker writes the persisted
+ *  CV value and the user sees an instant recolour. preserveAspectRatio
+ *  is left at the default `xMidYMid meet` so square-aspect glyphs stay
+ *  square even if the user drag-resizes to a non-square box — they
+ *  centre inside the box. (For polygon shapes we use "none" / stretch,
+ *  but brand glyphs visibly distort when stretched and the user
+ *  expects the corner-handle Shift modifier to lock aspect — the
+ *  inspector layer already shows that affordance.) */
+function renderIcon(el: IconElement) {
+  const def = isSocialIconName(el.iconName)
+    ? SOCIAL_ICONS_BY_NAME[el.iconName]
+    : null;
+  if (!def) {
+    // Fallback — a faint dashed square with a "?" so the user notices
+    // and can swap to a known icon via the inspector. Far better than
+    // an invisible element that the user thinks they "lost".
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "2px dashed #cbd5e1",
+          borderRadius: 6,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#94a3b8",
+          fontSize: 18,
+          fontWeight: 700,
+        }}
+        aria-label="Unknown icon — open the inspector to choose a brand"
+      >
+        ?
+      </div>
+    );
+  }
+  return (
+    <svg
+      viewBox={def.viewBox}
+      width="100%"
+      height="100%"
+      style={{ display: "block" }}
+      aria-label={def.label}
+      role="img"
+    >
+      <path d={def.path} fill={el.color} />
+    </svg>
+  );
 }
 
 function renderImage(el: ImageElement) {

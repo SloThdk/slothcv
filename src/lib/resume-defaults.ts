@@ -939,6 +939,24 @@ export function defaultCustomElement(
         fit: "cover",
         radius: 8,
       };
+    case "icon":
+      // Social-icon glyph — the toolshelf's social-icon palette overrides
+      // `iconName` + `color` via the addCustomElement(init) channel so
+      // each card stamps the right brand. The default here (LinkedIn
+      // brand color) is a fallback for callers that don't pass init —
+      // shouldn't happen in normal flow, but a sensible default beats
+      // an empty box if a caller forgets the init.
+      return {
+        ...base,
+        kind: "icon",
+        // 48 px is the canonical "social-icon button" size — small
+        // enough to fit a row of 4-5 icons in a header band, large
+        // enough to read at A4 print resolution.
+        w: 48,
+        h: 48,
+        iconName: "linkedin",
+        color: "#0A66C2",
+      };
   }
 }
 

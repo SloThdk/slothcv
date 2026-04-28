@@ -539,6 +539,35 @@ const imageElementSchema = z.object({
   radius: z.number().min(0).max(400).optional(),
 });
 
+// Social-icon element. `iconName` is gated by the registry in
+// `src/lib/social-icons.ts` so a saved CV can't reference a glyph we
+// no longer ship — Zod fails parse, the editor falls back to default
+// data, the user is never confronted with an empty-box mystery. The
+// list is duplicated here (rather than imported) to keep this schema
+// module independent of editor-runtime code; the test suite asserts
+// the two stay in sync.
+const SOCIAL_ICON_NAMES = [
+  "linkedin",
+  "instagram",
+  "facebook",
+  "x",
+  "github",
+  "youtube",
+  "telegram",
+  "tiktok",
+  "discord",
+  "behance",
+  "dribbble",
+  "mail",
+  "globe",
+] as const;
+const iconElementSchema = z.object({
+  ...customElementBaseFields,
+  kind: z.literal("icon"),
+  iconName: z.enum(SOCIAL_ICON_NAMES),
+  color: colorSchema,
+});
+
 const customElementSchema = z.discriminatedUnion("kind", [
   rectElementSchema,
   ellipseElementSchema,
@@ -554,6 +583,7 @@ const customElementSchema = z.discriminatedUnion("kind", [
   sparkleElementSchema,
   textElementSchema,
   imageElementSchema,
+  iconElementSchema,
 ]);
 
 export const resumeDataSchema = z.object({

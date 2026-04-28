@@ -19,6 +19,28 @@
  *
  * Avatars are rendered inline as SVG data URIs — no external image hosting,
  * no remotePatterns config, scales crisp at any zoom.
+ *
+ * # Demo-link safety contract — DO NOT BREAK
+ *
+ * Every URL in this file (personal.links[].url, project.url, etc.) MUST
+ * point at `https://example.com/...` — never a real social network,
+ * personal portfolio, or third-party service. `example.com` is reserved
+ * by RFC 2606 specifically for documentation / examples and will never
+ * resolve to a real human's profile, no matter who edits this file or
+ * which persona we add later.
+ *
+ * Display labels (personal.links[].label) MUST also avoid resolving
+ * to real people if a curious user pastes the label into a browser.
+ * Use the "<firstname>-cv" demo suffix (e.g. "linkedin.com/in/alex-cv")
+ * — the "-cv" marker is uncommon enough that no real person owns those
+ * vanity slugs, but the visual format still reads like a CV link so
+ * the gallery preview looks polished.
+ *
+ * Why this matters: an earlier revision shipped real LinkedIn slugs
+ * like `linkedin.com/in/jonasberg` that resolved to an actual senior
+ * engineer's profile — using their name + employment context on every
+ * Aurora-template gallery card is a privacy / defamation problem that
+ * could draw a takedown notice or worse. Don't reintroduce real handles.
  */
 
 import {
@@ -382,7 +404,7 @@ function scratchPersona(): ResumeData {
       location: "Aarhus, DK",
       photoUrl: avatarSvg("SC", "#e2e8f0", "#0f172a"),
       links: [
-        { id: "scrat1", label: "github.com/samc", url: "https://github.com/samc" },
+        { id: "scrat1", label: "github.com/sam-cv", url: "https://example.com/sam-cv" },
       ],
     },
     sections: [
@@ -449,8 +471,8 @@ function berlinPersona(): ResumeData {
       location: "Copenhagen, DK",
       photoUrl: "/sample-photos/berlin.webp",
       links: [
-        { id: "be1", label: "alex.design", url: "https://alex.design" },
-        { id: "be2", label: "linkedin.com/in/alex", url: "https://linkedin.com/in/alex" },
+        { id: "be1", label: "alex-cv.example", url: "https://example.com/alex-cv" },
+        { id: "be2", label: "linkedin.com/in/alex-cv", url: "https://example.com/in/alex-cv" },
       ],
     },
     sections: [
@@ -526,7 +548,7 @@ function helsinkiPersona(): ResumeData {
       phone: "+47 90 11 22 33",
       location: "Oslo, NO",
       links: [
-        { id: "he1", label: "maritandersen.no", url: "https://maritandersen.no" },
+        { id: "he1", label: "marit-cv.example", url: "https://example.com/marit-cv" },
       ],
     },
     sections: [
@@ -594,8 +616,8 @@ function tokyoPersona(): ResumeData {
       location: "London, UK",
       photoUrl: "/sample-photos/tokyo.webp",
       links: [
-        { id: "tk1", label: "github.com/rpatel", url: "https://github.com/rpatel" },
-        { id: "tk2", label: "rpatel.dev", url: "https://rpatel.dev" },
+        { id: "tk1", label: "github.com/ravi-cv", url: "https://example.com/ravi-cv" },
+        { id: "tk2", label: "ravi-cv.example", url: "https://example.com/ravi-cv-portfolio" },
       ],
     },
     sections: [
@@ -641,7 +663,7 @@ function tokyoPersona(): ResumeData {
         {
           name: "vesper-chaos",
           role: "Author",
-          url: "github.com/rpatel/vesper-chaos",
+          url: "https://example.com/projects/vesper-chaos",
           start: "2024",
           techStack: "Rust · Tokio",
           bullet: "Open-source fault-injection harness; 4.2k★.",
@@ -673,7 +695,7 @@ function osloPersona(): ResumeData {
       phone: "+385 1 555 0123",
       location: "Zagreb, HR",
       links: [
-        { id: "os1", label: "linkedin.com/in/ekovac", url: "https://linkedin.com/in/ekovac" },
+        { id: "os1", label: "linkedin.com/in/elena-cv", url: "https://example.com/in/elena-cv" },
       ],
     },
     sections: [
@@ -745,8 +767,8 @@ function madridPersona(): ResumeData {
       location: "Madrid, ES",
       photoUrl: "/sample-photos/madrid.webp",
       links: [
-        { id: "ma1", label: "diegofuentes.studio", url: "https://diegofuentes.studio" },
-        { id: "ma2", label: "instagram.com/df.studio", url: "https://instagram.com/df.studio" },
+        { id: "ma1", label: "diego-cv.example", url: "https://example.com/diego-cv" },
+        { id: "ma2", label: "instagram.com/diego-cv", url: "https://example.com/diego-cv-portfolio" },
       ],
     },
     sections: [
@@ -817,8 +839,8 @@ function reykjavikPersona(): ResumeData {
       phone: "+41 44 632 1100",
       location: "Zürich, CH",
       links: [
-        { id: "re1", label: "scholar.google.com/sophie-m", url: "https://scholar.google.com" },
-        { id: "re2", label: "orcid.org/0000-0002", url: "https://orcid.org" },
+        { id: "re1", label: "scholar.example.com/sophie-cv", url: "https://example.com/scholar/sophie-cv" },
+        { id: "re2", label: "orcid.example/sophie-cv", url: "https://example.com/orcid/sophie-cv" },
       ],
     },
     sections: [
@@ -918,8 +940,8 @@ function auroraPersona(): ResumeData {
       location: "Stockholm, SE",
       photoUrl: "/sample-photos/aurora.webp",
       links: [
-        { id: "au1", label: "jonasberg.io", url: "https://jonasberg.io" },
-        { id: "au2", label: "linkedin.com/in/jonasberg", url: "https://linkedin.com/in/jonasberg" },
+        { id: "au1", label: "jonas-cv.example", url: "https://example.com/jonas-cv" },
+        { id: "au2", label: "linkedin.com/in/jonas-cv", url: "https://example.com/in/jonas-cv" },
       ],
     },
     sections: [

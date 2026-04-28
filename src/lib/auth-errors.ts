@@ -347,6 +347,12 @@ export function callbackErrorTranslationKey(
       return "login.errAccountUseMagicLink";
     case "oauth_declined":
       return "login.errOAuthDeclined";
+    case "account_deleted":
+      // Surfaced when the AuthProvider's realtime session-revocation
+      // listener fires — i.e. the signed-in user's row was just
+      // deleted from auth.users. The user is bounced here from
+      // wherever they were in-app.
+      return "login.errAccountDeleted";
     default:
       return null;
   }

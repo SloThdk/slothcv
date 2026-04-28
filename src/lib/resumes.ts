@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "./supabase/client";
+import { collectResumeStoragePaths } from "./cv-storage-cleanup";
 import { defaultResumeData, newId } from "./resume-defaults";
 import { parseResumeData } from "./schemas/resume";
 import { sampleResumeData } from "@/templates/sample-data";
@@ -265,10 +266,99 @@ function freshSection(s: Section): Section {
   }
 }
 
+/**
+ * Delete a single CV row AND best-effort purge any storage files it
+ * was the sole reference to.
+ *
+ * Cleanup contract:
+ *   1. Read the row's `data` first (RLS scopes the SELECT to the
+ *      caller). Collect candidate storage paths via
+ *      `collectResumeStoragePaths()` — only `cv-*` / `el-*` files
+ *      under the caller's `<uid>/` folder are eligible.
+ *   2. SELECT every OTHER row of the caller's and walk those for
+ *      storage paths too. The intersection (a path referenced by
+ *      another row) is REMOVED from the deletion list. This protects
+ *      duplicated CVs: `duplicateResume()` clones `data` wholesale,
+ *      so two rows can share the same `photoUrl` until one of them is
+ *      edited to a different photo.
+ *   3. Delete the resumes row. RLS guards ownership.
+ *   4. Best-effort `storage.remove()` on the (no-longer-referenced)
+ *      paths. Failures are swallowed — orphans are caught later by
+ *      the `BEFORE DELETE on auth.users` trigger if the user
+ *      eventually deletes their account, and a manual sweep can
+ *      handle long-lived stragglers.
+ *
+ * Step ordering matters: step 4 runs AFTER the row delete so a
+ * concurrent SELECT-by-id can never see a `photoUrl` whose file we
+ * already removed. RLS + the eq(id) filter make step 3 atomic at the
+ * row level; step 4 is best-effort cleanup that the user never sees.
+ */
 export async function deleteResume(id: string): Promise<void> {
   const supabase = createClient();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  // We need user.id to scope storage-path matching to the caller's
+  // folder. RLS would protect a wider match, but explicit prefix
+  // matching keeps `collectResumeStoragePaths()` honest if the row's
+  // data ever holds a foreign URL by mistake.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in.");
+
+  // Compute paths to delete — this whole block is best-effort. If the
+  // env var is missing or any read fails, we skip cleanup and proceed
+  // with the row delete; a failed cleanup must never block the user
+  // from deleting their CV.
+  let pathsToDelete: string[] = [];
+  if (supabaseUrl) {
+    const { data: thisRow } = await supabase
+      .from("resumes")
+      .select("data")
+      .eq("id", id)
+      .maybeSingle();
+    if (thisRow) {
+      const candidates = collectResumeStoragePaths(
+        thisRow.data,
+        user.id,
+        supabaseUrl,
+      );
+      if (candidates.length > 0) {
+        // Build the "still referenced by other rows" set. RLS scopes
+        // this SELECT to the caller's rows; we additionally filter out
+        // the row we're about to delete so it doesn't self-cancel the
+        // candidates.
+        const { data: others } = await supabase
+          .from("resumes")
+          .select("data")
+          .neq("id", id);
+        const stillReferenced = new Set<string>();
+        for (const r of others ?? []) {
+          for (const p of collectResumeStoragePaths(
+            r.data,
+            user.id,
+            supabaseUrl,
+          )) {
+            stillReferenced.add(p);
+          }
+        }
+        pathsToDelete = candidates.filter((p) => !stillReferenced.has(p));
+      }
+    }
+  }
+
   const { error } = await supabase.from("resumes").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  if (pathsToDelete.length > 0) {
+    // Swallow — orphans are recoverable, a failed delete here is not
+    // the user's problem. The auth.users-delete trigger picks up
+    // strays when the account is eventually closed.
+    await supabase.storage
+      .from("avatars")
+      .remove(pathsToDelete)
+      .catch(() => {});
+  }
 }
 
 /**
@@ -287,10 +377,34 @@ export async function deleteResume(id: string): Promise<void> {
  */
 export async function deleteAllResumes(): Promise<number> {
   const supabase = createClient();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in.");
+
+  // Capture every storage path referenced by ANY of the user's rows
+  // BEFORE the bulk delete fires. After the delete completes, no row
+  // remains that could still need these files, so we can purge
+  // unconditionally — no per-path cross-reference check (unlike
+  // `deleteResume`).
+  const allPaths = new Set<string>();
+  if (supabaseUrl) {
+    const { data: allRows } = await supabase
+      .from("resumes")
+      .select("data")
+      .eq("user_id", user.id);
+    for (const r of allRows ?? []) {
+      for (const p of collectResumeStoragePaths(
+        r.data,
+        user.id,
+        supabaseUrl,
+      )) {
+        allPaths.add(p);
+      }
+    }
+  }
+
   // Filter on user_id (not just .delete() with no eq) as belt-and-braces:
   // RLS already restricts deletes to the caller's rows, but explicit
   // user-id matching makes the intent obvious to anyone reading the
@@ -302,6 +416,14 @@ export async function deleteAllResumes(): Promise<number> {
     .eq("user_id", user.id)
     .select("id");
   if (error) throw new Error(error.message);
+
+  if (allPaths.size > 0) {
+    await supabase.storage
+      .from("avatars")
+      .remove(Array.from(allPaths))
+      .catch(() => {});
+  }
+
   return Array.isArray(data) ? data.length : 0;
 }
 

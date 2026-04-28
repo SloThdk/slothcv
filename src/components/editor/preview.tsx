@@ -47,6 +47,10 @@ import { TemplateRenderer } from "@/templates/renderer";
 import { PAGE_DIMENSIONS_MM, mmToPx } from "@/templates/shared";
 import { elementTextLens } from "@/lib/element-text-lens";
 import { uploadResumePhoto } from "@/lib/profile";
+import {
+  SOCIAL_ICONS_BY_NAME,
+  isSocialIconName,
+} from "@/lib/social-icons";
 import { Button } from "@/components/ui/button";
 import { InlineTextEditor } from "@/components/editor/inline-text-editor";
 import { SnapGuidesOverlay } from "@/components/editor/snap-guides-overlay";
@@ -916,22 +920,7 @@ export function Preview() {
         onDrop={(e) => {
           const kind = e.dataTransfer.getData(
             "application/x-slothcv-element",
-          ) as
-            | "rect"
-            | "ellipse"
-            | "line"
-            | "triangle"
-            | "star"
-            | "hexagon"
-            | "octagon"
-            | "diamond"
-            | "heart"
-            | "cross"
-            | "sparkle"
-            | "arrow"
-            | "text"
-            | "image"
-            | "";
+          ) as Parameters<typeof addCustomElement>[0] | "";
           if (!kind) return;
           e.preventDefault();
           // Translate the screen-space drop point into A4-page coords.
@@ -946,10 +935,30 @@ export function Preview() {
           const sc = scaleRef.current || 1;
           const x = (e.clientX - rect.left) / sc;
           const y = (e.clientY - rect.top) / sc;
-          addCustomElement(
-            kind as Parameters<typeof addCustomElement>[0],
-            { x, y },
-          );
+          // Social-icon palette stamps a secondary payload with the
+          // brand identifier so a single drop creates an
+          // already-coloured LinkedIn / Telegram / etc., not a generic
+          // icon that the user has to recolour from the inspector.
+          // The icon registry is imported lazily here so the rest of
+          // preview.tsx (which doesn't know about social icons) stays
+          // import-clean.
+          if (kind === "icon") {
+            const iconName = e.dataTransfer.getData(
+              "application/x-slothcv-icon",
+            );
+            if (iconName && isSocialIconName(iconName)) {
+              const def = SOCIAL_ICONS_BY_NAME[iconName];
+              addCustomElement("icon", { x, y }, {
+                iconName,
+                color: def.defaultColor,
+              });
+              return;
+            }
+            // Fall through to default-icon if no name was carried —
+            // shouldn't happen in normal flow but keeps drag-from-
+            // outside-source safe.
+          }
+          addCustomElement(kind, { x, y });
         }}
       >
         {/* Page sheet — sized at scaled visual dimensions so the layout

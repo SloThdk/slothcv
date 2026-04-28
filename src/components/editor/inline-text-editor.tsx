@@ -229,6 +229,15 @@ export function InlineTextEditor() {
   // burning a write.
   const committedRef = useRef(false);
 
+  // Tracks which edit session has already been focus+select'd. The
+  // focus useLayoutEffect runs every time `overlay` changes (rAF
+  // position-sync rewrites overlay each frame the source moves), so
+  // without this guard we'd re-focus mid-keystroke and collapse the
+  // user's caret / selection. Set to the editingElementId on the
+  // first successful focus call; reset to null when the edit session
+  // ends.
+  const focusedSessionRef = useRef<string | null>(null);
+
   // Resolve the lens for the active element-id.
   const lens = editingElementId
     ? elementTextLens(editingElementId, data, { setPersonal, updateSection })
@@ -255,53 +264,44 @@ export function InlineTextEditor() {
       setEditingElementId(null);
       return;
     }
-    const rect = el.getBoundingClientRect();
+
+    // Capture computed font / paddings BEFORE we mutate the source.
+    // `getComputedStyle` returns a LIVE CSSStyleDeclaration so reading
+    // `cs.color` AFTER `el.style.color = "transparent"` would resolve
+    // to "rgba(0,0,0,0)" — the overlay would then render invisible
+    // text. Snapshot every value we care about here, drop the live
+    // reference, and the rest of this effect can mutate freely.
     const cs = window.getComputedStyle(el);
-    const intrinsicW = el.offsetWidth || rect.width || 1;
-    const visualScale = rect.width / intrinsicW || 1;
-    setOverlay({
-      rect,
-      visualScale,
-      font: {
-        fontFamily: cs.fontFamily,
-        fontSize: parseFloat(cs.fontSize) || 16,
-        fontWeight: cs.fontWeight,
-        fontStyle: cs.fontStyle,
-        color: cs.color,
-        textAlign: cs.textAlign,
-        lineHeight: cs.lineHeight,
-        letterSpacing: cs.letterSpacing,
-        textTransform: cs.textTransform,
-        paddingLeft: parseFloat(cs.paddingLeft) || 0,
-        paddingTop: parseFloat(cs.paddingTop) || 0,
-        paddingRight: parseFloat(cs.paddingRight) || 0,
-        paddingBottom: parseFloat(cs.paddingBottom) || 0,
-        borderRadius: cs.borderRadius || "0",
-        fontFeatureSettings: cs.fontFeatureSettings || "normal",
-        fontVariantNumeric: cs.fontVariantNumeric || "normal",
-        fontKerning: cs.fontKerning || "auto",
-        tabSize: cs.tabSize || "8",
-      },
-    });
-    const initialText = lens.read();
-    setText(initialText);
-    latestTextRef.current = initialText;
-    // Hide the source element's text — its box stays in place (so the
-    // template's layout doesn't shift) but no rendered text shows
-    // underneath the overlay. The source's text + computed styles
-    // remain unchanged for the entire edit session because we no
-    // longer write to the data store on every keystroke (see file
-    // header). The overlay grows freely above a perfectly still source
-    // — that's the "Photoshop feel" behaviour.
-    // Snapshot original inline styles BEFORE we mutate them. We
-    // INTENTIONALLY DO NOT lock the source's width / height — even
-    // though the agent's research suggested it as insurance, in
-    // practice setting an explicit width on a flex / grid child
-    // causes the parent's layout algorithm to re-run with a different
-    // basis, and the source can end up at a SLIGHTLY different
-    // position. The rAF rect-sync loop then chases the new position
-    // and the user sees the overlay (and the visible edit text) jump
-    // down a few pixels at edit start.
+    const fontSnapshot = {
+      fontFamily: cs.fontFamily,
+      fontSize: parseFloat(cs.fontSize) || 16,
+      fontWeight: cs.fontWeight,
+      fontStyle: cs.fontStyle,
+      color: cs.color,
+      textAlign: cs.textAlign,
+      lineHeight: cs.lineHeight,
+      letterSpacing: cs.letterSpacing,
+      textTransform: cs.textTransform,
+      paddingLeft: parseFloat(cs.paddingLeft) || 0,
+      paddingTop: parseFloat(cs.paddingTop) || 0,
+      paddingRight: parseFloat(cs.paddingRight) || 0,
+      paddingBottom: parseFloat(cs.paddingBottom) || 0,
+      borderRadius: cs.borderRadius || "0",
+      fontFeatureSettings: cs.fontFeatureSettings || "normal",
+      fontVariantNumeric: cs.fontVariantNumeric || "normal",
+      fontKerning: cs.fontKerning || "auto",
+      tabSize: cs.tabSize || "8",
+    };
+
+    // Snapshot original inline styles BEFORE we mutate. We INTENTIONALLY
+    // DO NOT lock the source's width / height — even though scout's
+    // research suggested it as insurance, in practice setting an
+    // explicit width on a flex / grid child causes the parent's layout
+    // algorithm to re-run with a different basis, and the source can
+    // end up at a SLIGHTLY different position. The rAF rect-sync loop
+    // would then chase the new position and the user would see the
+    // overlay (and the visible edit text) jump down a few pixels at
+    // edit start.
     //
     // Without the lock, the source's box stays exactly where the
     // browser already had it. Because we no longer write to the data
@@ -321,7 +321,37 @@ export function InlineTextEditor() {
       originalMaxWidth: el.style.maxWidth,
       originalMaxHeight: el.style.maxHeight,
     };
+
+    // Hide the source element's text — its box stays in place (so the
+    // template's layout doesn't shift) but no rendered text shows
+    // underneath the overlay. Color doesn't affect layout, so this is
+    // pure paint-channel suppression.
     el.style.color = "transparent";
+
+    // Clear the browser's auto-selection from the user's double-click.
+    // Without this, the rect we read below is captured WITH the
+    // selection visible, and the rAF loop's first tick (after the
+    // browser has dropped the selection on focus-shift to our overlay)
+    // reads a SLIGHTLY DIFFERENT rect — the overlay then animates from
+    // the selection-inflated rect to the steady-state rect and the
+    // user perceives a "jump down" of 1-3 px. Clearing here pins both
+    // rect reads to the same browser layout state.
+    const sel0 = window.getSelection();
+    if (sel0) sel0.removeAllRanges();
+
+    // FINALLY read the rect — after all visual mutations (transparency
+    // + selection clear) have settled. This is the same rect the rAF
+    // position-sync loop will read on its first tick, so the captured
+    // rect equals the rect rAF wants → zero jump on edit-start.
+    const rect = el.getBoundingClientRect();
+    const intrinsicW = el.offsetWidth || rect.width || 1;
+    const visualScale = rect.width / intrinsicW || 1;
+
+    setOverlay({ rect, visualScale, font: fontSnapshot });
+
+    const initialText = lens.read();
+    setText(initialText);
+    latestTextRef.current = initialText;
     committedRef.current = false;
 
     // Snapshot lens + el + every original style so the cleanup closure
@@ -431,18 +461,38 @@ export function InlineTextEditor() {
     };
   }, []);
 
-  // Initial-content + focus + select-all in useLayoutEffect — runs
-  // synchronously after the overlay mounts but BEFORE the browser
-  // paints, so the user never sees the unfocused intermediate state.
+  // Initial-content + focus + select-all.
   //
-  // We initialize the contentEditable's content imperatively via
-  // `innerText` rather than passing `text` as React children. This is
-  // the "uncontrolled input" pattern for contentEditable: React
-  // doesn't manage the editing div's children, so subsequent renders
-  // (e.g. from rAF rect-sync, replica resize) cannot clobber the
-  // user's caret position or selection. The latestTextRef + local
-  // `text` state mirror the value for the commit path and the
-  // replica's auto-grow display.
+  // **The original implementation's hidden bug:** depending only on
+  // `[editingElementId]` looked correct, but the effect actually fired
+  // BEFORE the contentEditable existed in the DOM. The setup order is:
+  //
+  //   1. `setEditingElementId(id)` triggers a render of `<InlineTextEditor>`.
+  //   2. Render returns `null` (overlay state is still null).
+  //   3. After commit, the rect-capture useLayoutEffect runs and calls
+  //      `setOverlay(...)` — schedules a re-render.
+  //   4. THIS effect runs next, in declaration order. But `taRef.current`
+  //      is still null because step 2 didn't mount the contentEditable.
+  //      Focus is silently skipped.
+  //   5. React processes the queued re-render. The overlay JSX renders.
+  //      `taRef.current` populates. But this effect's deps
+  //      (`[editingElementId]`) didn't change between renders 1 and 2,
+  //      so React DOES NOT re-fire it. **Focus never happens
+  //      automatically — the user has to click the overlay to start
+  //      typing.**
+  //
+  // Fix: depend on `overlay` as well. The rect-capture effect sets
+  // overlay; that triggers a re-render where the contentEditable
+  // mounts; THIS effect re-runs (deps changed), `taRef.current` is
+  // now valid, focus fires.
+  //
+  // The rAF position-sync loop also writes to `overlay` every frame
+  // the source moves (it merges a new rect+scale into the existing
+  // overlay state, producing a fresh object reference each call). So
+  // this effect would re-run on every rAF tick. The
+  // `focusedSessionRef` guard short-circuits subsequent runs — focus
+  // / select-all happens exactly ONCE per edit session and never
+  // again, even as the rAF loop ticks.
   //
   // **`preventScroll: true` is critical.** The browser's default
   // focus-into-view behaviour pans the canvas a few pixels the moment
@@ -456,14 +506,29 @@ export function InlineTextEditor() {
   // `.select()`). selectNodeContents covers all text nodes in the
   // editing div, mimicking textarea's select-all behaviour.
   //
-  // We only run focus once per edit session (initial mount), not on
-  // every overlay rect tick. Re-focusing on every rAF re-render of
-  // the overlay would steal focus / collapse selection while the user
-  // is mid-keystroke if anything else briefly grabs focus. The
-  // dependency on `editingElementId` (rather than `overlay`) ensures
-  // one setup per session.
+  // We initialize the contentEditable's content imperatively via
+  // `innerText` rather than passing `text` as React children. This is
+  // the "uncontrolled input" pattern for contentEditable: React
+  // doesn't manage the editing div's children, so subsequent renders
+  // (e.g. from rAF rect-sync, replica resize) cannot clobber the
+  // user's caret position or selection. The latestTextRef + local
+  // `text` state mirror the value for the commit path and the
+  // replica's auto-grow display.
   useLayoutEffect(() => {
-    if (!editingElementId) return;
+    // Reset focus tracker on edit-end so the next edit session re-focuses.
+    if (!editingElementId) {
+      focusedSessionRef.current = null;
+      return;
+    }
+    // Wait for the overlay to mount in the DOM. Without this guard
+    // the effect fires before `<div ref={taRef}>` exists — focus
+    // silently skips and the user has to click manually.
+    if (!overlay) return;
+    // Already focused for this session? rAF position-sync rewrites
+    // `overlay` every frame the source moves — short-circuit so we
+    // don't steal focus / collapse selection mid-keystroke.
+    if (focusedSessionRef.current === editingElementId) return;
+
     const el = taRef.current;
     if (!el) return;
     // Set initial content. Empty string is normal — happens when the
@@ -480,7 +545,8 @@ export function InlineTextEditor() {
       sel.removeAllRanges();
       sel.addRange(range);
     }
-  }, [editingElementId]);
+    focusedSessionRef.current = editingElementId;
+  }, [editingElementId, overlay]);
 
   // Commit the latest typed value via lens.write and close the overlay.
   // Reads from the ref (not React state) because blur / keyboard
@@ -497,18 +563,26 @@ export function InlineTextEditor() {
     setEditingElementId(null);
   }
 
-  // Keyboard, matching the industry convention (Figma + Photoshop) per
-  // the commit-cancel research:
-  //   - Esc                 → commit + exit (NOT revert). Universal in
-  //                           canvas tools. Web-form muscle memory says
-  //                           Esc cancels, but the canvas convention is
-  //                           the stronger pull and matches Figma /
-  //                           Canva / Illustrator.
-  //   - Enter (plain)       → newline (browser default in
-  //                           contentEditable=plaintext-only — inserts
-  //                           "\n" into innerText, which the replica
-  //                           picks up on the next onInput tick)
-  //   - Cmd/Ctrl + Enter    → commit + exit
+  // Keyboard. The earlier policy followed Photoshop's Type Tool (plain
+  // Enter inserts a newline, Cmd+Enter commits). Real users hitting
+  // Enter expecting "save" instead got an unexpected newline that
+  // grew the auto-sized box downward — read by every tester as the
+  // editor "jumping". For a CV editor (where 90 % of editable fields
+  // are short strings — name, headline, email, role, dates) the
+  // web-form convention is the stronger pull:
+  //
+  //   - Plain Enter         → commit + exit. Matches every form-field
+  //                           muscle memory the user already has.
+  //   - Shift+Enter         → newline. Matches Slack / Discord / GitHub
+  //                           comment / every modern chat-style editor.
+  //                           For multi-line fields (summary, bullets)
+  //                           the user holds Shift to get a soft break.
+  //   - Cmd/Ctrl + Enter    → commit + exit. Kept for backwards muscle
+  //                           memory — anyone who learned the previous
+  //                           binding still gets save behaviour.
+  //   - Esc                 → commit + exit (NOT revert). Canvas-tool
+  //                           convention; matches Figma / Canva.
+  //
   // Click-outside / blur is also commit (the universal default).
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") {
@@ -516,11 +590,18 @@ export function InlineTextEditor() {
       commit();
       return;
     }
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      // Plain Enter or Cmd/Ctrl+Enter both commit. preventDefault
+      // blocks the contentEditable's native newline insertion —
+      // without it, a "\n" would land in innerText one tick before
+      // commit() fires, polluting the saved value.
       e.preventDefault();
       commit();
       return;
     }
+    // Shift+Enter falls through — contenteditable=plaintext-only
+    // inserts "\n" natively, the replica picks up the new content
+    // on the next onInput tick, the auto-grow grid track expands.
   }
 
   /** Mirror the contentEditable's current `innerText` into local
@@ -694,15 +775,20 @@ export function InlineTextEditor() {
         />
       </div>
       {/* Status hint — pinned to viewport bottom-center, NOT attached
-          to the textarea, so it never overlaps the document text below
+          to the editor, so it never overlaps the document text below
           the field being edited. Reads like an editor's status bar:
-          informational, not in the way. */}
+          informational, not in the way. The keys reflect the actual
+          binding policy in `onKeyDown` above. */}
       <div
         className="pointer-events-none fixed left-1/2 bottom-4 -translate-x-1/2 select-none rounded-full bg-blue-600 px-3 py-1 text-[11px] font-medium text-white shadow-lg"
         style={{ zIndex: 10001 }}
       >
         <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
           Enter
+        </kbd>{" "}
+        save{"  ·  "}
+        <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
+          Shift+Enter
         </kbd>{" "}
         newline{"  ·  "}
         <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">

@@ -151,6 +151,36 @@ body.slothcv-dragging * {
   -webkit-user-select: none !important;
 }
 
+/* Kill every transition + animation on every preview-stage descendant
+ * for the duration of a drag or a resize. Without this rule, hover-
+ * ring transitions (Tailwind's `transition-[outline-color,box-shadow]
+ * duration-100`) keep firing as the cursor passes over siblings whose
+ * pointer-events are disabled — they were the LAST hovered before
+ * pointer-events killed the :hover, so they spend 100 ms transitioning
+ * out of the hover state, painting a settling ring as the user drags
+ * past. Stacking that across overlapping siblings produces the "border
+ * outliners highlighting each other" effect. The slothcv-dragging /
+ * slothcv-resizing class wins on every transitionable property so
+ * everything snaps instantly — Photoshop / Affinity / Figma-grade
+ * "the dragged element is the only thing moving" perception. */
+body.slothcv-dragging .preview-stage *,
+body.slothcv-resizing .preview-stage * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Suppress hover/selection rings on the element being dragged or
+ * resized. The cursor-grab + the live transform / left+top updates
+ * are stronger affordances than any outline, and an outline on a
+ * fast-moving element reads as visual chatter (Photoshop hides the
+ * marching ants while you drag a marquee selection — same idea). */
+body.slothcv-dragging .preview-stage [data-being-dragged="true"],
+body.slothcv-resizing .preview-stage [data-being-dragged="true"] {
+  outline: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+
 /* Resize-active state — same lockdown but force resize cursor instead
  * of grabbing. Set by ResizeHandle's onPointerDown; cleared on
  * pointerup/cancel. The data-resize-cursor attr on the body carries
@@ -167,6 +197,32 @@ body.slothcv-resizing,
 body.slothcv-resizing * {
   user-select: none !important;
   -webkit-user-select: none !important;
+}
+
+/* Hover-ring nesting: only the LEAFMOST hovered targetable element
+ * shows its hover ring. Without this, every template's per-element
+ * `hover:ring-2 hover:ring-neutral-900/X` (text spans) AND the wrapping
+ * group's `hover:ring-2` (whole experience entry, whole section) light
+ * up at the same time as the cursor sits over the leaf — the user
+ * sees three concentric rings stacking, which the user described as
+ * "border outliners highlighting each other".
+ *
+ * The :has() guard fires whenever a more-specific descendant target is
+ * hovered. We zero out Tailwind's ring custom-properties + outline +
+ * box-shadow so the parent's ring vanishes. Only the leaf's ring stays.
+ *
+ * Browser support: :has() is Baseline 2024 (Chrome 105+, Firefox 121+,
+ * Safari 15.4+). All modern browsers support it; older fall back to
+ * the old stacking behaviour, which still WORKS — it's just less
+ * polished. Acceptable graceful degradation. */
+.preview-stage
+  [data-section-id]:hover:has([data-section-id]:hover, [data-element-id]:hover),
+.preview-stage [data-element-id]:hover:has([data-element-id]:hover) {
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-shadow: 0 0 #0000 !important;
+  box-shadow: none !important;
+  outline-color: transparent !important;
 }
 
 /*

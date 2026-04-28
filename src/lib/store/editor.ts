@@ -125,10 +125,18 @@ interface EditorState {
    *  so the caller can immediately select it. Optional `at` overrides
    *  the default (80, 80) drop position — used by the toolshelf's
    *  drag-onto-canvas flow so the element lands where the cursor was
-   *  released rather than at a fixed corner. */
+   *  released rather than at a fixed corner.
+   *
+   *  Optional `init` is shallow-merged over the defaultCustomElement()
+   *  result. Used by the social-icon palette: every social-icon card
+   *  shares `kind: "icon"` but each card stamps a different
+   *  `iconName` + brand `color` — `init` carries those without
+   *  needing a separate addIconElement() function or a follow-up
+   *  updateCustomElement() call (which would burn an extra undo step). */
   addCustomElement: (
     kind: CustomElementKind,
     at?: { x: number; y: number },
+    init?: Partial<CustomElement>,
   ) => string;
   /** Patch a custom element's properties. Generic patch type because the
    *  toolshelf inspector touches any field. */
@@ -532,7 +540,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // ---- Toolshelf actions ----
 
-  addCustomElement(kind, at) {
+  addCustomElement(kind, at, init) {
     // Top z is the highest existing z + 1, so the new element lands on
     // top of everything. Defaults are tuned to land at a visible offset
     // from the top-left so the user immediately sees what they added.
@@ -544,13 +552,24 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     // sits under the cursor — that matches user intent ("I dropped it
     // here") better than top-left anchoring, which feels off by half
     // the element's size.
-    const el = at
+    const positioned = at
       ? ({
           ...base,
           x: Math.round(at.x - base.w / 2),
           y: Math.round(at.y - base.h / 2),
         } as typeof base)
       : base;
+    // Apply caller-supplied init last. Used by the social-icon palette
+    // to stamp the network-specific iconName + brand color in the same
+    // operation as the create — so the undo stack gets ONE entry for
+    // "added a LinkedIn icon", not two ("added a generic icon", "set
+    // its iconName"). Cast through unknown because TypeScript can't
+    // narrow the discriminated union when init is Partial<CustomElement>
+    // — the runtime invariant (init shape matches kind's element type)
+    // is enforced by the toolshelf, not the type system.
+    const el = (
+      init ? ({ ...positioned, ...init } as CustomElement) : positioned
+    ) as CustomElement;
     set((s) => ({
       data: {
         ...s.data,

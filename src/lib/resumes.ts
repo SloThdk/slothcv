@@ -271,6 +271,40 @@ export async function deleteResume(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Hard-delete EVERY CV the caller owns. RLS scopes the DELETE to the
+ * caller's rows only — even though the WHERE clause matches "all
+ * resumes", Postgres only sees the rows the policy permits.
+ *
+ * Returns the number of rows deleted so the caller can show a
+ * confirmation toast ("Deleted 7 CVs"). The Supabase client returns
+ * the deleted rows when `.select()` is appended; we count and return
+ * the length.
+ *
+ * Caller MUST gate this behind a confirm modal — there is NO undo.
+ * The dashboard wires this through `useConfirm({ variant: "danger" })`
+ * with explicit "this cannot be undone" wording in both EN and DA.
+ */
+export async function deleteAllResumes(): Promise<number> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in.");
+  // Filter on user_id (not just .delete() with no eq) as belt-and-braces:
+  // RLS already restricts deletes to the caller's rows, but explicit
+  // user-id matching makes the intent obvious to anyone reading the
+  // SQL log AND survives any future RLS policy change without
+  // accidentally deleting more than the caller's own rows.
+  const { data, error } = await supabase
+    .from("resumes")
+    .delete()
+    .eq("user_id", user.id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data.length : 0;
+}
+
 export async function duplicateResume(id: string): Promise<void> {
   const supabase = createClient();
   const {

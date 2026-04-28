@@ -17,7 +17,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, FileText, Copy, Layers, Trash2 } from "lucide-react";
+import { Plus, FileText, Copy, Layers, Trash2, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   listResumes,
   createResume,
   deleteResume,
+  deleteAllResumes,
   duplicateResume,
   duplicateAsVariant,
   groupResumesByMaster,
@@ -161,6 +162,51 @@ function DashboardInner() {
     }
   }
 
+  /**
+   * Hard-delete EVERY CV the user owns. Two friction layers:
+   *
+   *   1. The button is `variant="ghost"` with red text — it does not
+   *      look like a primary action even when present.
+   *   2. The confirm modal uses the danger variant + "this cannot be
+   *      undone" language in EN/DA. The user has to actively click
+   *      "Yes, delete everything" — a non-default keyboard-friendly
+   *      label that requires reading.
+   *
+   * Server-side, RLS guarantees this DELETE only touches the caller's
+   * rows. The `deleteAllResumes()` helper also adds an explicit
+   * `eq("user_id", user.id)` filter as belt-and-braces.
+   */
+  async function onDeleteAll() {
+    const ok = await confirm({
+      title: t("dashboard.confirmDeleteAllTitle"),
+      description: t("dashboard.confirmDeleteAllDesc"),
+      confirmLabel: t("dashboard.confirmDeleteAllConfirm"),
+      cancelLabel: t("common.cancel"),
+      variant: "danger",
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const n = await deleteAllResumes();
+      // Plural-aware toast — naive "{n} CV{s}" templating would yield
+      // "7 CVs" in English but "7 CVs" in Danish (incorrect; Danish
+      // plural is "CV'er"). Two separate translation entries handle
+      // the morphology cleanly.
+      toast.success(
+        n === 1
+          ? t("dashboard.toastDeletedAll.one")
+          : t("dashboard.toastDeletedAll.other", { n }),
+      );
+      await refresh();
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : t("dashboard.toastDeleteAllFailed"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onDelete(id: string) {
     const cv = resumes?.find((r) => r.id === id);
     const ok = await confirm({
@@ -270,23 +316,43 @@ function DashboardInner() {
             )}
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={onCreate}
-          disabled={busy || atLimit}
-          title={
-            atLimit
-              ? t("dashboard.limitTitle", { n: MAX_CVS_PER_USER })
-              : undefined
-          }
-        >
-          <Plus className="h-4 w-4" />
-          {busy
-            ? t("dashboard.creating")
-            : atLimit
-              ? t("dashboard.limitReached")
-              : t("dashboard.newCv")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Bulk-delete only renders when there's something to delete.
+              Visually subordinate to "New CV" — a ghost button with
+              red text + warning glyph reads as "destructive but
+              available" without competing with the primary action.
+              The confirm modal does the heavy work of friction. */}
+          {Array.isArray(resumes) && resumes.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onDeleteAll}
+              disabled={busy}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
+              title={t("dashboard.deleteAllCvs")}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              {t("dashboard.deleteAllCvs")}
+            </Button>
+          )}
+          <Button
+            type="button"
+            onClick={onCreate}
+            disabled={busy || atLimit}
+            title={
+              atLimit
+                ? t("dashboard.limitTitle", { n: MAX_CVS_PER_USER })
+                : undefined
+            }
+          >
+            <Plus className="h-4 w-4" />
+            {busy
+              ? t("dashboard.creating")
+              : atLimit
+                ? t("dashboard.limitReached")
+                : t("dashboard.newCv")}
+          </Button>
+        </div>
       </div>
 
       {atLimit && (

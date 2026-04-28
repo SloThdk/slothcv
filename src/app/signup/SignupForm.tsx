@@ -290,24 +290,29 @@ export function SignupForm() {
   }
 
   async function handleGoogle() {
-    // No captcha gate: signInWithOAuth doesn't take captchaToken and
-    // GoTrue doesn't enforce CAPTCHA on the OAuth /authorize endpoint
-    // (Google does its own bot detection). Turnstile on this page is
-    // for the magic-link probe only.
+    // DIY OAuth — see LoginForm.tsx handleGoogle for the full
+    // rationale. Identical flow on signup; the init Function doesn't
+    // care which page kicked off the request. New users land on
+    // /dashboard via signInWithIdToken on the finalize page (Supabase
+    // auto-creates the auth.users row on first sign-in if no
+    // collision); existing users get the same provider-mixing toast
+    // they'd see via the broker.
+    //
+    // The Turnstile-equipped magic-link signup form gates on its
+    // captcha; this Google path doesn't (Google handles bot
+    // detection at the consent screen + we don't mutate any state
+    // until the round-trip returns with a verified ID token).
     setSubmittingGoogle(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: callback },
-    });
-    if (err) {
-      setSubmittingGoogle(false);
-      toast.error(t("login.errGoogleFailed"));
-    }
-    // On success the browser is redirected away — if the user comes back
-    // via the browser's back button, the `pageshow` bfcache listener at
-    // the top of this component clears `submittingGoogle` so the button
-    // isn't stuck on "Connecting…" with no path to recover.
+    const initParams = new URLSearchParams();
+    if (next) initParams.set("next", next);
+    const initPath = `/auth/google/init${
+      initParams.toString() ? `?${initParams.toString()}` : ""
+    }`;
+    window.location.href = initPath;
+    // No further state to set — we're navigating away. If the user
+    // comes back via the browser's back button, the `pageshow`
+    // bfcache listener at the top of this component clears
+    // `submittingGoogle` so the button isn't stuck on "Connecting…".
   }
 
   if (loading || user) {

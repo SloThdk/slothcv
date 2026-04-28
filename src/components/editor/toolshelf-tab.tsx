@@ -33,6 +33,7 @@ import {
   Heart,
   Hexagon,
   Image as ImageIcon,
+  Link2,
   Minus,
   Octagon,
   Plus as PlusIcon,
@@ -47,6 +48,12 @@ import {
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { uploadCustomElementImage } from "@/lib/profile";
+import {
+  SOCIAL_ICONS,
+  SOCIAL_ICONS_BY_NAME,
+  isSocialIconName,
+  type SocialIconName,
+} from "@/lib/social-icons";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-modal";
 import { Input } from "@/components/ui/input";
@@ -56,6 +63,7 @@ import type {
   CustomElement,
   CustomElementKind,
   EllipseElement,
+  IconElement,
   ImageElement,
   LineElement,
   RectElement,
@@ -228,7 +236,33 @@ function ShapePreview({ kind }: { kind: CustomElementKind }) {
           <ImageIcon className="h-3.5 w-3.5 text-white drop-shadow" />
         </div>
       );
+    case "icon":
+      // Defensive: ShapePreview is only called from SHELF_ITEMS (which
+      // doesn't include "icon" — social icons live in their own palette
+      // with `<SocialIconPreview>`), so this branch is unreachable in
+      // practice. Kept for exhaustiveness so a future refactor that
+      // routes "icon" through SHELF_ITEMS doesn't render a blank thumb.
+      return <SocialIconPreview name="linkedin" />;
   }
+}
+
+/** Mini SVG-glyph preview rendered inside each social-icon shelf card.
+ *  Reads from the same registry the live canvas uses, so what users
+ *  see in the shelf is exactly what drops onto the page. Sized to
+ *  match the geometric ShapePreview thumbnails (~36 px) so the two
+ *  shelf sections share visual rhythm. */
+function SocialIconPreview({ name }: { name: SocialIconName }) {
+  const def = SOCIAL_ICONS_BY_NAME[name];
+  return (
+    <svg
+      viewBox={def.viewBox}
+      className="h-9 w-9"
+      role="img"
+      aria-label={def.label}
+    >
+      <path d={def.path} fill={def.defaultColor} />
+    </svg>
+  );
 }
 
 function Shelf() {
@@ -239,6 +273,18 @@ function Shelf() {
   const updateCustomElement = useEditorStore((s) => s.updateCustomElement);
 
   const elements = data.customElements ?? [];
+
+  /** Drop a brand-glyph icon onto the canvas with the network's brand
+   *  color pre-applied. Single store mutation = single undo entry —
+   *  the toolshelf "click LinkedIn" gesture is one logical action,
+   *  not "create generic icon" + "set iconName" + "set color". */
+  function addSocialIcon(name: SocialIconName) {
+    const def = SOCIAL_ICONS_BY_NAME[name];
+    addCustomElement("icon", undefined, {
+      iconName: name,
+      color: def.defaultColor,
+    } as Partial<IconElement>);
+  }
 
   return (
     <div className="space-y-3">
@@ -298,6 +344,59 @@ function Shelf() {
         })}
       </div>
 
+      {/* Social Icons palette — separate from the geometric shapes
+          above so the user reads "shapes" vs "brand glyphs" as
+          distinct affordances. Each card stamps a pre-coloured
+          IconElement with the network's brand hex; the inspector's
+          color picker lets the user retune to match their CV palette
+          afterwards. The cards are intentionally tighter (3-col grid
+          instead of 2) because brand glyphs are visually denser than
+          named shapes — 13 icons fit four rows of three plus one. */}
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+          Social icons
+        </p>
+        <p className="mt-0.5 text-[11px] text-subtle">
+          Drop a brand glyph instead of importing your own. Recolour from
+          the inspector after — every glyph is a single SVG path that
+          tints to any hex.
+        </p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {SOCIAL_ICONS.map((it) => (
+            <button
+              key={it.name}
+              type="button"
+              draggable
+              onDragStart={(e) => {
+                // Same MIME type as geometric shapes so the canvas drop
+                // handler routes through one code path. The payload is
+                // augmented with the iconName — the canvas reads BOTH
+                // pieces and calls addCustomElement("icon", at, {iconName, color}).
+                e.dataTransfer.effectAllowed = "copy";
+                e.dataTransfer.setData(
+                  "application/x-slothcv-element",
+                  "icon",
+                );
+                e.dataTransfer.setData(
+                  "application/x-slothcv-icon",
+                  it.name,
+                );
+                e.dataTransfer.setData("text/plain", `slothcv:icon:${it.name}`);
+              }}
+              onClick={() => addSocialIcon(it.name)}
+              onDoubleClick={() => addSocialIcon(it.name)}
+              title={`Drag to canvas, or click to add ${it.label}`}
+              className="group relative flex aspect-square cursor-grab flex-col items-center justify-center gap-1 rounded-lg border border-border bg-surface p-1.5 transition-[background-color,box-shadow,transform] hover:-translate-y-px hover:border-strong hover:bg-surface-hover hover:shadow-md active:cursor-grabbing"
+            >
+              <SocialIconPreview name={it.name} />
+              <span className="text-[10px] font-semibold leading-tight text-fg">
+                {it.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {elements.length > 0 && (
         <div className="mt-4 border-t border-border pt-3">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
@@ -351,6 +450,7 @@ function LayerRow({
     arrow: "Arrow",
     text: "Text",
     image: "Image",
+    icon: "Icon",
   };
   const iconMap: Record<
     CustomElementKind,
@@ -370,12 +470,21 @@ function LayerRow({
     arrow: ArrowRight,
     text: Type,
     image: ImageIcon,
+    icon: Link2,
   };
   const Icon = iconMap[el.kind];
+  // For icon layers, prefer the brand label (LinkedIn / Telegram) over
+  // a generic "48×48" — users scanning the layers list want to know
+  // WHICH icon, not its dimensions.
   const preview =
     el.kind === "text"
       ? (el as TextElement).text.slice(0, 28) || "(empty)"
-      : `${Math.round(el.w)}×${Math.round(el.h)}`;
+      : el.kind === "icon"
+        ? isSocialIconName((el as IconElement).iconName)
+          ? SOCIAL_ICONS_BY_NAME[(el as IconElement).iconName as SocialIconName]
+              .label
+          : "Icon"
+        : `${Math.round(el.w)}×${Math.round(el.h)}`;
   return (
     <div className="group flex items-center gap-1.5 rounded border border-transparent px-1.5 py-1 hover:border-border hover:bg-surface">
       <button
@@ -540,6 +649,7 @@ function Inspector({ element }: { element: CustomElement }) {
       )}
       {element.kind === "text" && <TextControls element={element} />}
       {element.kind === "image" && <ImageControls element={element} />}
+      {element.kind === "icon" && <IconControls element={element} />}
 
       {/* --- Common: rotation, opacity --- */}
       <Section title="Transform">
@@ -885,6 +995,70 @@ function TextControls({ element }: { element: TextElement }) {
   );
 }
 
+/** Brand-glyph inspector. Two controls:
+ *
+ *    - **Brand picker**: a 3-col grid of every registered social icon,
+ *      same layout as the shelf palette. Clicking swaps `iconName`
+ *      AND resets `color` to that brand's defaultColor — so changing
+ *      from Instagram pink to Telegram blue gives a sensible recolour
+ *      automatically. The user can fine-tune color afterwards.
+ *
+ *    - **Color picker**: standard ColorField. Persists to
+ *      `IconElement.color` which the renderer plugs into the SVG's
+ *      `fill`. No transition — instant retint.
+ *
+ *  No size / stroke controls — the global Position + Size + Transform
+ *  sections above already cover those. Icon glyphs are intentionally
+ *  fill-only (no stroke) because brand guidelines vary and a stroke
+ *  on a brand glyph generally violates the network's logo policy. */
+function IconControls({ element }: { element: IconElement }) {
+  const update = useEditorStore((s) => s.updateCustomElement);
+  return (
+    <Section title="Icon">
+      <div>
+        <Label>Brand</Label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {SOCIAL_ICONS.map((it) => {
+            const isActive = element.iconName === it.name;
+            return (
+              <button
+                key={it.name}
+                type="button"
+                onClick={() =>
+                  update(element.id, {
+                    iconName: it.name,
+                    color: it.defaultColor,
+                  })
+                }
+                title={it.label}
+                className={`group flex aspect-square cursor-pointer flex-col items-center justify-center gap-0.5 rounded border bg-surface p-1 text-[9px] font-medium transition-[background-color,box-shadow,border-color] ${
+                  isActive
+                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-950/40 dark:text-blue-300"
+                    : "border-border text-fg hover:border-strong hover:bg-surface-hover"
+                }`}
+              >
+                <svg
+                  viewBox={it.viewBox}
+                  className="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  <path d={it.path} fill={it.defaultColor} />
+                </svg>
+                <span className="truncate leading-tight">{it.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <ColorField
+        label="Color"
+        value={element.color}
+        onChange={(v) => update(element.id, { color: v })}
+      />
+    </Section>
+  );
+}
+
 function ImageControls({ element }: { element: ImageElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -1149,5 +1323,7 @@ function kindLabel(k: CustomElementKind): string {
       return "Text";
     case "image":
       return "Image";
+    case "icon":
+      return "Icon";
   }
 }

@@ -14,6 +14,7 @@ import { PromptProvider } from "@/components/ui/prompt-modal";
 import { ALL_FONT_VARIABLE_CLASSES } from "@/lib/fonts/registry";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { CookieBanner } from "@/components/cookie-banner";
 import { RouteTransition } from "@/components/motion/route-transition";
 import "./globals.css";
 
@@ -73,6 +74,7 @@ export default function RootLayout({
                     <RouteTransition>{children}</RouteTransition>
                   </main>
                   <SiteFooter />
+                  <CookieBanner />
                   <Toaster richColors position="top-center" />
                 </PromptProvider>
               </ConfirmProvider>

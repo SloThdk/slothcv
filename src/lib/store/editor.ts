@@ -204,12 +204,11 @@ interface EditorState {
 // promises "auto-saves the second you stop typing" and re-enabling
 // makes that true.
 //
-// The earlier disable-autosave move was an over-correction. The real
-// issue was that template-swap snapshotted unwanted state. The fix
-// for THAT is to let the user explicitly opt in to a swap (a confirm
-// modal in the templates tab, separate from autosave). Auto-saving
-// every other change is the right default — undo (Cmd+Z) protects
-// against regret.
+// Auto-saving every change is the right default — undo (Cmd+Z) protects
+// against regret. Template swap (the historical pain point) is handled
+// by a post-swap toast in templates-tab.tsx that exposes Undo + an
+// optional "Save as variant" action — no modal, no auto-snapshot, no
+// surprise dashboard clutter, instant swap.
 //
 // Debounce semantics: every store mutation calls scheduleSave() which
 // arms a 800 ms timer. Subsequent mutations within the window reset
@@ -470,8 +469,34 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           // Element-level offsets are even more template-coupled than
           // section-level ones, so they go too.
           elementOverrides: {},
+          // Toolshelf custom elements (shapes / text / icons / images
+          // the user dropped onto the canvas) are positioned in
+          // ABSOLUTE px coords against THIS template's page layout —
+          // a custom text dropped at (240, 380) on Berlin's
+          // single-column flow lands on top of Aurora's sidebar in a
+          // template swap, looking nothing like what the user
+          // composed. Clearing them on swap matches the same
+          // contract `position` / `overrides` already follow:
+          // template-coupled visual decisions reset, content stays.
+          //
+          // Recovery paths if the user wanted to keep the decorated
+          // version: (a) Cmd-Z undoes the swap (history snapshot
+          // restores the cleared elements + the previous template),
+          // or (b) the post-swap toast in templates-tab.tsx offers
+          // a "Save as variant" action that clones a captured
+          // pre-swap snapshot to a separate dashboard row. So zero
+          // data loss for users who notice; no dashboard clutter for
+          // users who don't.
+          customElements: undefined,
         },
         saveStatus: "dirty",
+        // Belt-and-braces: any selected element id from the previous
+        // template wouldn't resolve any more (its element is gone).
+        // Same for an in-progress inline-edit session. Clear both so
+        // the inspector and inline-text-editor don't render against
+        // stale state.
+        selectedElementId: null,
+        editingElementId: null,
       };
     });
     scheduleSave();

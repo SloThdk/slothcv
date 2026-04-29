@@ -464,10 +464,19 @@ export async function duplicateResume(id: string): Promise<void> {
  * use ITS parent as the new variant's parent. Variants don't nest — every
  * variant points at a top-level master. This prevents "variant of a
  * variant of a variant" sprawl that would make the dashboard a tree.
+ *
+ * Optional `snapshot` lets the caller supply the data payload directly
+ * instead of reading it from the source row. The template-swap toast
+ * uses this so it can preserve the PRE-swap state — by the time the
+ * user clicks "Save as variant" in the toast, the live row has already
+ * auto-saved with the new template, so reading from DB would clone the
+ * post-swap state and the user's previous decorated version is gone.
+ * Passing the captured snapshot bypasses that race entirely.
  */
 export async function duplicateAsVariant(
   sourceId: string,
   variantLabel: string,
+  options?: { snapshot?: ResumeData },
 ): Promise<string> {
   const trimmed = variantLabel.trim().slice(0, 80);
   if (!trimmed) throw new Error("Variant label can't be empty.");
@@ -477,7 +486,10 @@ export async function duplicateAsVariant(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in.");
 
-  // Read source first to learn its parent (if any) and to clone its content.
+  // Read source first to learn its parent (if any) and (if no snapshot
+  // was supplied) to clone its content. Title is always read from DB —
+  // the variant_label is the differentiator, so the title field stays
+  // identical to the master's, regardless of what the snapshot says.
   const { data: src, error: readErr } = await supabase
     .from("resumes")
     .select("title, data, parent_id")
@@ -490,12 +502,17 @@ export async function duplicateAsVariant(
   // (parent_id null), use the source's id as the parent.
   const masterId = src.parent_id ?? sourceId;
 
+  // Prefer the caller-supplied snapshot when present; otherwise the
+  // current DB content (legacy callers).
+  const dataPayload =
+    options?.snapshot !== undefined ? options.snapshot : src.data;
+
   const { data: ins, error: insertErr } = await supabase
     .from("resumes")
     .insert({
       user_id: user.id,
       title: src.title, // keep the master's title; variant_label is the differentiator
-      data: src.data,
+      data: dataPayload,
       parent_id: masterId,
       variant_label: trimmed,
     })

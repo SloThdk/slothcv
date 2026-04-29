@@ -1,62 +1,174 @@
 /**
- * TemplatesTab — gallery of templates. Click swaps the active template.
+ * TemplatesTab — gallery of templates. Click swaps the active template
+ * INSTANTLY (no modal, no auto-side-effects) and shows a single toast
+ * with two opt-in actions: Undo + "Save as variant".
  *
- * The first time a user switches templates we pop a confirm modal so they
- * understand that the *content* is preserved but the *presentation* changes.
- * Subsequent swaps are silent (modal is suppressed for the rest of the
- * session via local state).
+ * Why this shape (and not the previous confirm-modal-+-auto-snapshot):
+ *
+ *   1. Auto-saving the current state to a NEW variant on every swap
+ *      surprised users — they pressed "Switch template" expecting a
+ *      template change, then later saw their dashboard cluttered with
+ *      "<old template> · <date>" rows they never asked for. The auto
+ *      backup was well-intentioned (don't lose decorated work) but
+ *      paternalistic — Figma / Canva / Notion all let bold actions go
+ *      through instantly with an undo affordance, not a modal + cleanup
+ *      cost the user has to discover later.
+ *
+ *   2. Undo (Cmd-Z / Ctrl-Z) already restores the full pre-swap state
+ *      — template + sections + design + custom elements + position
+ *      overrides — because the editor store snapshots `data` on every
+ *      mutation. So "I picked the wrong template" is a single keystroke
+ *      to revert.
+ *
+ *   3. For the rare power user who DID want both versions kept, the
+ *      toast offers a one-click "Save as variant" action. It captures
+ *      the pre-swap snapshot at click-time on the gallery card (BEFORE
+ *      `setTemplate` mutates the store) and passes it to
+ *      `duplicateAsVariant`, so even if auto-save has already flushed
+ *      the new template to the master row, the variant clones the OLD
+ *      decorated state. Zero data loss when the user explicitly opts in.
+ *
+ *   4. Per-template absolute-position state (toolshelf shapes,
+ *      drag-position overrides, design overrides) gets stripped on
+ *      swap — that lives in `setTemplate` already. Carrying it across
+ *      layouts produces nonsense (px coords from a single-column flow
+ *      land in the middle of a sidebar layout). Undo recovers it; the
+ *      "Save as variant" snapshot preserves it.
  */
 
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, Check } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
+import { Check } from "lucide-react";
+import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { TEMPLATES, TEMPLATES_BY_ID } from "@/templates/registry";
-import { Button } from "@/components/ui/button";
+import { duplicateAsVariant } from "@/lib/resumes";
 import { TemplatePreview } from "./template-preview";
-import {
-  backdrop,
-  modalPanel,
-  staggerContainer,
-  staggerItem,
-} from "@/lib/motion";
+import { staggerContainer, staggerItem } from "@/lib/motion";
+
+/** Stable id for the swap toast — passing the same id on every swap
+ *  makes Sonner replace the previous toast instead of stacking, so the
+ *  user never sees a chain of "Switched to X / Switched to Y / …". */
+const SWAP_TOAST_ID = "template-swap";
 
 export function TemplatesTab() {
   const current = useEditorStore((s) => s.data.meta.template);
   const setTemplate = useEditorStore((s) => s.setTemplate);
+  const resumeId = useEditorStore((s) => s.resumeId);
   // The user's full resume data — passed to each thumbnail so the
   // gallery shows what their actual CV will look like in each layout.
-  // Without this, thumbnails used per-template sample personas (Sam
-  // Carter etc. with stock SVG avatars) and the post-swap editor
-  // preview rendered the user's real data — different photos, different
-  // names, different content density. WYSIWYG matters in a CV builder.
+  // WYSIWYG: card thumbnail must match what the editor will render
+  // post-swap, so per-card sample personas are out.
   const userData = useEditorStore((s) => s.data);
-  // Read save status so the swap modal can warn the user when they're
-  // about to throw away unsaved work.
-  const saveStatus = useEditorStore((s) => s.saveStatus);
-  // Always confirm — earlier UX silently swapped after the first time
-  // and that surprised users who were just exploring (auto-save then
-  // pinned them to whatever they last clicked). Now every swap is
-  // explicit; the modal also reminds them what swapping resets.
-  const [pending, setPending] = useState<string | null>(null);
 
-  function pick(id: string) {
-    if (id === current) return;
-    setPending(id);
-  }
+  function handlePick(newTplId: string) {
+    if (newTplId === current) return;
 
-  function confirm() {
-    if (!pending) return;
-    setTemplate(pending as Parameters<typeof setTemplate>[0]);
-    setPending(null);
+    // Capture the pre-swap state IMMEDIATELY, before setTemplate mutates
+    // the store. structuredClone deep-copies so subsequent edits don't
+    // bleed into the toast's "Save as variant" payload.
+    const preSwapData = structuredClone(userData);
+    const oldTpl = current;
+    const oldTplName =
+      TEMPLATES_BY_ID[oldTpl as keyof typeof TEMPLATES_BY_ID]?.name ??
+      "Previous";
+    const newTplName =
+      TEMPLATES_BY_ID[newTplId as keyof typeof TEMPLATES_BY_ID]?.name ??
+      "the new template";
+
+    // Whether there's anything visually distinctive about the pre-swap
+    // state worth preserving. If there are no custom elements / drag
+    // overrides / design overrides, "Save as variant" would just clone a
+    // near-empty CV and clutter the dashboard — so we suppress the
+    // action in that case. Same guard as the old modal used.
+    const hasDecoration =
+      (preSwapData.customElements ?? []).length > 0 ||
+      Object.keys(preSwapData.elementOverrides ?? {}).length > 0 ||
+      preSwapData.sections.some((s) => s.position || s.overrides);
+
+    // Apply the swap. Auto-save (800 ms debounce) will flush the new
+    // template state to the live row shortly. Undo, if invoked, rolls
+    // the store back to the pre-swap snapshot which the next debounced
+    // save then re-flushes — so undo also "untransfers" in the DB.
+    setTemplate(newTplId as Parameters<typeof setTemplate>[0]);
+
+    // Single toast with up to two actions. We don't gate on
+    // saveStatus === "dirty" any more — auto-save has already (or
+    // will shortly) persist whatever the user typed. There's no
+    // "discard the unsaved part" semantics in an autosaving editor;
+    // the only mental model that's true is "everything is always
+    // saved, undo to revert". Saying "unsaved changes will be lost"
+    // would be a lie.
+    toast(`Switched to ${newTplName}.`, {
+      id: SWAP_TOAST_ID,
+      duration: 8000, // 8s — long enough to read, short enough to not nag.
+      description: hasDecoration
+        ? `Your shapes and overrides from the ${oldTplName} layout were cleared (positions don't carry across layouts).`
+        : undefined,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          // Editor store's undo() rolls back one history step. It
+          // restores `data` (which includes template + customElements
+          // + overrides), so a single click reverses everything the
+          // swap touched.
+          useEditorStore.getState().undo();
+          toast.success(`Reverted to ${oldTplName}.`, {
+            id: SWAP_TOAST_ID,
+            duration: 3000,
+          });
+        },
+      },
+      // Sonner only supports a single `action`. The "Save as variant"
+      // affordance is wired as a `cancel` button — Sonner renders it
+      // alongside `action`, and we hijack the onClick to do work
+      // instead of dismissing. Only shown when there's something
+      // worth preserving.
+      cancel: hasDecoration
+        ? {
+            label: "Save as variant",
+            onClick: () => {
+              if (!resumeId) {
+                toast.error(
+                  "Can't save a variant before the CV is loaded.",
+                );
+                return;
+              }
+              const stamp = new Date().toLocaleDateString();
+              const label = `${oldTplName} · ${stamp}`;
+              // Async fire-and-forget. The toast itself is the
+              // progress indicator — show "saving" then resolve to
+              // success / error in place.
+              toast.loading(`Saving ${oldTplName} version as a variant…`, {
+                id: SWAP_TOAST_ID,
+              });
+              duplicateAsVariant(resumeId, label, { snapshot: preSwapData })
+                .then(() => {
+                  toast.success(
+                    `Saved ${oldTplName} version as a variant on your dashboard.`,
+                    { id: SWAP_TOAST_ID, duration: 4000 },
+                  );
+                })
+                .catch((e: unknown) => {
+                  toast.error(
+                    e instanceof Error
+                      ? `Couldn't save variant: ${e.message}`
+                      : "Couldn't save variant. Free up space on your dashboard and try again.",
+                    { id: SWAP_TOAST_ID, duration: 6000 },
+                  );
+                });
+            },
+          }
+        : undefined,
+    });
   }
 
   return (
     <div>
       <p className="mb-3 text-xs text-muted">
-        Pick a template. Your content stays intact — only the layout changes.
+        Pick a template. Your content stays — only the layout changes.
+        Cmd/Ctrl-Z to undo a swap.
       </p>
       {/* Stagger entrance — when the user opens the Templates tab the
           cards cascade in 30ms apart. Quick enough that 50 templates
@@ -77,8 +189,8 @@ export function TemplatesTab() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            onClick={() => pick(t.id)}
-            className={`group relative flex flex-col overflow-hidden rounded-lg border bg-surface text-left transition-shadow duration-200 hover:shadow-md ${current === t.id ? "border-fg ring-2 ring-fg" : "border-border"}`}
+            onClick={() => handlePick(t.id)}
+            className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-surface text-left transition-shadow duration-200 hover:shadow-md ${current === t.id ? "border-fg ring-2 ring-fg" : "border-border"}`}
           >
             {/* Aspect MUST match the real A4 page ratio (210/297). Earlier
                 code overrode this to aspect-[3/4] to make cards more compact,
@@ -111,101 +223,6 @@ export function TemplatesTab() {
           </motion.button>
         ))}
       </motion.div>
-
-      {/* Confirm modal — every swap goes through this. The copy adapts
-          based on whether the user has unsaved changes:
-            - Clean: warn about positions/overrides resetting
-            - Dirty: SHOUT about losing the unsaved edits, prompt them
-              to save first
-          AnimatePresence lets the modal mount/unmount with the standard
-          backdrop-fade + panel scale-rise transitions defined in
-          lib/motion. */}
-      <AnimatePresence>
-        {pending && (
-          <motion.div
-            {...backdrop}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setPending(null);
-            }}
-          >
-            <motion.div
-              {...modalPanel}
-              className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-            <div className="flex items-start gap-3">
-              {saveStatus === "dirty" && (
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                  <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-                </span>
-              )}
-              <div className="flex-1">
-                <h2 className="text-base font-semibold text-fg">
-                  {saveStatus === "dirty"
-                    ? "Switch template — unsaved changes will be lost"
-                    : `Switch to ${TEMPLATES_BY_ID[pending as keyof typeof TEMPLATES_BY_ID]?.name ?? "this template"}?`}
-                </h2>
-                {saveStatus === "dirty" ? (
-                  <>
-                    <p className="mt-1.5 text-sm text-muted">
-                      You have <strong className="text-fg">unsaved changes</strong> on
-                      this CV. Switching templates without saving will{" "}
-                      <strong className="text-fg">discard them</strong>.
-                    </p>
-                    <p className="mt-2 text-[12px] text-subtle">
-                      Click &ldquo;Keep editing&rdquo; below, hit{" "}
-                      <kbd className="rounded bg-surface-hover px-1 font-mono text-[10px]">
-                        Ctrl
-                      </kbd>
-                      +
-                      <kbd className="rounded bg-surface-hover px-1 font-mono text-[10px]">
-                        S
-                      </kbd>{" "}
-                      or the Save button in the header, then come back to
-                      swap templates safely.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-1.5 text-sm text-muted">
-                      Your content (name, summary, sections, items) is
-                      safe — only the visual layout changes.
-                    </p>
-                    <p className="mt-2 text-[12px] text-subtle">
-                      Per-section nudges (drag positions), per-section
-                      design overrides, and toolshelf shape positions
-                      reset on swap so they don&rsquo;t land in nonsense
-                      spots in the new layout.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setPending(null)}
-              >
-                {saveStatus === "dirty" ? "Keep editing" : "Keep current"}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={saveStatus === "dirty" ? "destructive" : "default"}
-                onClick={confirm}
-              >
-                {saveStatus === "dirty"
-                  ? "Discard & switch"
-                  : "Switch template"}
-              </Button>
-            </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

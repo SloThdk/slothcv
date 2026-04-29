@@ -48,9 +48,10 @@ import { DesignTab } from "@/components/editor/design-tab";
 import { TemplatesTab } from "@/components/editor/templates-tab";
 import { SettingsTab } from "@/components/editor/settings-tab";
 import { ToolshelfTab } from "@/components/editor/toolshelf-tab";
+import { LayersPanel } from "@/components/editor/layers-panel";
 import { Preview } from "@/components/editor/preview";
 
-type Tab = "content" | "design" | "add" | "templates" | "settings";
+type Tab = "content" | "design" | "add" | "layers" | "templates" | "settings";
 type MobilePane = "edit" | "preview";
 
 function EditorInner() {
@@ -276,6 +277,7 @@ function EditorInner() {
             {tab === "content" && <SectionList />}
             {tab === "design" && <DesignTab />}
             {tab === "add" && <ToolshelfTab />}
+            {tab === "layers" && <LayersPanel />}
             {tab === "templates" && <TemplatesTab />}
             {tab === "settings" && <SettingsTab initialTitle={title} />}
           </div>
@@ -328,7 +330,8 @@ function Tabs({
     { id: "content", label: trans("editor.tab.content"), icon: FileText },
     { id: "design", label: trans("editor.tab.design"), icon: Wand2 },
     { id: "add", label: trans("editor.tab.add"), icon: Plus },
-    { id: "templates", label: trans("editor.tab.templates"), icon: Layers },
+    { id: "layers", label: trans("editor.tab.layers"), icon: Layers },
+    { id: "templates", label: trans("editor.tab.templates"), icon: Eye },
     { id: "settings", label: trans("editor.tab.settings"), icon: Settings2 },
   ];
   return (
@@ -337,7 +340,7 @@ function Tabs({
     // SAME virtual element from button to button using a transform-only
     // 200ms slide. Inactive tabs render plain (no underline element), so
     // there's only ever one visible indicator at a time.
-    <div className="relative grid grid-cols-5 border-b border-border bg-surface">
+    <div className="relative grid grid-cols-6 border-b border-border bg-surface">
       {items.map((it) => {
         const Icon = it.icon;
         const active = tab === it.id;

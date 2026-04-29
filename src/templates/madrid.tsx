@@ -93,11 +93,30 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-2 text-[0.78em]">
-              {personal.email && <Chip>{personal.email}</Chip>}
-              {personal.phone && <Chip>{personal.phone}</Chip>}
-              {personal.location && <Chip>{personal.location}</Chip>}
+              {personal.email && (
+                <Chip id="personal.email" data={data}>
+                  {personal.email}
+                </Chip>
+              )}
+              {personal.phone && (
+                <Chip id="personal.phone" data={data}>
+                  {personal.phone}
+                </Chip>
+              )}
+              {personal.location && (
+                <Chip id="personal.location" data={data}>
+                  {personal.location}
+                </Chip>
+              )}
               {personal.links.map((l) => (
-                <Chip key={l.id}>{l.label || l.url}</Chip>
+                <Chip
+                  key={l.id}
+                  id={`personal.links.${l.id}`}
+                  data={data}
+                  href={l.url}
+                >
+                  {l.label || l.url}
+                </Chip>
               ))}
             </div>
           </div>
@@ -133,16 +152,44 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
   );
 }
 
-/** White outline chip used for header contact items. */
-function Chip({ children }: { children: React.ReactNode }) {
+/** White outline chip used for header contact items. Carries a stable
+ *  `data-element-id` so each chip is independently draggable + inline-
+ *  editable. When `href` is provided (links) it renders as `<a>` so the
+ *  user can click through; without it, it renders as a span. */
+function Chip({
+  children,
+  id,
+  data,
+  href,
+}: {
+  children: React.ReactNode;
+  id: string;
+  data: ResumeData;
+  href?: string;
+}) {
+  const baseClass =
+    "inline-block cursor-text rounded-full px-3 py-0.5 transition-shadow hover:ring-2 hover:ring-white/60 hover:ring-offset-2 hover:ring-offset-transparent";
+  const baseStyle = {
+    background: "rgba(255,255,255,0.16)",
+    border: "1px solid rgba(255,255,255,0.45)",
+    ...elementStyle(data, id),
+  } as const;
+  if (href) {
+    return (
+      <a
+        data-element-id={id}
+        href={href.startsWith("http") ? href : `https://${href}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${baseClass} no-underline hover:underline`}
+        style={baseStyle}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
-    <span
-      className="rounded-full px-3 py-0.5"
-      style={{
-        background: "rgba(255,255,255,0.16)",
-        border: "1px solid rgba(255,255,255,0.45)",
-      }}
-    >
+    <span data-element-id={id} className={baseClass} style={baseStyle}>
       {children}
     </span>
   );

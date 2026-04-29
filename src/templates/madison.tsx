@@ -35,6 +35,7 @@ import { SectionActions } from "./section-actions";
 import {
   elementStyle,
   formatDateRange,
+  photoBorderStyle,
   positionStyle,
   visibleBullets,
   visibleSections,
@@ -135,7 +136,7 @@ export function MadisonTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-32 w-full rounded-sm object-cover"
-                style={{ outline: `1.5px solid ${GOLD}` }}
+                style={photoBorderStyle(design, GOLD)}
               />
             </div>
           )}

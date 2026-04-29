@@ -254,6 +254,33 @@ export function elementStyle(
   };
 }
 
+/**
+ * Photo-border CSS for templates that render `personal.photoUrl` with
+ * an outline / ring around it. Honours the user-overridable
+ * `design.photo.borderColor` + `design.photo.borderWidth` from the
+ * Design → Photo controls so a single style rule serves every photo
+ * across every template.
+ *
+ * `fallbackColor` is the template's "if user hasn't customised colour"
+ * default — typically `${design.accentColor}66` for accent-tinted
+ * outlines, but templates can pass a darker hex for editorial styles.
+ *
+ * Width 0 = no border (returns `outline: "none"`). Use `outlineOffset`
+ * separately when you want a visual gap between the photo edge and
+ * the border (Berlin's signature "ring with breathing room").
+ */
+export function photoBorderStyle(
+  design: GlobalDesign,
+  fallbackColor: string,
+): { outline: string; outlineOffset: string } {
+  const w = design.photo.borderWidth ?? 2;
+  const c = design.photo.borderColor?.trim() || fallbackColor;
+  return {
+    outline: w > 0 ? `${w}px solid ${c}` : "none",
+    outlineOffset: w > 0 ? "2px" : "0",
+  };
+}
+
 /** Header-style transform helper — applied to section titles in templates. */
 export function transformHeader(text: string, d: GlobalDesign): string {
   if (d.headerStyle === "uppercase") return text.toUpperCase();

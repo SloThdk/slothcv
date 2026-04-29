@@ -487,6 +487,14 @@ export interface GlobalDesign {
     enabled: boolean;
     shape: PhotoShape;
     position: PhotoPosition;
+    /** Border colour around the photo. Empty string = derive from
+     *  `design.accentColor` at template-defined alpha so the border
+     *  feels integrated with the rest of the page. Hex value gives
+     *  the user pixel-perfect control. */
+    borderColor?: string;
+    /** Border width in pixels. 0 = no border. Templates default to
+     *  ~2 px so the border is visible without overpowering the photo. */
+    borderWidth?: number;
   };
 
   // Section ornamentation

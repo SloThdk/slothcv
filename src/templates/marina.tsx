@@ -27,6 +27,7 @@ import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
   elementStyle,
+  photoBorderStyle,
   positionStyle,
   resolveDesign,
   visibleSections,
@@ -80,8 +81,7 @@ export function MarinaTemplate({ data, fixedSize, skipOverlay }: Props) {
               style={{
                 width: 120,
                 height: 120,
-                outline: "3px solid rgba(255,255,255,0.35)",
-                outlineOffset: 0,
+                ...photoBorderStyle(design, "rgba(255,255,255,0.35)"),
                 boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
                 ...elementStyle(data, "personal.photo"),
               }}

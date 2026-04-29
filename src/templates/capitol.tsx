@@ -45,6 +45,7 @@ import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
   elementStyle,
+  photoBorderStyle,
   positionStyle,
   resolveDesign,
   visibleSections,
@@ -104,8 +105,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
               style={{
                 width: 96,
                 height: 96,
-                outline: "3px solid rgba(255,255,255,0.3)",
-                outlineOffset: 0,
+                ...photoBorderStyle(design, "rgba(255,255,255,0.3)"),
                 ...elementStyle(data, "personal.photo"),
               }}
             >

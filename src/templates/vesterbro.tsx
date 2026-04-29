@@ -38,6 +38,7 @@ import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
   elementStyle,
+  photoBorderStyle,
   positionStyle,
   resolveDesign,
   visibleSections,
@@ -97,8 +98,7 @@ export function VesterbroTemplate({ data, fixedSize, skipOverlay }: Props) {
             style={{
               width: 110,
               height: 110,
-              outline: `3px solid ${design.accentColor}33`,
-              outlineOffset: 4,
+              ...photoBorderStyle(design, `${design.accentColor}33`),
               ...elementStyle(data, "personal.photo"),
             }}
           >

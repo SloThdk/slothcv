@@ -142,8 +142,14 @@ function GeistContact({ data }: { data: ResumeData }) {
     });
   }
   if (items.length === 0) return null;
+  // Drag wrapper. We anchor `data-element-id` and `elementStyle` on the
+  // OUTER row so the decorative prefix glyph ($, #, @, →) participates
+  // in the same drag target as the value — clicking the prefix used to
+  // fall through to "background" (no element-id ancestor) which felt
+  // broken. Don't re-apply elementStyle on the inner anchor / span:
+  // that would double-translate the offset.
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "inline-flex items-baseline gap-1 cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
   return (
     <div
       className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.82em]"
@@ -153,36 +159,41 @@ function GeistContact({ data }: { data: ResumeData }) {
           "var(--font-geist-mono, 'Geist Mono'), 'JetBrains Mono', monospace",
       }}
     >
-      {items.map((it) => (
-        <span key={it.id}>
+      {items.map((it) => {
+        const prefix = (
           <span
             className="select-none"
             style={{ color: `${design.textColor}55` }}
+            aria-hidden
           >
-            {it.prefix}{" "}
+            {it.prefix}
           </span>
-          {it.href ? (
-            <a
-              data-element-id={it.id}
-              href={it.href.startsWith("http") ? it.href : `https://${it.href}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${grab} underline-offset-2 hover:underline`}
-              style={{ color: design.textColor, ...elementStyle(data, it.id) }}
-            >
-              {it.label}
-            </a>
-          ) : (
-            <span
-              data-element-id={it.id}
-              className={grab}
-              style={elementStyle(data, it.id)}
-            >
-              {it.label}
-            </span>
-          )}
-        </span>
-      ))}
+        );
+        return it.href ? (
+          <a
+            key={it.id}
+            data-element-id={it.id}
+            href={it.href.startsWith("http") ? it.href : `https://${it.href}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${grab} underline-offset-2 hover:underline`}
+            style={{ color: design.textColor, ...elementStyle(data, it.id) }}
+          >
+            {prefix}
+            <span>{it.label}</span>
+          </a>
+        ) : (
+          <span
+            key={it.id}
+            data-element-id={it.id}
+            className={grab}
+            style={elementStyle(data, it.id)}
+          >
+            {prefix}
+            <span>{it.label}</span>
+          </span>
+        );
+      })}
     </div>
   );
 }

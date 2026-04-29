@@ -214,8 +214,14 @@ function SidebarContact({ data }: { data: ResumeData }) {
     });
   }
   if (items.length === 0) return null;
+  // Drag wrapper. The single-letter key (M / T / L / W) used to live
+  // OUTSIDE the data-element-id, so clicks on the letter fell through
+  // to "background" (Design tab). We promote `data-element-id` and
+  // `elementStyle` onto the row container so the entire row — letter
+  // and value — drags as one unit. Inner anchor/span no longer carries
+  // its own elementStyle (avoids double-translate).
   const grab =
-    "block w-fit cursor-text transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent rounded-sm";
+    "flex w-full gap-2 cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent";
   return (
     <div>
       <SidebarHeader>Contact</SidebarHeader>
@@ -223,8 +229,8 @@ function SidebarContact({ data }: { data: ResumeData }) {
         className="space-y-1.5 text-[0.85em]"
         style={{ color: TEXT_SIDEBAR }}
       >
-        {items.map((it) => (
-          <div key={it.id} className="flex gap-2">
+        {items.map((it) => {
+          const keyGlyph = (
             <span
               className="w-3 shrink-0 text-[0.85em]"
               style={{ color: TEXT_SIDEBAR_DIM, fontFamily: MONO }}
@@ -232,28 +238,32 @@ function SidebarContact({ data }: { data: ResumeData }) {
             >
               {it.key}
             </span>
-            {it.href ? (
-              <a
-                data-element-id={it.id}
-                href={it.href.startsWith("http") ? it.href : `https://${it.href}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${grab} underline-offset-2 hover:underline break-all`}
-                style={elementStyle(data, it.id)}
-              >
-                {it.label}
-              </a>
-            ) : (
-              <span
-                data-element-id={it.id}
-                className={`${grab} break-all`}
-                style={elementStyle(data, it.id)}
-              >
-                {it.label}
-              </span>
-            )}
-          </div>
-        ))}
+          );
+          return it.href ? (
+            <a
+              key={it.id}
+              data-element-id={it.id}
+              href={it.href.startsWith("http") ? it.href : `https://${it.href}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${grab} underline-offset-2 hover:underline break-all`}
+              style={elementStyle(data, it.id)}
+            >
+              {keyGlyph}
+              <span className="flex-1">{it.label}</span>
+            </a>
+          ) : (
+            <span
+              key={it.id}
+              data-element-id={it.id}
+              className={`${grab} break-all`}
+              style={elementStyle(data, it.id)}
+            >
+              {keyGlyph}
+              <span className="flex-1">{it.label}</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

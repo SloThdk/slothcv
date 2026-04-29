@@ -138,10 +138,35 @@ export function MarinaTemplate({ data, fixedSize, skipOverlay }: Props) {
           <section className="break-inside-avoid">
             <RailHeading title="Contact" accent={design.accentColor} />
             <div className="space-y-1 text-[0.85em] text-neutral-700">
-              {personal.email && <Detail label="Email" value={personal.email} />}
-              {personal.phone && <Detail label="Phone" value={personal.phone} />}
+              {/* Each contact row gets its own data-element-id via the
+                  Detail helper so the user can free-drag email / phone /
+                  location independently in the visual editor and
+                  double-click to inline-edit. Links are still rendered
+                  via the shared ContactLine helper from scratch.tsx,
+                  which has the same instrumentation. */}
+              {personal.email && (
+                <Detail
+                  label="Email"
+                  value={personal.email}
+                  id="personal.email"
+                  data={data}
+                />
+              )}
+              {personal.phone && (
+                <Detail
+                  label="Phone"
+                  value={personal.phone}
+                  id="personal.phone"
+                  data={data}
+                />
+              )}
               {personal.location && (
-                <Detail label="Location" value={personal.location} />
+                <Detail
+                  label="Location"
+                  value={personal.location}
+                  id="personal.location"
+                  data={data}
+                />
               )}
               <ContactLine data={data} />
             </div>
@@ -225,13 +250,29 @@ function RailSection({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({
+  label,
+  value,
+  id,
+  data,
+}: {
+  label: string;
+  value: string;
+  id: string;
+  data: ResumeData;
+}) {
   return (
     <div className="flex flex-col">
       <span className="text-[0.75em] font-semibold uppercase tracking-[0.15em] text-neutral-500">
         {label}
       </span>
-      <span className="break-words">{value}</span>
+      <span
+        data-element-id={id}
+        className="block break-words cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-1"
+        style={elementStyle(data, id)}
+      >
+        {value}
+      </span>
     </div>
   );
 }

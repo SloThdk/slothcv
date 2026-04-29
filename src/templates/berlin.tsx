@@ -109,19 +109,48 @@ export function BerlinTemplate({ data, fixedSize, skipOverlay }: Props) {
             </div>
           )}
 
-          {/* Contact stack — labels + values */}
+          {/* Contact stack — labels + values. Each row carries a stable
+              `data-element-id` so the user can free-drag email / phone /
+              location / each link individually, and double-click any
+              value to inline-edit it. Without this every contact row was
+              dead in the visual editor — visible, but unclickable. */}
           <div className="space-y-1 text-[0.78em]">
-            {personal.email && <Detail label="Email" value={personal.email} accent={design.accentColor} />}
-            {personal.phone && <Detail label="Phone" value={personal.phone} accent={design.accentColor} />}
+            {personal.email && (
+              <Detail
+                label="Email"
+                value={personal.email}
+                accent={design.accentColor}
+                id="personal.email"
+                data={data}
+              />
+            )}
+            {personal.phone && (
+              <Detail
+                label="Phone"
+                value={personal.phone}
+                accent={design.accentColor}
+                id="personal.phone"
+                data={data}
+              />
+            )}
             {personal.location && (
-              <Detail label="Location" value={personal.location} accent={design.accentColor} />
+              <Detail
+                label="Location"
+                value={personal.location}
+                accent={design.accentColor}
+                id="personal.location"
+                data={data}
+              />
             )}
             {personal.links.map((l) => (
               <Detail
                 key={l.id}
-                label="Link"
-                value={l.label || l.url}
+                label={l.label || "Link"}
+                value={l.url}
+                href={l.url}
                 accent={design.accentColor}
+                id={`personal.links.${l.id}`}
+                data={data}
               />
             ))}
           </div>
@@ -176,11 +205,24 @@ function Detail({
   label,
   value,
   accent,
+  id,
+  data,
+  href,
 }: {
   label: string;
   value: string;
   accent: string;
+  id: string;
+  data: ResumeData;
+  /** When provided, render the value as an external `<a>` link. Used for
+   *  personal links so clicking the URL opens it in a new tab while still
+   *  being draggable + inline-editable. */
+  href?: string;
 }) {
+  // Drag affordance shared by both anchor and span variants — keeps the
+  // hover ring + cursor consistent regardless of whether the row is a link.
+  const valueClass =
+    "block break-words cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-1";
   return (
     <div className="flex flex-col">
       <span
@@ -189,7 +231,26 @@ function Detail({
       >
         {label}
       </span>
-      <span className="break-words">{value}</span>
+      {href ? (
+        <a
+          data-element-id={id}
+          href={href.startsWith("http") ? href : `https://${href}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${valueClass} underline-offset-2 hover:underline`}
+          style={elementStyle(data, id)}
+        >
+          {value}
+        </a>
+      ) : (
+        <span
+          data-element-id={id}
+          className={valueClass}
+          style={elementStyle(data, id)}
+        >
+          {value}
+        </span>
+      )}
     </div>
   );
 }

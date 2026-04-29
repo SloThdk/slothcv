@@ -457,6 +457,26 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/*
+ * Default cursor on every editor-canvas element that's draggable or
+ * selectable. Uses `:where()` so the rule has specificity 0 — any
+ * class-driven override (`cursor-text` on Editable spans, `cursor-grab`
+ * on item wrappers, `cursor-pointer` on section wrappers, `cursor-default`
+ * on the page background) wins automatically.
+ *
+ * Why this exists: small inner spans inside templates sometimes lack an
+ * explicit cursor class. Without this fallback they rendered the OS
+ * default arrow, which reads as "this is decoration, not interactive"
+ * and silently undermined the visual editor's promise that EVERY
+ * element with `data-element-id` is clickable + draggable.
+ *
+ * Doesn't fight `pointer-events: none` on siblings during drag — that
+ * cascade is handled by the `body.slothcv-dragging` rule above.
+ */
+.preview-stage :where([data-element-id], [data-section-id]) {
+  cursor: pointer;
+}
+
 /* prefers-reduced-motion guard.
  *
  * The user's OS-level setting "Reduce motion" (Windows: Settings →

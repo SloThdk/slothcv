@@ -141,88 +141,97 @@ export function PersonalForm() {
           placeholder={t("personal.locationPlaceholder")}
         />
       </div>
-      <div>
-        <Label>{t("personal.photo")}</Label>
-        <div className="flex items-center gap-3">
-          {personal.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={personal.photoUrl}
-              alt={t("personal.photo")}
-              className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-border"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            // Empty-state avatar — icon ONLY (no text). Earlier versions had
-            // a translated text label that would overflow the 56px circle
-            // at long locales (Danish "Intet foto"). Now: pure icon, with
-            // title + aria-label carrying the description for tooltips and
-            // screen readers respectively. inline-flex with grid centering
-            // guarantees the icon stays in the geometric center regardless
-            // of any inherited line-height oddities.
-            <div
-              role="img"
-              title={t("personal.noPhoto")}
-              aria-label={t("personal.noPhoto")}
-              className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-hover text-subtle ring-1 ring-border"
-            >
-              <ImageOff className="h-5 w-5" aria-hidden="true" />
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Upload className="h-4 w-4" />
-              {uploading
-                ? t("personal.uploading")
-                : personal.photoUrl
-                  ? t("personal.replacePhoto")
-                  : t("personal.uploadPhoto")}
-            </Button>
-            {personal.photoUrl && (
+      {/* Photo block — hidden entirely on templates that don't render
+          photos by design (Helsinki / Cambridge / Boston / classical
+          academic layouts). Showing the upload UI + a "this template
+          doesn't display photos" warning was UX noise: the user
+          already knows the template doesn't have a photo slot, and
+          if they want one they'll switch templates. Hiding the
+          section keeps the form focused on what actually shows up
+          in the preview. The user's photoUrl in `data.personal` is
+          PRESERVED — swapping to a photo-supporting template (Berlin
+          / Aurora / Marina / etc.) brings the upload UI and the
+          existing photo back. */}
+      {!templateSkipsPhoto && (
+        <div>
+          <Label>{t("personal.photo")}</Label>
+          <div className="flex items-center gap-3">
+            {personal.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={personal.photoUrl}
+                alt={t("personal.photo")}
+                className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-border"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              // Empty-state avatar — icon ONLY (no text). Earlier versions had
+              // a translated text label that would overflow the 56px circle
+              // at long locales (Danish "Intet foto"). Now: pure icon, with
+              // title + aria-label carrying the description for tooltips and
+              // screen readers respectively. inline-flex with grid centering
+              // guarantees the icon stays in the geometric center regardless
+              // of any inherited line-height oddities.
+              <div
+                role="img"
+                title={t("personal.noPhoto")}
+                aria-label={t("personal.noPhoto")}
+                className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-hover text-subtle ring-1 ring-border"
+              >
+                <ImageOff className="h-5 w-5" aria-hidden="true" />
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={onClearPhoto}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
-                <X className="h-4 w-4" />
-                {t("personal.removePhoto")}
+                <Upload className="h-4 w-4" />
+                {uploading
+                  ? t("personal.uploading")
+                  : personal.photoUrl
+                    ? t("personal.replacePhoto")
+                    : t("personal.uploadPhoto")}
               </Button>
-            )}
+              {personal.photoUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearPhoto}
+                  disabled={uploading}
+                >
+                  <X className="h-4 w-4" />
+                  {t("personal.removePhoto")}
+                </Button>
+              )}
+            </div>
           </div>
+          <p className="mt-1.5 text-[11px] text-subtle">{t("personal.photoHint")}</p>
+          {/* Capability warning is now ONLY about the design-toggle —
+              the per-template skip path is handled by hiding the whole
+              block above. Keeping this branch lets users who turned
+              photo off via Design → Personal know how to bring it back. */}
+          {!photoEnabled && personal.photoUrl && (
+            <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              Photo is currently turned OFF in Design → Personal. Toggle it back on to show your image.
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onPickFile(f);
+            }}
+          />
         </div>
-        <p className="mt-1.5 text-[11px] text-subtle">{t("personal.photoHint")}</p>
-        {/* Capability warning — the active template won't render the
-            photo. Show only when the template is in the no-photo set
-            (intentionally text-only / classical layouts). The user can
-            still upload — the photo persists for when they swap to a
-            template that does render it — but they should know it
-            won't appear right now. */}
-        {(templateSkipsPhoto || !photoEnabled) && personal.photoUrl && (
-          <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-            {templateSkipsPhoto
-              ? "Heads up: this template doesn't display photos. Switch to a template with a photo slot (Berlin, Aurora, Capitol, Marina, …) to see your image."
-              : "Photo is currently turned OFF in Design → Personal. Toggle it back on to show your image."}
-          </div>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void onPickFile(f);
-          }}
-        />
-      </div>
+      )}
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">

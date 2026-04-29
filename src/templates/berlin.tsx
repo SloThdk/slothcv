@@ -31,6 +31,7 @@ import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
+  photoBorderStyle,
   positionStyle,
   resolveDesign,
   visibleSections,
@@ -94,8 +95,7 @@ export function BerlinTemplate({ data, fixedSize, skipOverlay }: Props) {
                       : "h-24 w-24 rounded-md"
               }`}
               style={{
-                outline: `2px solid ${design.accentColor}66`,
-                outlineOffset: "2px",
+                ...photoBorderStyle(design, `${design.accentColor}66`),
                 ...elementStyle(data, "personal.photo"),
               }}
             >

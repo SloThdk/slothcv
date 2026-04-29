@@ -113,6 +113,11 @@ const globalDesignSchema = z.object({
     enabled: z.boolean(),
     shape: photoShapeSchema,
     position: photoPositionSchema,
+    // Border styling — both optional so older rows in the DB without
+    // these fields parse cleanly. Empty borderColor → templates fall
+    // back to design.accentColor at template-defined alpha.
+    borderColor: z.string().max(64).optional(),
+    borderWidth: z.number().min(0).max(8).optional(),
   }),
   sectionIcons: z.boolean(),
   iconSet: iconSetSchema,

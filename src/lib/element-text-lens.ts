@@ -252,6 +252,58 @@ export function elementTextLens(
   if (tail.startsWith("item.")) {
     const after = tail.slice("item.".length);
     const dot = after.indexOf(".");
+    // No-field form — `section.<sid>.item.<iid>` with nothing after.
+    // Some templates (Aurora's SkillsGroupedChips, certain compact
+    // chip layouts) put `data-element-id` on the chip wrapper itself
+    // without a `.name` / `.text` suffix, so the user sees the chip,
+    // tries to double-click, and nothing happens because the lens
+    // can't pick a target. Resolve the most-visible string property
+    // of the item — `name` for skills / languages / certifications,
+    // `text` for hobbies / custom bullets, `title` for talks /
+    // publications — and treat THAT as the inline-edit target. This
+    // makes "double-click on a chip / row to rename it" work for
+    // free across every template that uses the chip pattern.
+    if (dot < 0) {
+      const itemId = after;
+      const items = (section as { items?: unknown[] }).items;
+      if (Array.isArray(items)) {
+        const idx = items.findIndex(
+          (it) =>
+            it &&
+            typeof it === "object" &&
+            "id" in it &&
+            (it as { id: string }).id === itemId,
+        );
+        if (idx >= 0) {
+          const item = items[idx] as Record<string, unknown>;
+          // Priority: name > text > title. These cover every item
+          // shape in the schema. Anything else (compound items like
+          // experience entries) keeps returning null since there's
+          // no single text to edit and the user is expected to use
+          // the form.
+          const field =
+            typeof item.name === "string"
+              ? "name"
+              : typeof item.text === "string"
+                ? "text"
+                : typeof item.title === "string"
+                  ? "title"
+                  : null;
+          if (field) {
+            return {
+              read: () => (item[field] as string) ?? "",
+              write: (s) => {
+                const next = items.slice();
+                next[idx] = { ...item, [field]: s };
+                writers.updateSection(sid, {
+                  items: next,
+                } as Partial<Section>);
+              },
+            };
+          }
+        }
+      }
+    }
     if (dot > 0) {
       const itemId = after.slice(0, dot);
       const field = after.slice(dot + 1);

@@ -384,6 +384,71 @@ export function DesignTab() {
                 setDesign({ photo: { ...design.photo, position: v } })
               }
             />
+            {/* Border colour + width — both are independently controllable
+                so users can match the photo border to their personal
+                brand without first having to override accentColor. Empty
+                colour means "use the template's accent at template-defined
+                alpha"; non-empty colour wins as-given. Width 0 = no
+                border. Hex colour input has a paired colour-swatch picker
+                so non-technical users get an OS-native picker. */}
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted">
+                Border
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  aria-label="Photo border colour"
+                  value={(design.photo.borderColor || "#000000").slice(0, 7)}
+                  onChange={(e) =>
+                    setDesign({
+                      photo: { ...design.photo, borderColor: e.target.value },
+                    })
+                  }
+                  className="h-8 w-10 cursor-pointer rounded border border-border bg-surface p-0.5"
+                />
+                <input
+                  type="text"
+                  aria-label="Photo border colour hex"
+                  placeholder="auto (accent)"
+                  value={design.photo.borderColor ?? ""}
+                  onChange={(e) =>
+                    setDesign({
+                      photo: {
+                        ...design.photo,
+                        borderColor: e.target.value.trim() || undefined,
+                      },
+                    })
+                  }
+                  className="flex-1 rounded border border-border bg-surface px-2 py-1 text-xs"
+                />
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={8}
+                  step={1}
+                  aria-label="Photo border width"
+                  value={design.photo.borderWidth ?? 2}
+                  onChange={(e) =>
+                    setDesign({
+                      photo: {
+                        ...design.photo,
+                        borderWidth: Number(e.target.value),
+                      },
+                    })
+                  }
+                  className="flex-1 cursor-pointer accent-fg"
+                />
+                <span className="w-10 text-right text-xs tabular-nums text-muted">
+                  {design.photo.borderWidth ?? 2}px
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-subtle">
+                Empty colour falls back to the template accent. Width 0 hides the border entirely.
+              </p>
+            </div>
           </>
         )}
       </Section>

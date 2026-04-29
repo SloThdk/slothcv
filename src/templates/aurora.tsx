@@ -28,6 +28,7 @@ import {
   bulletGlyph,
   elementStyle,
   formatDateRange,
+  photoBorderStyle,
   positionStyle,
   visibleBullets,
   visibleSections,
@@ -111,6 +112,7 @@ export function AuroraTemplate({ data, fixedSize, skipOverlay }: Props) {
               src={personal.photoUrl}
               shape={design.photo.shape}
               accent={design.accentColor}
+              design={design}
             />
           </div>
         )}
@@ -166,10 +168,12 @@ function Photo({
   src,
   shape,
   accent,
+  design,
 }: {
   src: string;
   shape: GlobalDesign["photo"]["shape"];
   accent: string;
+  design: GlobalDesign;
 }) {
   const cls =
     shape === "circle"
@@ -182,7 +186,7 @@ function Photo({
   return (
     <div
       className={`relative h-28 w-28 overflow-hidden ${cls}`}
-      style={{ outline: `2px solid ${accent}66`, outlineOffset: "2px" }}
+      style={photoBorderStyle(design, `${accent}66`)}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- avatar is a
           user-supplied URL or generated SVG data URI; <Image> would force

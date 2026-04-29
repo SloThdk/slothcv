@@ -20,6 +20,7 @@ import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
+  photoBorderStyle,
   positionStyle,
   resolveDesign,
   visibleSections,
@@ -101,7 +102,7 @@ export function ManhattanTemplate({ data, fixedSize, skipOverlay }: Props) {
               referrerPolicy="no-referrer"
               draggable={false}
               className="h-24 w-24 rounded-sm object-cover"
-              style={{ outline: `1.5px solid ${NAVY}` }}
+              style={photoBorderStyle(design, NAVY)}
             />
           </div>
         )}

@@ -537,6 +537,35 @@ export async function renameResume(id: string, title: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Rename a variant's `variant_label` only — used by the dashboard's
+ * "Rename" action when invoked on a variant row. Variants share the
+ * master's title (the title column stays whatever the master is named);
+ * the differentiator a user sees is the variant_label ("PM at Vercel"
+ * etc). Renaming a variant should change THAT, not the shared title —
+ * otherwise renaming one variant would either rename every sibling
+ * variant + the master (if we wrote the shared title) or silently
+ * desync the title between rows. Editing variant_label keeps the data
+ * model honest.
+ *
+ * 80-char cap matches the cap used at variant-creation time
+ * (duplicateAsVariant) so renames don't push existing variants past a
+ * new ceiling.
+ */
+export async function renameVariantLabel(
+  id: string,
+  label: string,
+): Promise<void> {
+  const trimmed = label.trim().slice(0, 80);
+  if (!trimmed) throw new Error("Variant label can't be empty.");
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("resumes")
+    .update({ variant_label: trimmed })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function saveResumeData(id: string, data: unknown): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase

@@ -362,6 +362,37 @@ export const TRANSLATIONS = {
   "dashboard.daysAgo": { en: "days ago", da: "dage siden" },
   "dashboard.duplicateAria": { en: "Duplicate CV", da: "Dupliker CV" },
   "dashboard.variantAria": { en: "Save as variant", da: "Gem som variant" },
+  "dashboard.renameAria": { en: "Rename CV", da: "Omdøb CV" },
+  // Master-CV rename prompt — the input value seeds with the current
+  // title so the user can edit a few characters instead of retyping.
+  "dashboard.renamePromptTitle": { en: "Rename CV", da: "Omdøb CV" },
+  "dashboard.renamePromptDesc": {
+    en: "Pick a name that helps you find this CV later.",
+    da: "Vælg et navn der gør det let at finde dette CV senere.",
+  },
+  "dashboard.renamePromptLabel": { en: "Title", da: "Titel" },
+  "dashboard.renamePromptPlaceholder": {
+    en: "e.g. Software Engineer 2026",
+    da: "f.eks. Softwareudvikler 2026",
+  },
+  "dashboard.renamePromptConfirm": { en: "Rename", da: "Omdøb" },
+  "dashboard.toastRenamed": { en: "Renamed.", da: "Omdøbt." },
+  "dashboard.toastRenameFailed": {
+    en: "Couldn't rename. Try again.",
+    da: "Kunne ikke omdøbe. Prøv igen.",
+  },
+  // Variant rename prompt — edits variant_label, not the shared title.
+  // Distinct copy so the user understands they're labelling a variant
+  // ("PM at Vercel") and not renaming the master CV the variant
+  // belongs to.
+  "dashboard.renameVariantPromptTitle": {
+    en: "Rename variant",
+    da: "Omdøb variant",
+  },
+  "dashboard.renameVariantPromptDesc": {
+    en: "The variant's label is the differentiator from its master. The shared CV title stays the same.",
+    da: "Variantens label er det der adskiller den fra masteren. Den fælles CV-titel er uændret.",
+  },
   "dashboard.variantPromptTitle": {
     en: "Save as a tailored variant",
     da: "Gem som tilpasset variant",

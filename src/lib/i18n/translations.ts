@@ -526,6 +526,22 @@ export const TRANSLATIONS = {
     en: "Opens the existing {type} section instead of creating a duplicate.",
     da: "Åbner den eksisterende {type}-sektion i stedet for at oprette en dublet.",
   },
+  "sections.blankTitle": {
+    en: "Design from scratch",
+    da: "Design fra bunden",
+  },
+  "sections.blankBody": {
+    en: "The Blank template has no built-in sections or personal block. Build your CV by dropping shapes, text, lines, and images on the canvas.",
+    da: "Blank-skabelonen har ingen indbyggede sektioner eller personlige felter. Byg dit CV ved at trække figurer, tekst, linjer og billeder på lærredet.",
+  },
+  "sections.blankCta": {
+    en: "Open the Add tab on the left",
+    da: "Åbn Add-fanen til venstre",
+  },
+  "sections.blankPreserveHint": {
+    en: "Switch to any other template to bring back your sections and personal info — they're saved, just hidden here.",
+    da: "Skift til en anden skabelon for at få dine sektioner og personlige oplysninger frem igen — de er gemt, bare skjult her.",
+  },
 
   // ─── Section type labels ──────────────────────────────────────────
   "section.summary": { en: "Summary", da: "Resumé" },

@@ -678,9 +678,11 @@ function MidnightBullets({
 }) {
   const list = visibleBullets(bullets);
   if (list.length === 0) return null;
-  // Default to a small filled square (▪) — the bullet of the FT and the
-  // Economist. Respect the user's choice if they've changed it.
-  const glyph = design.bulletStyle === "disc" ? "▪" : bulletGlyph(design);
+  // Honour the user's bulletStyle choice exactly. Earlier code force-
+  // swapped "disc" → "▪" so picking Disc rendered squares — confusing.
+  // Defaults handle the FT / Economist square aesthetic via bulletStyle:
+  // "square" in Midnight's factory design.
+  const glyph = bulletGlyph(design);
   return (
     <ul
       className="mt-1.5 space-y-1 text-[0.95em]"

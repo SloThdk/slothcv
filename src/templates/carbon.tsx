@@ -626,9 +626,12 @@ function CarbonBullets({
 }) {
   const list = visibleBullets(bullets);
   if (list.length === 0) return null;
-  // Default to a small block glyph that fits the IBM aesthetic; respect
-  // the user's choice if they've changed it.
-  const glyph = design.bulletStyle === "disc" ? "▪" : bulletGlyph(design);
+  // Honour the user's bulletStyle choice exactly — bulletGlyph() is the
+  // shared resolver. Earlier code overrode "disc" to "▪" (square) which
+  // confused users: they picked Disc, the bullets rendered as squares.
+  // The IBM aesthetic still renders well via the Square option in the
+  // Design tab; we just don't silently swap glyphs anymore.
+  const glyph = bulletGlyph(design);
   return (
     <ul
       className="mt-1.5 space-y-0.5 text-[0.88em]"

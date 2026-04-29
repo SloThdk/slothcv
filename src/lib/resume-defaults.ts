@@ -101,9 +101,14 @@ export function defaultDesignForTemplate(
         headerStyle: "uppercase",
         skillBarStyle: "pills",
         photo: { enabled: true, shape: "circle", position: "top-right" },
-        watermarkText: "CV",
-        watermarkPosition: "bottom-left",
-        watermarkColor: "#7FFAB6",
+        // Watermark defaults left "off" — Aurora used to ship a "CV"
+        // letter watermark in the bottom-left, but first-time users
+        // confused it with a real label. The schema field stays so
+        // older saved data parses cleanly; the template just no
+        // longer opts in by default.
+        watermarkText: "",
+        watermarkPosition: "off",
+        watermarkColor: "",
       };
     case "eclipse":
       return {

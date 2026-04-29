@@ -63,6 +63,7 @@ import {
   marginMm,
   visibleSections,
 } from "@/templates/shared";
+import { NO_PHOTO_TEMPLATES } from "@/lib/design-labels";
 
 const SIDEBAR_TYPES = new Set([
   "skills",
@@ -75,6 +76,57 @@ const SIDEBAR_TYPES = new Set([
 const SIDEBAR_TEMPLATES = new Set(["berlin"]);
 const TWO_COL_TEMPLATES = new Set(["tokyo"]);
 const FULL_HEADER_TEMPLATES = new Set(["madrid"]);
+
+// ---------- Override helpers ----------
+//
+// The DOM editor lets users free-drag every annotated element via
+// `data.elementOverrides[id]` (`{dx, dy, rotate?}`) and free-drag whole
+// sections via `section.position` + `section.rotation`. The PDF render
+// MUST mirror those edits — otherwise users see their carefully-placed
+// layout snap back to template defaults on export, which is exactly the
+// "I moved things and the PDF doesn't show it" complaint.
+//
+// react-pdf's transform support is more limited than CSS but DOES handle
+// `translate(...)` and `rotate(...)` strings. We compose them the same
+// way `elementStyle()` / `positionStyle()` do in the DOM templates so
+// edit → preview → export stays visually consistent.
+
+/** Inline style additions that apply an element-level override (dx/dy/rotate)
+ *  to a react-pdf View/Text. Returns an empty object when no override is set
+ *  so call-sites can spread it unconditionally without changing the render
+ *  tree's structural identity. */
+function elementOverrideStyle(
+  data: ResumeData,
+  id: string,
+): { transform?: string } {
+  const o = data.elementOverrides?.[id];
+  if (!o) return {};
+  const dx = o.dx ?? 0;
+  const dy = o.dy ?? 0;
+  const rot = o.rotate ?? 0;
+  const hasMove = dx !== 0 || dy !== 0;
+  const hasRot = rot !== 0;
+  if (!hasMove && !hasRot) return {};
+  const parts: string[] = [];
+  if (hasMove) parts.push(`translate(${dx}, ${dy})`);
+  if (hasRot) parts.push(`rotate(${rot})`);
+  return { transform: parts.join(" ") };
+}
+
+/** Same idea but for whole-section positions/rotations. Sections in the
+ *  PDF always render through `<SectionBlock>` so this drops into one place
+ *  there, matching the DOM `positionStyle()` helper. */
+function sectionOverrideStyle(section: Section): { transform?: string } {
+  const p = section.position;
+  const r = section.rotation ?? 0;
+  const hasPos = !!p && (p.x !== 0 || p.y !== 0);
+  const hasRot = r !== 0;
+  if (!hasPos && !hasRot) return {};
+  const parts: string[] = [];
+  if (hasPos) parts.push(`translate(${p!.x}, ${p!.y})`);
+  if (hasRot) parts.push(`rotate(${r})`);
+  return { transform: parts.join(" ") };
+}
 
 // ---------- Top-level Document ----------
 
@@ -111,6 +163,10 @@ export function ResumePdf({ data }: { data: ResumeData }) {
         <View style={pageStyle.docPad}>
           <Layout data={data} />
         </View>
+        {/* Watermark — rendered between layout and the custom-elements
+            layer so toolshelf shapes still float above it like in the
+            editor. Absolutely positioned to a page corner. */}
+        <PdfWatermark data={data} />
         {/* Custom elements (toolshelf shapes / icons / images / text) —
             absolutely positioned in editor-page-edge coordinates so the
             PDF reflects exactly what the user assembled in the visual
@@ -136,6 +192,112 @@ function Layout({ data }: { data: ResumeData }) {
   if (TWO_COL_TEMPLATES.has(tpl)) return <TwoColLayout data={data} />;
   if (FULL_HEADER_TEMPLATES.has(tpl)) return <FullHeaderLayout data={data} />;
   return <SingleLayout data={data} />;
+}
+
+// ---------- Profile photo ----------
+//
+// Renders `personal.photoUrl` as a circular/rounded/square/arch frame to
+// match the DOM templates. Skipped when:
+//   - The active template is in NO_PHOTO_TEMPLATES (text-only by design)
+//   - `design.photo.enabled` is false
+//   - `personal.photoUrl` is empty or a `blob:` URL (editor-temp preview
+//     that react-pdf cannot resolve)
+//
+// Visual parity targets: Berlin's accent-outlined ring, the rounded-square
+// shape variants, and the size scale defaults defined in resume-defaults.ts.
+function Photo({
+  data,
+  size = 80,
+  outlined = true,
+}: {
+  data: ResumeData;
+  /** Edge length in PDF points. The DOM uses px / em; we convert at the
+   *  call-site. Default 80 ≈ 28mm — same scale as the DOM avatars. */
+  size?: number;
+  /** Whether to draw the accent outline ring around the photo. Berlin
+   *  uses it; minimal templates can pass false. */
+  outlined?: boolean;
+}) {
+  const { personal, design } = data;
+  if (NO_PHOTO_TEMPLATES.has(data.meta.template)) return null;
+  if (!design.photo.enabled) return null;
+  const url = personal.photoUrl?.trim();
+  if (!url) return null;
+  if (url.startsWith("blob:")) return null;
+  const shape = design.photo.shape;
+  const radius =
+    shape === "circle"
+      ? size / 2
+      : shape === "rounded"
+        ? Math.round(size / 4)
+        : 0;
+  const archRadius = shape === "arch" ? size : 0;
+  return (
+    <View
+      style={{
+        width: size,
+        height: shape === "arch" ? size * 1.15 : size,
+        borderRadius: archRadius || radius,
+        // For arch we approximate with top-rounded only by drawing the
+        // photo itself with full radius — react-pdf doesn't support
+        // border-top-left-radius / etc. so this is the best we can do.
+        overflow: "hidden",
+        borderWidth: outlined ? 1.5 : 0,
+        borderColor: outlined ? `${design.accentColor}66` : "transparent",
+        borderStyle: "solid",
+        ...elementOverrideStyle(data, "personal.photo"),
+      }}
+    >
+      <PdfImage
+        src={url}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+    </View>
+  );
+}
+
+// ---------- Watermark ----------
+//
+// Mirror the DOM `<Watermark>` — oversized branding text in one of the
+// four corners, low-opacity, accent-tinted. Honours `design.watermarkText`
+// + `design.watermarkPosition` and applies the user's drag offset via
+// `elementOverrides["design.watermark"]` so a watermark dragged in the
+// editor lands at the same spot in the exported PDF.
+function PdfWatermark({ data }: { data: ResumeData }) {
+  const { design } = data;
+  const text = (design.watermarkText ?? "").trim();
+  const pos = design.watermarkPosition ?? "off";
+  if (!text || pos === "off") return null;
+  const color =
+    (design.watermarkColor ?? "").trim() || design.accentColor;
+  const corner: PdfStyle =
+    pos === "bottom-left"
+      ? { left: 12, bottom: 12 }
+      : pos === "bottom-right"
+        ? { right: 12, bottom: 12 }
+        : pos === "top-left"
+          ? { left: 12, top: 12 }
+          : { right: 12, top: 12 };
+  return (
+    <Text
+      style={{
+        position: "absolute",
+        ...corner,
+        color,
+        fontSize: 56,
+        fontWeight: 800,
+        opacity: 0.85,
+        letterSpacing: 1.5,
+        ...elementOverrideStyle(data, "design.watermark"),
+      }}
+    >
+      {text}
+    </Text>
+  );
 }
 
 // ---------- Header ----------

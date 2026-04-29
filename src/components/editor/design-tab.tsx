@@ -23,11 +23,9 @@ import type {
   Layout,
   LetterSpacing,
   PageMargin,
-  PageSize,
   PhotoPosition,
   PhotoShape,
   SkillBarStyle,
-  WatermarkPosition,
 } from "@/types/resume";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -526,50 +524,20 @@ export function DesignTab() {
         />
       </Section>
 
-      <Section title={t("design.page")}>
-        <ChipRow
-          label="Page size"
-          value={design.pageSize}
-          options={["A4", "Letter", "Legal"] as PageSize[]}
-          onChange={(v) => setDesign({ pageSize: v })}
-        />
-      </Section>
+      {/* Page size selector removed — every CV ships A4 by default. The
+          underlying schema still accepts Letter / Legal for users who
+          edit raw data, but the chrome no longer surfaces it because
+          (a) almost every job market expects A4 / Letter interchangeably
+          and react-pdf reflows accordingly, (b) exposing it as a chip
+          row added cognitive load without practical payoff. */}
 
-      <Section title={t("design.watermark")} onReset={() => onResetGroup("watermark")}>
-        <div>
-          <Label>Watermark text</Label>
-          <Input
-            value={design.watermarkText ?? ""}
-            placeholder='e.g. "CV", initials, "PS"'
-            maxLength={40}
-            onChange={(e) => setDesign({ watermarkText: e.target.value })}
-          />
-        </div>
-        <ChipRow
-          label="Position"
-          value={design.watermarkPosition ?? "off"}
-          options={[
-            "off",
-            "bottom-left",
-            "bottom-right",
-            "top-left",
-            "top-right",
-          ] as WatermarkPosition[]}
-          onChange={(v) => setDesign({ watermarkPosition: v })}
-        />
-        <div>
-          <Label>Watermark color</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              value={design.watermarkColor ?? ""}
-              placeholder="Using accent color"
-              maxLength={64}
-              onChange={(e) => setDesign({ watermarkColor: e.target.value })}
-              className="font-mono text-xs"
-            />
-          </div>
-        </div>
-      </Section>
+      {/* Watermark section removed — the corner-letter watermark
+          ("CV" / initials / etc.) was a decoration users either
+          ignored or turned off, and several first-time users reported
+          confusion about the big random letters appearing on their
+          CV. The schema fields stay so older saved data parses
+          cleanly, but the UI no longer surfaces them and every
+          template's factory defaults set watermarkPosition: "off". */}
     </div>
   );
 }

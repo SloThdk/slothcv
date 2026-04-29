@@ -52,7 +52,15 @@ export function TemplateFrame({
   const dims = PAGE_DIMENSIONS_MM[design.pageSize];
   const mm = marginMm(design);
 
-  const style: React.CSSProperties = {
+  // Inject `--cv-title-font` and `--cv-body-font` CSS variables on the
+  // page wrapper so templates that hardcode their identity fonts (e.g.
+  // Madison's Lora, Eclipse's Fraunces) can opt-in to the user's
+  // typography preset by reading from these vars instead of going
+  // straight to `var(--font-lora)`. Templates that haven't been
+  // migrated still render their original hardcoded font; templates
+  // that opt-in (using `var(--cv-title-font, fallback)`) follow the
+  // user's Design → Typography choice.
+  const style: React.CSSProperties & Record<string, string | number> = {
     background: design.pageBg,
     color: design.textColor,
     fontFamily: `var(--font-${slugFont(design.bodyFont)}, ${design.bodyFont}), system-ui, sans-serif`,
@@ -61,6 +69,8 @@ export function TemplateFrame({
     letterSpacing: `${letterSpacingEm(design)}em`,
     padding: `${mmToPx(mm)}px`,
     boxSizing: "border-box",
+    "--cv-title-font": `var(--font-${slugFont(design.titleFont)}, ${design.titleFont}), system-ui, sans-serif`,
+    "--cv-body-font": `var(--font-${slugFont(design.bodyFont)}, ${design.bodyFont}), system-ui, sans-serif`,
   };
 
   if (fixedSize) {

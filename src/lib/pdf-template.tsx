@@ -305,37 +305,45 @@ function PdfWatermark({ data }: { data: ResumeData }) {
 function Header({ data, dense = false }: { data: ResumeData; dense?: boolean }) {
   const { personal, design } = data;
   return (
-    <View style={{ marginBottom: dense ? 8 : 14 }}>
-      <Text
-        style={{
-          fontSize: 20 * design.fontScale,
-          fontWeight: 700,
-        }}
-      >
-        {personal.fullName || "Your name"}
-      </Text>
-      {personal.headline && (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 14,
+        marginBottom: dense ? 8 : 14,
+        alignItems: "flex-start",
+      }}
+    >
+      <Photo data={data} size={dense ? 60 : 78} outlined />
+      <View style={{ flex: 1 }}>
         <Text
           style={{
-            color: design.accentColor,
-            fontSize: 11 * design.fontScale,
-            marginTop: 2,
+            fontSize: 20 * design.fontScale,
+            fontWeight: 700,
+            ...elementOverrideStyle(data, "personal.name"),
           }}
         >
-          {personal.headline}
+          {personal.fullName || "Your name"}
         </Text>
-      )}
-      <ContactRow data={data} />
+        {personal.headline && (
+          <Text
+            style={{
+              color: design.accentColor,
+              fontSize: 11 * design.fontScale,
+              marginTop: 2,
+              ...elementOverrideStyle(data, "personal.headline"),
+            }}
+          >
+            {personal.headline}
+          </Text>
+        )}
+        <ContactRow data={data} />
+      </View>
     </View>
   );
 }
 
 function ContactRow({ data }: { data: ResumeData }) {
   const { personal, design } = data;
-  const parts: string[] = [];
-  if (personal.email) parts.push(personal.email);
-  if (personal.phone) parts.push(personal.phone);
-  if (personal.location) parts.push(personal.location);
   return (
     <View
       style={{
@@ -345,11 +353,39 @@ function ContactRow({ data }: { data: ResumeData }) {
         gap: 6,
       }}
     >
-      {parts.map((p, i) => (
-        <Text key={i} style={{ fontSize: 9 * design.fontScale, color: "#666" }}>
-          {p}
+      {personal.email && (
+        <Text
+          style={{
+            fontSize: 9 * design.fontScale,
+            color: "#666",
+            ...elementOverrideStyle(data, "personal.email"),
+          }}
+        >
+          {personal.email}
         </Text>
-      ))}
+      )}
+      {personal.phone && (
+        <Text
+          style={{
+            fontSize: 9 * design.fontScale,
+            color: "#666",
+            ...elementOverrideStyle(data, "personal.phone"),
+          }}
+        >
+          {personal.phone}
+        </Text>
+      )}
+      {personal.location && (
+        <Text
+          style={{
+            fontSize: 9 * design.fontScale,
+            color: "#666",
+            ...elementOverrideStyle(data, "personal.location"),
+          }}
+        >
+          {personal.location}
+        </Text>
+      )}
       {personal.links.map((l) => (
         <PdfLink
           key={l.id}
@@ -358,6 +394,7 @@ function ContactRow({ data }: { data: ResumeData }) {
             fontSize: 9 * design.fontScale,
             color: design.accentColor,
             textDecoration: "none",
+            ...elementOverrideStyle(data, `personal.links.${l.id}`),
           }}
         >
           {l.label || l.url}
@@ -398,47 +435,93 @@ function FullHeaderLayout({ data }: { data: ResumeData }) {
           paddingLeft: marginMm(design) * 2.83465,
           paddingRight: marginMm(design) * 2.83465,
           marginBottom: 14,
+          flexDirection: "row",
+          gap: 12,
+          alignItems: "center",
         }}
       >
-        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: 700 }}>
-          {personal.fullName || "Your name"}
-        </Text>
-        {personal.headline && (
-          <Text style={{ color: "#ffffff", opacity: 0.9, marginTop: 2 }}>
-            {personal.headline}
+        <Photo data={data} size={64} outlined={false} />
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: "#ffffff",
+              fontSize: 22,
+              fontWeight: 700,
+              ...elementOverrideStyle(data, "personal.name"),
+            }}
+          >
+            {personal.fullName || "Your name"}
           </Text>
-        )}
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            marginTop: 6,
-            gap: 8,
-          }}
-        >
-          {personal.email ? (
-            <Text style={{ color: "#ffffff", opacity: 0.9, fontSize: 9 }}>
-              {personal.email}
-            </Text>
-          ) : null}
-          {personal.phone ? (
-            <Text style={{ color: "#ffffff", opacity: 0.9, fontSize: 9 }}>
-              {personal.phone}
-            </Text>
-          ) : null}
-          {personal.location ? (
-            <Text style={{ color: "#ffffff", opacity: 0.9, fontSize: 9 }}>
-              {personal.location}
-            </Text>
-          ) : null}
-          {personal.links.map((l) => (
+          {personal.headline && (
             <Text
-              key={l.id}
-              style={{ color: "#ffffff", opacity: 0.9, fontSize: 9 }}
+              style={{
+                color: "#ffffff",
+                opacity: 0.9,
+                marginTop: 2,
+                ...elementOverrideStyle(data, "personal.headline"),
+              }}
             >
-              {l.label || l.url}
+              {personal.headline}
             </Text>
-          ))}
+          )}
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginTop: 6,
+              gap: 8,
+            }}
+          >
+            {personal.email ? (
+              <Text
+                style={{
+                  color: "#ffffff",
+                  opacity: 0.9,
+                  fontSize: 9,
+                  ...elementOverrideStyle(data, "personal.email"),
+                }}
+              >
+                {personal.email}
+              </Text>
+            ) : null}
+            {personal.phone ? (
+              <Text
+                style={{
+                  color: "#ffffff",
+                  opacity: 0.9,
+                  fontSize: 9,
+                  ...elementOverrideStyle(data, "personal.phone"),
+                }}
+              >
+                {personal.phone}
+              </Text>
+            ) : null}
+            {personal.location ? (
+              <Text
+                style={{
+                  color: "#ffffff",
+                  opacity: 0.9,
+                  fontSize: 9,
+                  ...elementOverrideStyle(data, "personal.location"),
+                }}
+              >
+                {personal.location}
+              </Text>
+            ) : null}
+            {personal.links.map((l) => (
+              <Text
+                key={l.id}
+                style={{
+                  color: "#ffffff",
+                  opacity: 0.9,
+                  fontSize: 9,
+                  ...elementOverrideStyle(data, `personal.links.${l.id}`),
+                }}
+              >
+                {l.label || l.url}
+              </Text>
+            ))}
+          </View>
         </View>
       </View>
       {visible.map((s) => (
@@ -465,7 +548,15 @@ function SidebarLayout({ data }: { data: ResumeData }) {
           borderLeft: `2 solid ${design.accentColor}`,
         }}
       >
-        <Text style={{ fontSize: 14, fontWeight: 700 }}>
+        <Photo data={data} size={64} outlined />
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            marginTop: 8,
+            ...elementOverrideStyle(data, "personal.name"),
+          }}
+        >
           {personal.fullName || "Your name"}
         </Text>
         {personal.headline && (
@@ -475,23 +566,45 @@ function SidebarLayout({ data }: { data: ResumeData }) {
               fontSize: 10,
               marginTop: 2,
               marginBottom: 4,
+              ...elementOverrideStyle(data, "personal.headline"),
             }}
           >
             {personal.headline}
           </Text>
         )}
         {personal.email && (
-          <Text style={{ fontSize: 9, color: "#444", marginTop: 1 }}>
+          <Text
+            style={{
+              fontSize: 9,
+              color: "#444",
+              marginTop: 1,
+              ...elementOverrideStyle(data, "personal.email"),
+            }}
+          >
             {personal.email}
           </Text>
         )}
         {personal.phone && (
-          <Text style={{ fontSize: 9, color: "#444", marginTop: 1 }}>
+          <Text
+            style={{
+              fontSize: 9,
+              color: "#444",
+              marginTop: 1,
+              ...elementOverrideStyle(data, "personal.phone"),
+            }}
+          >
             {personal.phone}
           </Text>
         )}
         {personal.location && (
-          <Text style={{ fontSize: 9, color: "#444", marginTop: 1 }}>
+          <Text
+            style={{
+              fontSize: 9,
+              color: "#444",
+              marginTop: 1,
+              ...elementOverrideStyle(data, "personal.location"),
+            }}
+          >
             {personal.location}
           </Text>
         )}
@@ -504,6 +617,7 @@ function SidebarLayout({ data }: { data: ResumeData }) {
               color: design.accentColor,
               textDecoration: "none",
               marginTop: 1,
+              ...elementOverrideStyle(data, `personal.links.${l.id}`),
             }}
           >
             {l.label || l.url}
@@ -511,7 +625,10 @@ function SidebarLayout({ data }: { data: ResumeData }) {
         ))}
         <View style={{ marginTop: 8 }}>
           {sidebar.map((s) => (
-            <View key={s.id} style={{ marginBottom: 8 }}>
+            <View
+              key={s.id}
+              style={{ marginBottom: 8, ...sectionOverrideStyle(s) }}
+            >
               <Text
                 style={{
                   fontSize: 9,
@@ -571,8 +688,14 @@ function SectionBlock({
   section: Section;
   design: GlobalDesign;
 }) {
+  // sectionOverrideStyle applies the user's whole-section drag
+  // (position + rotation). Keeps editor visual ↔ PDF visual in sync so
+  // an edit moved to (40, -10) lands at the same offset on export.
   return (
-    <View style={{ marginBottom: 10 }} wrap={false}>
+    <View
+      style={{ marginBottom: 10, ...sectionOverrideStyle(section) }}
+      wrap={false}
+    >
       <Text
         style={{
           fontSize: 10 * design.fontScale,

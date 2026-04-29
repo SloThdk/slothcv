@@ -124,6 +124,9 @@ export function Preview() {
   const addCustomElement = useEditorStore((s) => s.addCustomElement);
   const selectElement = useEditorStore((s) => s.selectElement);
   const setPersonal = useEditorStore((s) => s.setPersonal);
+  // setDesign is needed by the inline-text-edit lens when the user
+  // double-clicks `design.watermark` (corner letters) to rename it.
+  const setDesign = useEditorStore((s) => s.setDesign);
   const setEditingElementId = useEditorStore((s) => s.setEditingElementId);
   const { t } = useLanguage();
   const [zoom, setZoom] = useState<ZoomMode>("fit");
@@ -1170,6 +1173,7 @@ export function Preview() {
           const lens = elementTextLens(id, data, {
             setPersonal,
             updateSection,
+            setDesign,
           });
           if (!lens) return; // Not editable inline — falls back to form jump on click.
           e.stopPropagation();

@@ -41,6 +41,10 @@ export interface LensWriters {
     patch: Partial<ResumeData["personal"]>,
   ) => void;
   updateSection: <T extends Section>(id: string, patch: Partial<T>) => void;
+  /** Patch the design block — needed for design-level inline-editable
+   *  fields (watermark text). Optional so older callers that didn't
+   *  expose design editing keep compiling. */
+  setDesign?: (patch: Partial<ResumeData["design"]>) => void;
 }
 
 /** Resolve an element-id into a TextLens, or return null if the id
@@ -50,6 +54,23 @@ export function elementTextLens(
   data: ResumeData,
   writers: LensWriters,
 ): TextLens | null {
+  // ----- design.* ---------------------------------------------------
+  // The corner watermark — user-editable inline so double-clicking the
+  // big "CV" letters lets them rename it to whatever they want
+  // (initials, "Resume", company tag, etc.) without trip to the
+  // Design tab. The setDesign writer is optional in the interface but
+  // populated by the editor's preview so this path is live in practice.
+  if (id === "design.watermark") {
+    return {
+      read: () => data.design.watermarkText ?? "",
+      write: (s) => {
+        if (writers.setDesign) {
+          writers.setDesign({ watermarkText: s });
+        }
+      },
+    };
+  }
+
   // ----- personal.* ------------------------------------------------
   if (id === "personal.name") {
     return {

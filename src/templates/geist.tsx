@@ -41,6 +41,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -295,7 +296,7 @@ function GeistExperience({
                   letterSpacing: "-0.01em",
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span
                     style={{
@@ -304,7 +305,7 @@ function GeistExperience({
                     }}
                   >
                     {" @ "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -328,7 +329,7 @@ function GeistExperience({
                 Renders as a mono pill if it looks like a metric (contains a
                 digit or one of the metric prefix glyphs). Otherwise, falls
                 back to a normal location display. */}
-            {it.location && <GeistMetric text={it.location} design={design} />}
+            {it.location && <GeistMetric text={it.location || "Location"} design={design} />}
             <GeistBullets
               bullets={it.bullets}
               design={design}
@@ -399,7 +400,7 @@ function GeistProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: design.accentColor }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -407,7 +408,7 @@ function GeistProjects({
                 {it.role && (
                   <span style={{ color: `${design.textColor}88`, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -497,14 +498,14 @@ function GeistEducation({
                   fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
                 }}
               >
-                {it.degree}
-                {it.field ? ` · ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` · ${it.field || "Field of study"}` : ""}
               </span>
               <span
                 className="ml-2 text-[0.85em]"
                 style={{ color: `${design.textColor}99` }}
               >
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
@@ -580,7 +581,7 @@ function GeistSkills({
                     ...elementStyle(data, id),
                   }}
                 >
-                  {s.name}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                 </span>
               );
             })}
@@ -613,11 +614,11 @@ function GeistCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: `${design.textColor}88` }}>
                   {" · "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -630,7 +631,7 @@ function GeistCerts({
                     "var(--font-geist-mono, 'Geist Mono'), 'JetBrains Mono', monospace",
                 }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

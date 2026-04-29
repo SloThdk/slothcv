@@ -12,6 +12,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -242,21 +243,60 @@ export function SectionList() {
               {t("sections.add")}
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              {SECTION_OPTIONS.map((typ) => (
-                <Button
-                  key={typ}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const id = addSection(typ);
-                    setShowAdd(false);
-                    setExpanded(id);
-                  }}
-                >
-                  {t(SECTION_TKEY[typ])}
-                </Button>
-              ))}
+              {SECTION_OPTIONS.map((typ) => {
+                // Detect existing section of the same type. Skipped for
+                // "custom" since users frequently want multiple custom
+                // sections (e.g. "Volunteer", "Languages spoken", "Hobbies"),
+                // each with a distinct user-supplied title.
+                const existing =
+                  typ === "custom"
+                    ? null
+                    : sections.find((s) => s.type === typ);
+                return (
+                  <Button
+                    key={typ}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (existing) {
+                        // Singleton dedup: expand the existing section
+                        // and scroll to it instead of creating a
+                        // duplicate. Without this, clicking "+ Skills"
+                        // twice produces two Skills sections — the
+                        // common pitfall users have reported.
+                        setShowAdd(false);
+                        setExpanded(existing.id);
+                        requestJumpToSection(existing.id);
+                        toast.message(
+                          t("sections.alreadyExists", {
+                            type: t(SECTION_TKEY[typ]),
+                          }),
+                        );
+                        return;
+                      }
+                      const id = addSection(typ);
+                      setShowAdd(false);
+                      setExpanded(id);
+                    }}
+                    title={
+                      existing
+                        ? t("sections.alreadyExistsHint", {
+                            type: t(SECTION_TKEY[typ]),
+                          })
+                        : undefined
+                    }
+                    className={
+                      existing
+                        ? "border-dashed text-muted opacity-80"
+                        : undefined
+                    }
+                  >
+                    {t(SECTION_TKEY[typ])}
+                    {existing && <span className="ml-1 text-[10px]">✓</span>}
+                  </Button>
+                );
+              })}
             </div>
             <div className="mt-2 flex justify-end">
               <Button

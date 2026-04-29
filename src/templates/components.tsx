@@ -70,6 +70,113 @@ const dragClass =
   "cursor-grab transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-2 rounded-sm";
 
 /**
+ * EditableSectionTitle — drop-in wrapper that templates can put around
+ * their `<h2>{section.title}</h2>` contents. Tags the title with the
+ * canonical `section.<sid>.title` element-id so the inline-edit overlay
+ * picks it up on double-click; renders an inline `<span>` so the
+ * parent h2's typography (font, color, tracking, transform, etc.)
+ * still drives the visual appearance — the wrapper adds an editing
+ * affordance, not a layout element.
+ *
+ * Templates that already wire titles to a custom `titleId` (atlas,
+ * copenhagen, geist, vienna) keep their own implementation; this is
+ * for the rest, which previously rendered raw `{section.title}` and
+ * had no inline-edit hook on the heading.
+ *
+ * Usage:
+ *   <h2 className="...">
+ *     <EditableSectionTitle sid={section.id} data={data}>
+ *       {section.title}
+ *     </EditableSectionTitle>
+ *   </h2>
+ *
+ * For templates that transform the title via `transformHeader(...)`,
+ * pass the transformed JSX as children — the lens still reads/writes
+ * the raw `section.title` string, but the visual stays uppercase /
+ * titlecase / etc. as the template intends.
+ */
+export function EditableSectionTitle({
+  sid,
+  data,
+  children,
+  className,
+}: {
+  sid: string;
+  data: ResumeData;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const id = `section.${sid}.title`;
+  return (
+    <span
+      data-element-id={id}
+      className={`cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""}`}
+      style={elementStyle(data, id)}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Tailwind class string applied to placeholder Editables — the visual
+ * "this is empty, click to add" treatment. 40 % opacity + italic +
+ * normal-weight so a placeholder reads as a hint, not as real
+ * content. Keeping the SAME font-size / padding so when the user
+ * starts editing nothing reflows. The inline-edit lens still reads
+ * the underlying empty string, so the contentEditable starts truly
+ * blank — the user types fresh, no need to clear anything.
+ */
+const PLACEHOLDER_CLASS = "opacity-40 italic font-normal";
+
+/**
+ * EditableFallback — wraps a value with `<Editable>` and shows a
+ * placeholder when the value is empty. The placeholder is rendered
+ * inside the SAME `<Editable>` span so:
+ *   - The element-id stays stable between empty and filled states
+ *     (no DOM remount when the user types — caret position stays
+ *     valid through the transition).
+ *   - The inline-edit overlay's lens still sees the field's raw value
+ *     (empty string), so editing starts on a blank canvas — the visible
+ *     "Degree" / "Role" / etc. placeholder is purely cosmetic and
+ *     never enters the data.
+ *   - Layout stays stable — every field always emits something so
+ *     clicking "+ Add education" produces a row that VISUALLY mirrors
+ *     filled entries instead of collapsing to "Degree —" alone.
+ *
+ * `inline` defaults to true (renders a span); pass false for fields
+ * that should occupy a full block (locations, descriptions).
+ */
+export function EditableFallback({
+  data,
+  fieldId,
+  value,
+  placeholder,
+  className,
+  inline = true,
+}: {
+  data: ResumeData;
+  fieldId: string;
+  value: string;
+  placeholder: string;
+  className?: string;
+  inline?: boolean;
+}) {
+  const isEmpty = !value || !value.trim();
+  const Tag = inline ? "span" : "div";
+  return (
+    <Tag
+      data-element-id={fieldId}
+      data-placeholder={isEmpty ? "true" : undefined}
+      className={`${inline ? "" : "block"} cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""} ${isEmpty ? PLACEHOLDER_CLASS : ""}`}
+      style={elementStyle(data, fieldId)}
+    >
+      {isEmpty ? placeholder : value}
+    </Tag>
+  );
+}
+
+/**
  * Editable — wraps a piece of text with a stable `data-element-id` so
  * the inline-edit overlay (see `<InlineTextEditor>`) can pick it up
  * on double-click. The CSS cursor flips to `text` on hover so users
@@ -285,25 +392,21 @@ export function ExperienceBody({
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <div className="font-semibold">
-                  <span
-                    data-element-id={roleId}
-                    className="cursor-text"
-                    style={elementStyle(data, roleId)}
-                  >
-                    {it.role || "Role"}
+                  <EditableFallback
+                    data={data}
+                    fieldId={roleId}
+                    value={it.role}
+                    placeholder="Role"
+                  />
+                  <span className="cv-aux-field font-normal text-neutral-500">
+                    {" · "}
+                    <EditableFallback
+                      data={data}
+                      fieldId={companyId}
+                      value={it.company}
+                      placeholder="Company"
+                    />
                   </span>
-                  {it.company && (
-                    <span className="font-normal text-neutral-500">
-                      {" · "}
-                      <span
-                        data-element-id={companyId}
-                        className="cursor-text"
-                        style={elementStyle(data, companyId)}
-                      >
-                        {it.company}
-                      </span>
-                    </span>
-                  )}
                 </div>
                 <DateRange
                   data={data}
@@ -315,16 +418,14 @@ export function ExperienceBody({
                   className="text-[0.85em] text-neutral-500"
                 />
               </div>
-              {it.location && (
-                <Editable
-                  data={data}
-                  fieldId={locationId}
-                  inline={false}
-                  className="text-[0.85em] text-neutral-500"
-                >
-                  {it.location}
-                </Editable>
-              )}
+              <EditableFallback
+                data={data}
+                fieldId={locationId}
+                value={it.location}
+                placeholder="Location"
+                inline={false}
+                className="text-[0.85em] text-neutral-500"
+              />
               <BulletList
                 bullets={it.bullets}
                 design={design}
@@ -360,17 +461,21 @@ export function EducationBody({
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <div className="font-semibold">
-                  <Editable data={data} fieldId={`${id}.degree`}>
-                    {it.degree || "Degree"}
-                  </Editable>
-                  {it.field && (
-                    <span className="font-normal">
-                      {", "}
-                      <Editable data={data} fieldId={`${id}.field`}>
-                        {it.field}
-                      </Editable>
-                    </span>
-                  )}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.degree`}
+                    value={it.degree}
+                    placeholder="Degree"
+                  />
+                  <span className="cv-aux-field font-normal">
+                    {", "}
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.field`}
+                      value={it.field}
+                      placeholder="Field of study"
+                    />
+                  </span>
                 </div>
                 <DateRange
                   data={data}
@@ -383,25 +488,30 @@ export function EducationBody({
                 />
               </div>
               <div className="text-[0.9em] text-neutral-700">
-                <Editable data={data} fieldId={`${id}.institution`}>
-                  {it.institution}
-                </Editable>
-                {it.location && (
-                  <span className="text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.location`}>
-                      {it.location}
-                    </Editable>
-                  </span>
-                )}
-                {it.gpa && (
-                  <span className="text-neutral-500">
-                    {" · GPA "}
-                    <Editable data={data} fieldId={`${id}.gpa`}>
-                      {it.gpa}
-                    </Editable>
-                  </span>
-                )}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.institution`}
+                  value={it.institution}
+                  placeholder="Institution"
+                />
+                <span className="cv-aux-field text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.location`}
+                    value={it.location}
+                    placeholder="Location"
+                  />
+                </span>
+                <span className="cv-aux-field text-neutral-500">
+                  {" · GPA "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.gpa`}
+                    value={it.gpa ?? ""}
+                    placeholder="—"
+                  />
+                </span>
               </div>
               <BulletList
                 bullets={it.bullets}
@@ -435,41 +545,53 @@ export function SkillsBody({
 
   return (
     <div className="space-y-2.5">
-      {[...groups.entries()].map(([group, list]) => (
-        <div key={group}>
-          {groups.size > 1 && (
-            <div className="mb-1 text-[0.8em] font-medium uppercase tracking-wider text-neutral-500">
-              {group}
+      {[...groups.entries()].map(([group, list]) => {
+        // Group label gets its own element-id so the user can double-click
+        // "TECH" / "Soft skills" / etc. and inline-edit it. Editing
+        // rewrites the `group` field on every skill in this group at once
+        // (handled by the lens — `section.<sid>.skillGroup.<oldName>`).
+        // Group name is URI-encoded so spaces and unicode in group names
+        // survive the data-element-id selector round-trip cleanly.
+        const groupId = `section.${section.id}.skillGroup.${encodeURIComponent(group)}`;
+        return (
+          <div key={group}>
+            {groups.size > 1 && (
+              <div
+                data-element-id={groupId}
+                className="mb-1 cursor-text rounded-sm text-[0.8em] font-medium uppercase tracking-wider text-neutral-500 transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1"
+              >
+                {group}
+              </div>
+            )}
+            <div
+              className={
+                design.skillBarStyle === "pills"
+                  ? "flex flex-wrap gap-1.5"
+                  : "space-y-1"
+              }
+            >
+              {list.map((s) => {
+                const id = eid.item(section.id, s.id);
+                return (
+                  <div
+                    key={s.id}
+                    data-element-id={id}
+                    className={dragClass}
+                    style={elementStyle(data, id)}
+                  >
+                    <SkillRow
+                      skill={s}
+                      design={design}
+                      data={data}
+                      sectionId={section.id}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          )}
-          <div
-            className={
-              design.skillBarStyle === "pills"
-                ? "flex flex-wrap gap-1.5"
-                : "space-y-1"
-            }
-          >
-            {list.map((s) => {
-              const id = eid.item(section.id, s.id);
-              return (
-                <div
-                  key={s.id}
-                  data-element-id={id}
-                  className={dragClass}
-                  style={elementStyle(data, id)}
-                >
-                  <SkillRow
-                    skill={s}
-                    design={design}
-                    data={data}
-                    sectionId={section.id}
-                  />
-                </div>
-              );
-            })}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -669,23 +791,30 @@ export function ProjectsBody({
                     className="underline-offset-2 hover:underline"
                     style={{ color: design.accentColor }}
                   >
-                    <Editable data={data} fieldId={`${id}.name`}>
-                      {it.name || "Project"}
-                    </Editable>
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.name`}
+                      value={it.name}
+                      placeholder="Project name"
+                    />
                   </a>
                 ) : (
-                  <Editable data={data} fieldId={`${id}.name`}>
-                    {it.name || "Project"}
-                  </Editable>
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.name`}
+                    value={it.name}
+                    placeholder="Project name"
+                  />
                 )}
-                {it.role && (
-                  <span className="font-normal text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.role`}>
-                      {it.role}
-                    </Editable>
-                  </span>
-                )}
+                <span className="font-normal text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.role`}
+                    value={it.role}
+                    placeholder="Role"
+                  />
+                </span>
               </div>
               <DateRange
                 data={data}
@@ -697,16 +826,14 @@ export function ProjectsBody({
                 className="text-[0.85em] text-neutral-500"
               />
             </div>
-            {it.techStack && (
-              <Editable
-                data={data}
-                fieldId={`${id}.techStack`}
-                inline={false}
-                className="mt-0.5 text-[0.85em] text-neutral-500"
-              >
-                {it.techStack}
-              </Editable>
-            )}
+            <EditableFallback
+              data={data}
+              fieldId={`${id}.techStack`}
+              value={it.techStack}
+              placeholder="Tech stack — e.g. React, Postgres, Stripe"
+              inline={false}
+              className="mt-0.5 text-[0.85em] text-neutral-500"
+            />
             <BulletList
               bullets={it.bullets}
               design={design}
@@ -742,31 +869,39 @@ export function CertificationsBody({
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <div>
                 <span className="font-semibold">
-                  <Editable data={data} fieldId={`${id}.name`}>
-                    {c.name}
-                  </Editable>
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.name`}
+                    value={c.name}
+                    placeholder="Certification name"
+                  />
                 </span>
-                {c.issuer && (
-                  <span className="text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.issuer`}>
-                      {c.issuer}
-                    </Editable>
-                  </span>
-                )}
+                <span className="cv-aux-field text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.issuer`}
+                    value={c.issuer}
+                    placeholder="Issuer"
+                  />
+                </span>
               </div>
               <div className="text-[0.85em] text-neutral-500">
-                <Editable data={data} fieldId={`${id}.date`}>
-                  {c.date}
-                </Editable>
-                {c.expiry && (
-                  <>
-                    {" – "}
-                    <Editable data={data} fieldId={`${id}.expiry`}>
-                      {c.expiry}
-                    </Editable>
-                  </>
-                )}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.date`}
+                  value={c.date}
+                  placeholder="Issued"
+                />
+                <span className="cv-aux-field">
+                  {" – "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.expiry`}
+                    value={c.expiry ?? ""}
+                    placeholder="Expires"
+                  />
+                </span>
               </div>
             </div>
             {(c.credentialId || c.url) && (
@@ -817,37 +952,40 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <div>
                 <span className="font-semibold">
-                  <Editable data={data} fieldId={`${id}.name`}>
-                    {a.name}
-                  </Editable>
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.name`}
+                    value={a.name}
+                    placeholder="Award name"
+                  />
                 </span>
-                {a.issuer && (
-                  <span className="text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.issuer`}>
-                      {a.issuer}
-                    </Editable>
-                  </span>
-                )}
+                <span className="cv-aux-field text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.issuer`}
+                    value={a.issuer}
+                    placeholder="Issuer"
+                  />
+                </span>
               </div>
-              {a.date && (
-                <div className="text-[0.85em] text-neutral-500">
-                  <Editable data={data} fieldId={`${id}.date`}>
-                    {a.date}
-                  </Editable>
-                </div>
-              )}
+              <div className="text-[0.85em] text-neutral-500">
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.date`}
+                  value={a.date}
+                  placeholder="Date"
+                />
+              </div>
             </div>
-            {a.description && (
-              <Editable
-                data={data}
-                fieldId={`${id}.description`}
-                inline={false}
-                className="text-[0.9em] text-neutral-700"
-              >
-                {a.description}
-              </Editable>
-            )}
+            <EditableFallback
+              data={data}
+              fieldId={`${id}.description`}
+              value={a.description}
+              placeholder="Description"
+              inline={false}
+              className="text-[0.9em] text-neutral-700"
+            />
           </div>
         );
       })}
@@ -874,35 +1012,41 @@ export function PublicationsBody({
             style={elementStyle(data, id)}
           >
             <span className="font-semibold">
-              <Editable data={data} fieldId={`${id}.title`}>
-                {p.title}
-              </Editable>
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.title`}
+                value={p.title}
+                placeholder="Publication title"
+              />
             </span>
-            {p.authors && (
-              <span className="text-neutral-700">
-                {" — "}
-                <Editable data={data} fieldId={`${id}.authors`}>
-                  {p.authors}
-                </Editable>
-              </span>
-            )}
-            {p.venue && (
-              <span className="italic text-neutral-700">
-                {". "}
-                <Editable data={data} fieldId={`${id}.venue`}>
-                  {p.venue}
-                </Editable>
-              </span>
-            )}
-            {p.date && (
-              <span className="text-neutral-500">
-                {" ("}
-                <Editable data={data} fieldId={`${id}.date`}>
-                  {p.date}
-                </Editable>
-                {")"}
-              </span>
-            )}
+            <span className="cv-aux-field text-neutral-700">
+              {" — "}
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.authors`}
+                value={p.authors}
+                placeholder="Authors"
+              />
+            </span>
+            <span className="cv-aux-field italic text-neutral-700">
+              {". "}
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.venue`}
+                value={p.venue}
+                placeholder="Venue"
+              />
+            </span>
+            <span className="cv-aux-field text-neutral-500">
+              {" ("}
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.date`}
+                value={p.date}
+                placeholder="Date"
+              />
+              {")"}
+            </span>
             {p.url && (
               <>
                 {" "}
@@ -945,17 +1089,21 @@ export function VolunteerBody({
           >
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <div className="font-semibold">
-                <Editable data={data} fieldId={`${id}.role`}>
-                  {it.role || "Role"}
-                </Editable>
-                {it.organization && (
-                  <span className="font-normal text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.organization`}>
-                      {it.organization}
-                    </Editable>
-                  </span>
-                )}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.role`}
+                  value={it.role}
+                  placeholder="Role"
+                />
+                <span className="font-normal text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.organization`}
+                    value={it.organization}
+                    placeholder="Organization"
+                  />
+                </span>
               </div>
               <DateRange
                 data={data}
@@ -967,16 +1115,14 @@ export function VolunteerBody({
                 className="text-[0.85em] text-neutral-500"
               />
             </div>
-            {it.location && (
-              <Editable
-                data={data}
-                fieldId={`${id}.location`}
-                inline={false}
-                className="text-[0.85em] text-neutral-500"
-              >
-                {it.location}
-              </Editable>
-            )}
+            <EditableFallback
+              data={data}
+              fieldId={`${id}.location`}
+              value={it.location}
+              placeholder="Location"
+              inline={false}
+              className="text-[0.85em] text-neutral-500"
+            />
             <BulletList
               bullets={it.bullets}
               design={design}
@@ -1014,33 +1160,41 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
                     className="font-semibold underline-offset-2 hover:underline"
                     style={{ color: design.accentColor }}
                   >
-                    <Editable data={data} fieldId={`${id}.title`}>
-                      {t.title}
-                    </Editable>
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.title`}
+                      value={t.title}
+                      placeholder="Talk title"
+                    />
                   </a>
                 ) : (
                   <span className="font-semibold">
-                    <Editable data={data} fieldId={`${id}.title`}>
-                      {t.title}
-                    </Editable>
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.title`}
+                      value={t.title}
+                      placeholder="Talk title"
+                    />
                   </span>
                 )}
-                {t.venue && (
-                  <span className="text-neutral-500">
-                    {" · "}
-                    <Editable data={data} fieldId={`${id}.venue`}>
-                      {t.venue}
-                    </Editable>
-                  </span>
-                )}
+                <span className="cv-aux-field text-neutral-500">
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.venue`}
+                    value={t.venue}
+                    placeholder="Venue"
+                  />
+                </span>
               </div>
-              {t.date && (
-                <div className="text-[0.85em] text-neutral-500">
-                  <Editable data={data} fieldId={`${id}.date`}>
-                    {t.date}
-                  </Editable>
-                </div>
-              )}
+              <div className="text-[0.85em] text-neutral-500">
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.date`}
+                  value={t.date}
+                  placeholder="Date"
+                />
+              </div>
             </div>
           </div>
         );
@@ -1097,31 +1251,46 @@ export function ReferencesBody({
             style={elementStyle(data, id)}
           >
             <div className="font-semibold">
-              <Editable data={data} fieldId={`${id}.name`}>
-                {r.name}
-              </Editable>
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.name`}
+                value={r.name}
+                placeholder="Reference name"
+              />
             </div>
             <div className="text-neutral-700">
-              <Editable data={data} fieldId={`${id}.role`}>
-                {r.role}
-              </Editable>
-              {r.company && (
-                <>
-                  {" · "}
-                  <Editable data={data} fieldId={`${id}.company`}>
-                    {r.company}
-                  </Editable>
-                </>
-              )}
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.role`}
+                value={r.role}
+                placeholder="Role"
+              />
+              <span className="cv-aux-field">
+                {" · "}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.company`}
+                  value={r.company}
+                  placeholder="Company"
+                />
+              </span>
             </div>
             <div className="text-[0.85em] text-neutral-500">
-              <Editable data={data} fieldId={`${id}.email`}>
-                {r.email}
-              </Editable>
-              {r.email && r.phone && " · "}
-              <Editable data={data} fieldId={`${id}.phone`}>
-                {r.phone}
-              </Editable>
+              <EditableFallback
+                data={data}
+                fieldId={`${id}.email`}
+                value={r.email}
+                placeholder="email@example.com"
+              />
+              <span className="cv-aux-field">
+                {" · "}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.phone`}
+                  value={r.phone}
+                  placeholder="+45 12 34 56 78"
+                />
+              </span>
             </div>
           </div>
         );

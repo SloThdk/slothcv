@@ -40,7 +40,7 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
@@ -187,7 +187,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
                   className="mb-2 text-[0.95em] font-bold uppercase tracking-[0.18em]"
                   style={{ color: d.accentColor }}
                 >
-                  {s.title}
+                  <EditableSectionTitle sid={s.id} data={data}>{s.title}</EditableSectionTitle>
                 </h2>
                 <SectionBody section={s} design={d} data={data} />
                 <SectionActions section={s} />

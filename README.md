@@ -1,4 +1,4 @@
-# slothcv
+# SlothCV
 
 Free, beautiful CVs. No signup walls, no watermarks. Drag, drop, design. Export to PDF.
 

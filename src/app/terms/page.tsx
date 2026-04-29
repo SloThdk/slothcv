@@ -1,5 +1,5 @@
 /**
- * Terms of Service — slothcv.
+ * Terms of Service — SlothCV.
  *
  * Plain-language, written to match the actual service:
  *   - free CV builder
@@ -31,7 +31,7 @@ export default function TermsPage(): JSX.Element {
           {isDa ? "Vilkår" : "Terms"}
         </p>
         <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          {isDa ? "Vilkår for brug af slothcv." : "Terms of using slothcv."}
+          {isDa ? "Vilkår for brug af SlothCV." : "Terms of using SlothCV."}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--color-text-subtle)]">
           {isDa ? "Sidst opdateret" : "Last updated"}: {LAST_UPDATED}
@@ -39,11 +39,11 @@ export default function TermsPage(): JSX.Element {
 
         <p className="mt-8 text-base text-[color:var(--color-text-muted)] sm:text-lg">
           {isDa
-            ? "slothcv er en gratis CV-bygger drevet af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Ved at oprette en konto eller bruge sitet accepterer du disse vilkår. De er korte med vilje."
-            : "slothcv is a free CV builder operated by Philip Sloth, a sole proprietorship based in Denmark. By creating an account or using the site, you agree to these terms. They are short on purpose."}
+            ? "SlothCV er en gratis CV-bygger drevet af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Ved at oprette en konto eller bruge sitet accepterer du disse vilkår. De er korte med vilje."
+            : "SlothCV is a free CV builder operated by Philip Sloth, a sole proprietorship based in Denmark. By creating an account or using the site, you agree to these terms. They are short on purpose."}
         </p>
 
-        <Section title={isDa ? "Hvad slothcv er" : "What slothcv is"}>
+        <Section title={isDa ? "Hvad SlothCV er" : "What SlothCV is"}>
           <p>
             {isDa
               ? "Et værktøj til at bygge et CV i browseren og eksportere det som PDF. Gratis at bruge. Ingen vandmærker, ingen tilmeldingsmur for at hente, ingen prøveperioder der laver sig selv om til abonnementer. Du kan have op til 10 CV'er på din konto."
@@ -73,7 +73,7 @@ export default function TermsPage(): JSX.Element {
         </Section>
 
         <Section title={isDa ? "Acceptabel brug" : "Acceptable use"}>
-          <p className="mb-2">{isDa ? "Brug ikke slothcv til:" : "Do not use slothcv to:"}</p>
+          <p className="mb-2">{isDa ? "Brug ikke SlothCV til:" : "Do not use SlothCV to:"}</p>
           <ul className="list-disc space-y-1 pl-6 text-[color:var(--color-text-muted)]">
             <li>{isDa ? "ulovligt indhold, hadefulde ytringer, chikane eller seksuelt materiale med mindreårige" : "illegal content, hateful speech, harassment, or sexual content involving minors"}</li>
             <li>{isDa ? "udgive sig for at være en anden eller indsende dokumenter under falsk identitet" : "impersonate another person or submit documents under a false identity"}</li>
@@ -91,16 +91,16 @@ export default function TermsPage(): JSX.Element {
         <Section title={isDa ? "Tilgængelighed" : "Availability"}>
           <p>
             {isDa
-              ? "slothcv leveres 'som det er'. Vi tilstræber at sitet er oppe og kører, men der er ingen garanteret oppetid, og funktioner kan ændre sig. Planlagt vedligehold flagges hvor det giver mening."
-              : "slothcv is provided 'as is'. We aim to keep it running smoothly, but there is no guaranteed uptime and features may change. Planned maintenance is flagged where it makes sense."}
+              ? "SlothCV leveres 'som det er'. Vi tilstræber at sitet er oppe og kører, men der er ingen garanteret oppetid, og funktioner kan ændre sig. Planlagt vedligehold flagges hvor det giver mening."
+              : "SlothCV is provided 'as is'. We aim to keep it running smoothly, but there is no guaranteed uptime and features may change. Planned maintenance is flagged where it makes sense."}
           </p>
         </Section>
 
         <Section title={isDa ? "Ansvarsfraskrivelse" : "Liability"}>
           <p>
             {isDa
-              ? "I videst muligt omfang efter dansk ret kan slothcv og Philip Sloth ikke holdes ansvarlig for indirekte tab, mistede indtjeninger eller tab af data ud over værdien af det du har betalt for tjenesten — som er 0 kr. Det fritager ikke for ansvar i tilfælde af grov uagtsomhed eller forsætlig handling. Dette begrænser ikke dine rettigheder som forbruger efter dansk ret."
-              : "To the maximum extent permitted by Danish law, slothcv and Philip Sloth are not liable for indirect losses, lost earnings, or data loss beyond the value of what you paid for the service — which is zero. This does not exclude liability for gross negligence or wilful misconduct. Nothing in these terms limits your rights as a consumer under Danish law."}
+              ? "I videst muligt omfang efter dansk ret kan SlothCV og Philip Sloth ikke holdes ansvarlig for indirekte tab, mistede indtjeninger eller tab af data ud over værdien af det du har betalt for tjenesten — som er 0 kr. Det fritager ikke for ansvar i tilfælde af grov uagtsomhed eller forsætlig handling. Dette begrænser ikke dine rettigheder som forbruger efter dansk ret."
+              : "To the maximum extent permitted by Danish law, SlothCV and Philip Sloth are not liable for indirect losses, lost earnings, or data loss beyond the value of what you paid for the service — which is zero. This does not exclude liability for gross negligence or wilful misconduct. Nothing in these terms limits your rights as a consumer under Danish law."}
           </p>
         </Section>
 
@@ -121,7 +121,7 @@ export default function TermsPage(): JSX.Element {
             {isDa
               ? "Vi kan opdatere disse vilkår. Den seneste version ligger altid på "
               : "We may update these terms. The latest version is always at "}
-            <Link href="/terms" className="underline underline-offset-4">slothcv.com/terms</Link>
+            <Link href="/terms" className="underline underline-offset-4">SlothCV.com/terms</Link>
             {isDa
               ? " med ny dato øverst. Materielle ændringer flagges via en banner. Fortsat brug af sitet efter en ændring betyder accept af de nye vilkår."
               : " with a fresh date at the top. Material changes are flagged via a banner. Continued use of the site after an update means you accept the new terms."}

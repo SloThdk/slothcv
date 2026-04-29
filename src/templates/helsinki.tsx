@@ -15,7 +15,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -78,7 +78,7 @@ export function HelsinkiTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="text-[0.82em] font-semibold uppercase tracking-[0.28em]"
                 style={{ color: d.accentColor }}
               >
-                {transformHeader(s.title, d)}
+                <EditableSectionTitle sid={s.id} data={data}>{transformHeader(s.title, d)}</EditableSectionTitle>
               </h2>
               <span
                 className="h-px flex-1"

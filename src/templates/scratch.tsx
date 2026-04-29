@@ -9,7 +9,7 @@
 "use client";
 
 import { TemplateFrame, SectionHeader } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -69,7 +69,7 @@ export function ScratchTemplate({ data, fixedSize, skipOverlay }: Props) {
       style={positionStyle(s)}
       className="group relative mb-4 cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
     >
-      <SectionHeader text={s.title} design={resolveDesign(design, s)} />
+      <SectionHeader text={s.title} design={resolveDesign(design, s)} sectionId={s.id} data={data} />
       <SectionBody section={s} design={resolveDesign(design, s)} data={data} />
       <SectionActions section={s} />
     </section>

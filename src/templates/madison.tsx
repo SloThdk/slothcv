@@ -49,6 +49,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const NAVY = "#1e3a8a";
 const GOLD = "#d4af37";
@@ -317,7 +318,7 @@ function MadisonLeftSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div className="mb-2 h-px w-full" style={{ background: GOLD }} />
       <MadisonLeftBody section={section} data={data} />
@@ -386,15 +387,15 @@ function MadisonEducation({
             }}
           >
             <div className="font-semibold">
-              {it.degree}
-              {it.field ? `, ${it.field}` : ""}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+              {it.field ? `, ${it.field || "Field of study"}` : ""}
             </div>
             <div className="italic" style={{ color: `${NAVY}cc` }}>
-              {it.institution}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
             </div>
             <div className="text-[0.85em]" style={{ color: `${NAVY}88` }}>
               {[it.startDate, it.endDate].filter(Boolean).join(" – ")}
-              {it.gpa && ` · GPA ${it.gpa}`}
+              {it.gpa && ` · GPA ${it.gpa || "GPA"}`}
             </div>
           </div>
         );
@@ -427,10 +428,10 @@ function MadisonCerts({
               ...elementStyle(data, id),
             }}
           >
-            <div className="font-semibold">{c.name}</div>
+            <div className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></div>
             <div className="italic" style={{ color: `${NAVY}aa` }}>
-              {c.issuer}
-              {c.date && ` · ${c.date}`}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
+              {c.date && ` · ${c.date || "Date"}`}
             </div>
           </div>
         );
@@ -463,9 +464,9 @@ function MadisonLanguages({
               ...elementStyle(data, id),
             }}
           >
-            <span className="font-semibold">{l.name}</span>
+            <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.name`} value={l.name} placeholder="Name" /></span>
             <span style={{ color: GOLD, fontWeight: 600 }}>
-              {l.proficiency}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.proficiency`} value={l.proficiency} placeholder="Proficiency" />
             </span>
           </div>
         );
@@ -527,7 +528,7 @@ function MadisonSkills({
                   style={{ background: GOLD }}
                   aria-hidden
                 />
-                {s.name}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
               </div>
             );
           })}
@@ -606,7 +607,7 @@ function MadisonRightSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div className="mb-3 h-px w-full" style={{ background: GOLD }} />
       <MadisonRightBody section={section} design={design} data={data} />
@@ -687,11 +688,11 @@ function MadisonExperience({
                   fontWeight: 700,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: NAVY, fontWeight: 500 }}>
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -716,7 +717,7 @@ function MadisonExperience({
                 className="text-[0.82em]"
                 style={{ color: `${NAVY}80` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             {/* Headline result pull-quote — italic gold, with leading "▸"

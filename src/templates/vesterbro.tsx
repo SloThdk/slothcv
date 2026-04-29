@@ -33,7 +33,7 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
@@ -185,7 +185,7 @@ function BadgeSection({
           className="text-[1em] font-semibold tracking-wide"
           style={{ color: d.accentColor }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
       </div>
       {/* Hairline rule under the heading row */}

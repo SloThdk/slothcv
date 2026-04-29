@@ -44,6 +44,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const PAPER = "#fcfbf7";
 const CYAN = "#0e7490";
@@ -258,7 +259,7 @@ function CanvasSection({
             ...elementStyle(data, titleId),
           }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
         <div>
           <CanvasBody section={section} design={design} data={data} />
@@ -334,11 +335,11 @@ function CanvasExperience({
                   fontWeight: 700,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: CYAN, fontWeight: 500 }}>
                     {" · "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -362,7 +363,7 @@ function CanvasExperience({
                 className="text-[0.82em] italic"
                 style={{ color: `${INK}77` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <CanvasBullets
@@ -475,7 +476,7 @@ function CanvasFallback({
               {label}
               {it.proficiency && (
                 <span style={{ color: `${CYAN}` }}>
-                  {" — "}{it.proficiency}
+                  {" — "}<EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" />
                 </span>
               )}
             </span>

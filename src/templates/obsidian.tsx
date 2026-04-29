@@ -46,6 +46,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -242,7 +243,7 @@ function ObsidianSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <ObsidianBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -329,11 +330,11 @@ function ObsidianExperience({
                   fontStyle: "italic",
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: `${OFF_WHITE}aa`, fontStyle: "normal" }}>
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -357,7 +358,7 @@ function ObsidianExperience({
                 className="text-[0.82em]"
                 style={{ color: `${OFF_WHITE}66` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <ObsidianBullets
@@ -412,7 +413,7 @@ function ObsidianProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: PURPLE }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -420,7 +421,7 @@ function ObsidianProjects({
                 {it.role && (
                   <span style={{ color: `${OFF_WHITE}99`, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -443,7 +444,7 @@ function ObsidianProjects({
                 className="text-[0.82em]"
                 style={{ color: `${OFF_WHITE}77` }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <ObsidianBullets
@@ -490,14 +491,14 @@ function ObsidianEducation({
                   fontStyle: "italic",
                 }}
               >
-                {it.degree}
-                {it.field ? `, ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? `, ${it.field || "Field of study"}` : ""}
               </span>
               <span
                 className="ml-2 text-[0.85em]"
                 style={{ color: `${OFF_WHITE}99` }}
               >
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
@@ -567,7 +568,7 @@ function ObsidianSkills({
                     className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
                     style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
                   >
-                    {s.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                   </span>
                 </span>
               );
@@ -608,12 +609,12 @@ function ObsidianCerts({
                   fontStyle: "italic",
                 }}
               >
-                {c.name}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" />
               </span>
               {c.issuer && (
                 <span style={{ color: `${OFF_WHITE}88` }}>
                   {" · "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -622,7 +623,7 @@ function ObsidianCerts({
                 className="text-[0.82em]"
                 style={{ color: `${OFF_WHITE}77` }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

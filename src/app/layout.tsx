@@ -19,11 +19,11 @@ import { RouteTransition } from "@/components/motion/route-transition";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "slothcv — free, beautiful CVs",
+  title: "SlothCV — free, beautiful CVs",
   description:
     "Free, beautiful CVs. No signup walls, no watermarks. Drag, drop, design. Export to PDF.",
   openGraph: {
-    title: "slothcv",
+    title: "SlothCV",
     description: "Free, beautiful CVs. No signup walls, no watermarks.",
     type: "website",
   },

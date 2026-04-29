@@ -26,7 +26,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -275,7 +275,7 @@ function DubaiSidebarSection({
         }}
       >
         <GoldOrnament />
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-1.5 h-px w-full"
@@ -321,7 +321,7 @@ function DubaiMainSection({
         }}
       >
         <GoldOrnament />
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-2 h-px w-full"

@@ -43,6 +43,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const CLINIC_WHITE = "#ffffff";
 const CYAN = "#0e7490";
@@ -237,7 +238,7 @@ function ScrubsSection({
             ...elementStyle(data, titleId),
           }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
         <span
           className="ml-1 h-px flex-1"
@@ -332,11 +333,11 @@ function ScrubsExperience({
                   fontWeight: 700,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: CYAN, fontWeight: 500 }}>
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -360,7 +361,7 @@ function ScrubsExperience({
                 className="text-[0.82em]"
                 style={{ color: `${INK}77` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <ScrubsBullets
@@ -405,21 +406,21 @@ function ScrubsEducation({
                 }}
               >
                 <div className="font-bold">
-                  {it.degree}
-                  {it.field ? `, ${it.field}` : ""}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                  {it.field ? `, ${it.field || "Field of study"}` : ""}
                 </div>
                 <div style={{ color: CYAN, fontWeight: 500 }}>
-                  {it.institution}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
                   {it.location && (
                     <span style={{ color: `${INK}77`, fontWeight: 400 }}>
                       {" — "}
-                      {it.location}
+                      <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
                     </span>
                   )}
                 </div>
                 {it.gpa && (
                   <div className="text-[0.82em]" style={{ color: `${INK}88` }}>
-                    GPA: {it.gpa}
+                    GPA: <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.gpa`} value={it.gpa} placeholder="GPA" />
                   </div>
                 )}
               </div>
@@ -477,10 +478,10 @@ function ScrubsCertCards({
             }}
           >
             <div className="font-bold" style={{ color: CYAN }}>
-              {c.name}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" />
             </div>
             <div style={{ color: `${INK}aa` }}>
-              {c.issuer}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
             </div>
             <div
               className="mt-1 grid grid-cols-2 gap-x-2 text-[0.82em] tabular-nums"
@@ -489,19 +490,19 @@ function ScrubsCertCards({
               {c.credentialId && (
                 <div>
                   <span style={{ color: CYAN, fontWeight: 600 }}>ID:</span>{" "}
-                  {c.credentialId}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.credentialId`} value={c.credentialId} placeholder="Credential ID" />
                 </div>
               )}
               {c.date && (
                 <div>
                   <span style={{ color: CYAN, fontWeight: 600 }}>Issued:</span>{" "}
-                  {c.date}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
                 </div>
               )}
               {c.expiry && (
                 <div className="col-span-2">
                   <span style={{ color: CYAN, fontWeight: 600 }}>Expires:</span>{" "}
-                  {c.expiry}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.expiry`} value={c.expiry} placeholder="Expires" />
                 </div>
               )}
             </div>
@@ -555,11 +556,11 @@ function ScrubsPublications({
             </span>
             <span className="leading-[1.5]">
               {p.authors && (
-                <span style={{ color: `${INK}aa` }}>{p.authors}. </span>
+                <span style={{ color: `${INK}aa` }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.authors`} value={p.authors} placeholder="Authors" />. </span>
               )}
-              <span className="font-semibold">{p.title}.</span>
-              {p.venue && <span className="italic"> {p.venue}.</span>}
-              {p.date && <span> ({p.date}).</span>}
+              <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.title`} value={p.title} placeholder="Title" />.</span>
+              {p.venue && <span className="italic"> <EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.venue`} value={p.venue} placeholder="Venue" />.</span>}
+              {p.date && <span> (<EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.date`} value={p.date} placeholder="Date" />).</span>}
               {p.url && (
                 <>
                   {" "}
@@ -689,7 +690,7 @@ function ScrubsFallback({
                 {it.proficiency && (
                   <span style={{ color: `${INK}88` }}>
                     {" — "}
-                    {it.proficiency}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" />
                   </span>
                 )}
               </span>

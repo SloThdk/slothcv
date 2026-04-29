@@ -121,6 +121,40 @@ export function elementTextLens(
     };
   }
 
+  // section.<sid>.skillGroup.<encodedOldGroup> — bulk-rename the
+  // `group` field on every skill that currently shares the old label.
+  // Hits double-click on the "TECH" / "Soft skills" / etc. sub-header
+  // in the rendered Skills section. Group name in the id is URI-
+  // encoded by the renderer; we decode here so the comparison runs
+  // against the original string.
+  if (tail.startsWith("skillGroup.") && section.type === "skills") {
+    const encoded = tail.slice("skillGroup.".length);
+    let oldGroup: string;
+    try {
+      oldGroup = decodeURIComponent(encoded);
+    } catch {
+      // Malformed id — fall through and report null so the caller
+      // shows the section's form instead of crashing the inline editor.
+      return null;
+    }
+    type SkillsType = import("@/types/resume").SkillsSection;
+    const skills = (section as SkillsType).items;
+    return {
+      read: () => oldGroup,
+      write: (s) => {
+        const next = s.trim();
+        // Empty string → fall back to "Skills" so the renderer's
+        // `s.group || "Skills"` default doesn't produce an empty
+        // sub-header.
+        const replacement = next || "Skills";
+        const items = skills.map((it) =>
+          it.group === oldGroup ? { ...it, group: replacement } : it,
+        );
+        writers.updateSection(sid, { items } as Partial<Section>);
+      },
+    };
+  }
+
   if (tail === "body") {
     // Body lives on summary + custom sections. Hobbies/references "body"
     // is rendered from items, not from a single string — so for those

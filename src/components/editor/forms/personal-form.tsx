@@ -1,9 +1,12 @@
 /**
  * PersonalForm — edit the always-on Personal Info block.
  *
- * Photo: real file upload to Supabase Storage (`avatars/<uid>/cv-<ts>.<ext>`).
- * URL paste-in is still available as a power-user fallback (e.g. linking a
- * Gravatar / company headshot URL).
+ * Photo: file upload to Supabase Storage only (`avatars/<uid>/cv-<ts>.<ext>`).
+ * The "paste URL" power-user fallback was removed — exposing two paths
+ * (file picker + URL) split user attention and led to remote URLs that
+ * could break offline / lose CORS / 404 over time. The Upload button
+ * is the single canonical path; for the rare hosted-image case the
+ * user can paste-into-Files in their OS file picker.
  */
 
 "use client";
@@ -47,7 +50,6 @@ export function PersonalForm() {
   }
   const { t } = useLanguage();
   const [uploading, setUploading] = useState(false);
-  const [showUrlField, setShowUrlField] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function onPickFile(file: File) {
@@ -208,29 +210,6 @@ export function PersonalForm() {
             {templateSkipsPhoto
               ? "Heads up: this template doesn't display photos. Switch to a template with a photo slot (Berlin, Aurora, Capitol, Marina, …) to see your image."
               : "Photo is currently turned OFF in Design → Personal. Toggle it back on to show your image."}
-          </div>
-        )}
-        {!showUrlField ? (
-          <button
-            type="button"
-            onClick={() => setShowUrlField(true)}
-            className="mt-1 text-[11px] text-muted underline-offset-2 hover:underline"
-          >
-            {t("personal.pasteUrl")}
-          </button>
-        ) : (
-          <div className="mt-2">
-            <UrlInput
-              id="p-photo-url"
-              value={personal.photoUrl ?? ""}
-              onChange={(e) => {
-                const trimmed = e.target.value.trim();
-                setPersonal({ photoUrl: trimmed || undefined });
-                if (trimmed) maybeAutoEnablePhoto();
-              }}
-              placeholder="https://…"
-              className="font-mono text-xs"
-            />
           </div>
         )}
         <input

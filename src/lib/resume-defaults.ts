@@ -612,7 +612,12 @@ export function defaultDesign(): GlobalDesign {
     dividerStyle: "line",
     headerStyle: "uppercase",
     skillBarStyle: "bar",
-    languageStyle: "bar",
+    // languageStyle "bar" only renders the 0-5 level — typed proficiency
+    // text (C1 / B2 / "Fluent") wouldn't appear, leading users to think
+    // the proficiency input was dead. "text" shows the typed value
+    // immediately. Templates that want a level visualisation can opt in
+    // via a per-template default in `defaultDesignForTemplate`.
+    languageStyle: "text",
     dateFormat: "Mon YYYY",
     pageSize: "A4",
     multiPage: true,

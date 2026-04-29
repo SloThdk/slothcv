@@ -42,6 +42,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 // Skill / language / certification / hobby etc → sidebar.
 // Narrative sections → main column.
@@ -329,7 +330,7 @@ function AuroraSidebarSection({
         className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
         style={{ color: design.accentColor, ...elementStyle(data, titleId) }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div className="mt-1.5">
         <AuroraSidebarBody section={section} design={design} data={data} />
@@ -369,9 +370,19 @@ function AuroraSidebarBody({
                 className={`${auroraGrab} flex justify-between`}
                 style={elementStyle(data, id)}
               >
-                <span>{l.name}</span>
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.name`}
+                  value={l.name}
+                  placeholder="Language"
+                />
                 <span style={{ color: `${design.accentColor}cc` }}>
-                  {l.proficiency}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.proficiency`}
+                    value={l.proficiency}
+                    placeholder="Proficiency"
+                  />
                 </span>
               </div>
             );
@@ -393,14 +404,31 @@ function AuroraSidebarBody({
                 style={elementStyle(data, id)}
               >
                 <div className="font-semibold">
-                  {it.degree}
-                  {it.field ? ` · ${it.field}` : ""}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.degree`}
+                    value={it.degree}
+                    placeholder="Degree"
+                  />
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.field`}
+                    value={it.field}
+                    placeholder="Field of study"
+                  />
                 </div>
-                <div style={{ color: `${design.textColor}99` }}>
-                  {it.institution}
-                </div>
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.institution`}
+                  value={it.institution}
+                  placeholder="Institution"
+                  inline={false}
+                  className=""
+                />
                 <div className="text-[0.9em]" style={{ color: `${design.textColor}80` }}>
-                  {[it.startDate, it.endDate].filter(Boolean).join("–")}
+                  {[it.startDate, it.endDate].filter(Boolean).join("–") ||
+                    "Date range"}
                 </div>
               </div>
             );
@@ -421,10 +449,28 @@ function AuroraSidebarBody({
                 className={auroraGrab}
                 style={elementStyle(data, id)}
               >
-                <div className="font-medium">{c.name}</div>
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.name`}
+                  value={c.name}
+                  placeholder="Certification name"
+                  inline={false}
+                  className="font-medium"
+                />
                 <div style={{ color: `${design.textColor}99` }}>
-                  {c.issuer}
-                  {c.date ? ` · ${c.date}` : ""}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.issuer`}
+                    value={c.issuer}
+                    placeholder="Issuer"
+                  />
+                  {" · "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.date`}
+                    value={c.date}
+                    placeholder="Date"
+                  />
                 </div>
               </div>
             );
@@ -474,10 +520,28 @@ function AuroraSidebarBody({
                   className={auroraGrab}
                   style={elementStyle(data, id)}
                 >
-                  <div className="font-semibold">{r.name}</div>
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.name`}
+                    value={r.name}
+                    placeholder="Reference name"
+                    inline={false}
+                    className="font-semibold"
+                  />
                   <div style={{ color: `${design.textColor}99` }}>
-                    {r.role}
-                    {r.company ? ` · ${r.company}` : ""}
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.role`}
+                      value={r.role}
+                      placeholder="Role"
+                    />
+                    {" · "}
+                    <EditableFallback
+                      data={data}
+                      fieldId={`${id}.company`}
+                      value={r.company}
+                      placeholder="Company"
+                    />
                   </div>
                 </div>
               );
@@ -598,7 +662,7 @@ function AuroraMainSection({
         className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
         style={{ color: design.accentColor, ...elementStyle(data, titleId) }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div className="mt-2">
         <AuroraMainBody section={section} design={design} data={data} />
@@ -672,15 +736,21 @@ function Experience({
                 className="text-[1em] font-semibold"
                 style={{ color: design.textColor }}
               >
-                {it.role}
-                {it.company ? (
-                  <>
-                    {"  —  "}
-                    <span style={{ color: design.textColor }}>
-                      {it.company}
-                    </span>
-                  </>
-                ) : null}
+                <EditableFallback
+                  data={data}
+                  fieldId={`${id}.role`}
+                  value={it.role}
+                  placeholder="Role"
+                />
+                <>
+                  {"  —  "}
+                  <EditableFallback
+                    data={data}
+                    fieldId={`${id}.company`}
+                    value={it.company}
+                    placeholder="Company"
+                  />
+                </>
               </h3>
               <span
                 className="text-[0.82em] font-medium"
@@ -694,14 +764,14 @@ function Experience({
                 )}
               </span>
             </div>
-            {it.location && (
-              <div
-                className="text-[0.82em]"
-                style={{ color: `${design.textColor}99` }}
-              >
-                {it.location}
-              </div>
-            )}
+            <EditableFallback
+              data={data}
+              fieldId={`${id}.location`}
+              value={it.location}
+              placeholder="Location"
+              inline={false}
+              className="text-[0.82em]"
+            />
             <AuroraBulletList
               bullets={it.bullets}
               design={design}

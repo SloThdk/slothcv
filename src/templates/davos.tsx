@@ -42,6 +42,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const INK = "#0c0a09";
 const SURFACE = "#fafaf9";
@@ -200,7 +201,7 @@ function DavosSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <DavosBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -274,11 +275,11 @@ function DavosExperience({
                   fontWeight: 500,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: `${INK}aa`, fontWeight: 300 }}>
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -304,7 +305,7 @@ function DavosExperience({
                 className="text-[0.82em]"
                 style={{ color: `${INK}77`, fontWeight: 300 }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <DavosBullets
@@ -424,7 +425,7 @@ function DavosFallback({
             >
               <span>{label}</span>
               {it.proficiency && (
-                <span style={{ color: `${INK}77` }}>{it.proficiency}</span>
+                <span style={{ color: `${INK}77` }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" /></span>
               )}
             </li>
           );

@@ -41,6 +41,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const INK = "#0a0a0a";
 const SURFACE = "#fafafa";
@@ -304,7 +305,7 @@ function StudioSection({
             ...elementStyle(data, titleId),
           }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
       </div>
       <StudioBody section={section} design={design} data={data} />
@@ -393,11 +394,11 @@ function StudioExperience({
                 fontWeight: 700,
               }}
             >
-              {it.role}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
               {it.company && (
                 <span style={{ color: MUTED, fontWeight: 400 }}>
                   {" — "}
-                  {it.company}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                 </span>
               )}
             </h3>
@@ -406,7 +407,7 @@ function StudioExperience({
                 className="text-[0.82em]"
                 style={{ color: MUTED }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <StudioBullets
@@ -518,7 +519,7 @@ function StudioFallback({
                   className="text-[0.82em]"
                   style={{ color: MUTED }}
                 >
-                  {it.proficiency}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" />
                 </span>
               )}
             </li>

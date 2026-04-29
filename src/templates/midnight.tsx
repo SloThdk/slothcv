@@ -46,6 +46,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -240,7 +241,7 @@ function MidnightSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-3"
@@ -332,13 +333,13 @@ function MidnightExperience({
                   fontWeight: 600,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span
                     style={{ color: GOLD, fontWeight: 500, fontStyle: "italic" }}
                   >
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -359,7 +360,7 @@ function MidnightExperience({
                 className="text-[0.85em] italic"
                 style={{ color: CREAM_DIM, fontFamily: SERIF }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <MidnightBullets
@@ -413,7 +414,7 @@ function MidnightProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: GOLD }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -421,7 +422,7 @@ function MidnightProjects({
                 {it.role && (
                   <span style={{ color: CREAM_DIM, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -444,7 +445,7 @@ function MidnightProjects({
                 className="text-[0.85em] italic"
                 style={{ color: CREAM_DIM, fontFamily: SERIF }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <MidnightBullets
@@ -490,13 +491,13 @@ function MidnightEducation({
                   fontWeight: 600,
                 }}
               >
-                {it.degree}
-                {it.field ? `, ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? `, ${it.field || "Field of study"}` : ""}
                 <span
                   className="ml-2 italic"
                   style={{ color: GOLD, fontWeight: 500 }}
                 >
-                  {it.institution}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
                 </span>
               </span>
               <span
@@ -559,7 +560,7 @@ function MidnightSkills({
                     className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
                     style={elementStyle(data, id)}
                   >
-                    {s.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                   </span>
                 </span>
               );
@@ -595,11 +596,11 @@ function MidnightCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: GOLD, fontStyle: "italic" }}>
                   {" — "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -608,7 +609,7 @@ function MidnightCerts({
                 className="text-[0.85em] italic"
                 style={{ color: CREAM_DIM }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

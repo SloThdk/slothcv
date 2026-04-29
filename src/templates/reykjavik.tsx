@@ -15,7 +15,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
@@ -128,7 +128,7 @@ function Block({
         style={{ background: design.accentColor }}
       />
       <h2 className="mb-2 text-[0.86em] font-bold uppercase tracking-[0.18em]">
-        <span style={{ color: design.accentColor }}>{section.title}</span>
+        <span style={{ color: design.accentColor }}><EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle></span>
       </h2>
       <SectionBody section={section} design={design} data={data} />
       <SectionActions section={section} />

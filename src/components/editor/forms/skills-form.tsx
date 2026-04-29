@@ -95,7 +95,23 @@ export function SkillsForm({ section }: { section: SkillsSection }) {
       </DndContext>
       <AddEntryButton
         label="Add skill"
-        onClick={() => setItems([...section.items, defaultSkillItem()])}
+        onClick={() => {
+          // Inherit the group from the LAST skill added so "+ Add skill"
+          // always joins the same sub-header the user is currently
+          // editing. Without this inheritance, the factory default
+          // (`group: "Skills"`) drops every new skill into a fresh
+          // "Skills" sub-group — if the user's existing skills are in
+          // "TECH" or any other named group, a new skill creates a
+          // duplicate "SKILLS" header below the original group, which
+          // renders as a confusing "another header for the same
+          // section" bug. Empty-section fallback keeps the factory
+          // default so the very first skill still gets the user-
+          // friendly "Skills" label.
+          const last = section.items[section.items.length - 1];
+          const next = defaultSkillItem();
+          if (last) next.group = last.group;
+          setItems([...section.items, next]);
+        }}
       />
       <p className="text-[11px] text-subtle">
         {showLevel

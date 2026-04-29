@@ -786,13 +786,16 @@ export function InlineTextEditor() {
           display: "grid",
           // Photoshop's edit indicator is a thin DASHED bounding box,
           // not a solid framed surface. We match: transparent fill,
-          // 1px dashed outline in the brand-blue caret colour. Outline
-          // sits OUTSIDE the box and doesn't take layout space, so the
-          // editor's content lays out at the exact same coordinates as
-          // the source's content — no chrome-driven drift.
+          // 1px dashed outline in the brand-blue caret colour. Drawn
+          // INSIDE the box (negative offset) so the visual frame never
+          // extends past the source element's natural rect — without
+          // the negative offset, a 1 px dashed line straddling the box
+          // edge reads as the editor "extending out of its container".
+          // The editor's content still lays out at the exact same
+          // coordinates as the source's content — no chrome-driven drift.
           background: "transparent",
-          outline: "1px dashed rgb(37 99 235 / 0.7)",
-          outlineOffset: "0px",
+          outline: "1px dashed rgb(37 99 235 / 0.55)",
+          outlineOffset: "-1px",
           borderRadius: overlay.font.borderRadius,
           // Layout containment: sizing changes inside the wrapper
           // don't trigger ancestor reflows. Cheap perf insurance for

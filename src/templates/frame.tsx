@@ -23,6 +23,7 @@ import {
 } from "./shared";
 import type { GlobalDesign, ResumeData } from "@/types/resume";
 import { CustomElementsLayer } from "./custom-elements-layer";
+import { EditableSectionTitle } from "./components";
 
 interface FrameProps {
   data: ResumeData;
@@ -134,15 +135,29 @@ function slugFont(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-/** Header-decoration helper used by many templates. */
+/** Header-decoration helper used by many templates.
+ *
+ *  When `sectionId` and `data` are provided (the common case from inside
+ *  a template that knows which section it's rendering), the heading text
+ *  is wrapped in `<EditableSectionTitle>` so users can double-click the
+ *  rendered "EXPERIENCE" / "Skills" etc. and inline-edit the underlying
+ *  raw `section.title` string. The visible transformation
+ *  (uppercase/titlecase/box/etc.) stays as designed — the lens reads
+ *  and writes the raw value, the template still renders the styled
+ *  output. Both props are optional so legacy callers that just want a
+ *  decorated heading without the inline-edit hook still work. */
 export function SectionHeader({
   text,
   design,
   withDivider = true,
+  sectionId,
+  data,
 }: {
   text: string;
   design: GlobalDesign;
   withDivider?: boolean;
+  sectionId?: string;
+  data?: ResumeData;
 }) {
   const transformed =
     design.headerStyle === "uppercase"
@@ -154,7 +169,21 @@ export function SectionHeader({
           )
         : text;
 
-  let inner: React.ReactNode = transformed;
+  // The rendered text — wrapped with EditableSectionTitle when we have
+  // the section identity to write back to. Inline-edit lens reads and
+  // writes the RAW `section.title` string (not the transformed display),
+  // so toggling between uppercase / titlecase / etc. stays a design
+  // setting and never mangles the user's raw label.
+  const editableTextNode =
+    sectionId && data ? (
+      <EditableSectionTitle sid={sectionId} data={data}>
+        {transformed}
+      </EditableSectionTitle>
+    ) : (
+      transformed
+    );
+
+  let inner: React.ReactNode = editableTextNode;
 
   if (design.headerStyle === "box") {
     inner = (
@@ -165,7 +194,7 @@ export function SectionHeader({
           color: design.accentColor,
         }}
       >
-        {transformed}
+        {editableTextNode}
       </span>
     );
   } else if (design.headerStyle === "accent-block") {
@@ -175,7 +204,7 @@ export function SectionHeader({
           className="inline-block h-3 w-1 rounded"
           style={{ background: design.accentColor }}
         />
-        <span style={{ color: design.accentColor }}>{transformed}</span>
+        <span style={{ color: design.accentColor }}>{editableTextNode}</span>
       </span>
     );
   } else if (design.headerStyle === "underline") {
@@ -184,12 +213,12 @@ export function SectionHeader({
         className="inline-block border-b-2 pb-0.5"
         style={{ borderColor: design.accentColor, color: design.accentColor }}
       >
-        {transformed}
+        {editableTextNode}
       </span>
     );
   } else {
     inner = (
-      <span style={{ color: design.accentColor }}>{transformed}</span>
+      <span style={{ color: design.accentColor }}>{editableTextNode}</span>
     );
   }
 

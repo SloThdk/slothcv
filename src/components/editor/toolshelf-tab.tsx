@@ -21,6 +21,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   ArrowDown,
   ArrowRight,
@@ -55,8 +56,8 @@ import {
   type SocialIconName,
 } from "@/lib/social-icons";
 import { Button } from "@/components/ui/button";
+import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
 import { useConfirm } from "@/components/ui/confirm-modal";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UrlInput } from "@/components/ui/url-input";
 import type {
@@ -271,6 +272,7 @@ function Shelf() {
   const removeCustomElement = useEditorStore((s) => s.removeCustomElement);
   const selectElement = useEditorStore((s) => s.selectElement);
   const updateCustomElement = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
 
   const elements = data.customElements ?? [];
 
@@ -290,11 +292,10 @@ function Shelf() {
     <div className="space-y-3">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-          Add to canvas
+          {t("toolshelf.addToCanvas")}
         </p>
         <p className="mt-0.5 text-[11px] text-subtle">
-          Drag a card onto the page, double-click to drop it at the
-          default spot, or single-click to add and start tweaking.
+          {t("toolshelf.addToCanvasHint")}
         </p>
       </div>
 
@@ -354,12 +355,10 @@ function Shelf() {
           named shapes — 13 icons fit four rows of three plus one. */}
       <div className="mt-4 border-t border-border pt-3">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-          Social icons
+          {t("toolshelf.socialIcons")}
         </p>
         <p className="mt-0.5 text-[11px] text-subtle">
-          Drop a brand glyph instead of importing your own. Recolour from
-          the inspector after — every glyph is a single SVG path that
-          tints to any hex.
+          {t("toolshelf.socialIconsHint")}
         </p>
         <div className="mt-2 grid grid-cols-3 gap-2">
           {SOCIAL_ICONS.map((it) => (
@@ -400,7 +399,7 @@ function Shelf() {
       {elements.length > 0 && (
         <div className="mt-4 border-t border-border pt-3">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-            Layers ({elements.length})
+            {t("toolshelf.layers")} ({elements.length})
           </p>
           <div className="space-y-1">
             {[...elements]
@@ -1013,6 +1012,36 @@ function TextControls({ element }: { element: TextElement }) {
  *  on a brand glyph generally violates the network's logo policy. */
 function IconControls({ element }: { element: IconElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  // Suggest a sensible default URL placeholder per brand so the user
+  // doesn't have to remember whether LinkedIn is `/in/` or `/company/`.
+  // These are HINTS only — the actual stored value is always whatever
+  // the user types. Empty / undefined = decorative icon with no link.
+  const placeholder =
+    element.iconName === "linkedin"
+      ? "https://linkedin.com/in/yourname"
+      : element.iconName === "github"
+        ? "https://github.com/yourname"
+        : element.iconName === "x"
+          ? "https://x.com/yourhandle"
+          : element.iconName === "instagram"
+            ? "https://instagram.com/yourhandle"
+            : element.iconName === "facebook"
+              ? "https://facebook.com/yourname"
+              : element.iconName === "youtube"
+                ? "https://youtube.com/@yourchannel"
+                : element.iconName === "telegram"
+                  ? "https://t.me/yourhandle"
+                  : element.iconName === "tiktok"
+                    ? "https://tiktok.com/@yourhandle"
+                    : element.iconName === "discord"
+                      ? "https://discord.com/users/yourid"
+                      : element.iconName === "behance"
+                        ? "https://behance.net/yourname"
+                        : element.iconName === "dribbble"
+                          ? "https://dribbble.com/yourname"
+                          : element.iconName === "mail"
+                            ? "mailto:you@example.com"
+                            : "https://example.com";
   return (
     <Section title="Icon">
       <div>
@@ -1055,6 +1084,25 @@ function IconControls({ element }: { element: IconElement }) {
         value={element.color}
         onChange={(v) => update(element.id, { color: v })}
       />
+      {/* URL field. Optional. When set, the icon becomes a clickable
+          link in the exported PDF — recruiters can click LinkedIn/GitHub
+          icons to open the profile. Live editor canvas does NOT
+          navigate on click (clicks select the element); the URL is
+          purely for export. */}
+      <div>
+        <Label>Link URL</Label>
+        <UrlInput
+          value={element.url ?? ""}
+          onChange={(e) =>
+            update(element.id, { url: e.target.value.trim() || undefined })
+          }
+          placeholder={placeholder}
+        />
+        <p className="mt-1 text-[10px] text-subtle">
+          Optional. When set, the icon becomes a clickable link in the
+          exported PDF.
+        </p>
+      </div>
     </Section>
   );
 }
@@ -1187,6 +1235,26 @@ function ImageControls({ element }: { element: ImageElement }) {
         max={400}
         onChange={(v) => update(element.id, { radius: v })}
       />
+      {/* Link URL — separate from `url` (which is the IMAGE source).
+          When set, the image becomes a clickable hyperlink in the
+          exported PDF. Same UX pattern as the social-icon Link URL
+          field above; the IMAGE src and the LINK destination are
+          intentionally distinct (e.g. screenshot from Supabase ↔
+          Behance case study URL). */}
+      <div>
+        <Label>Link URL</Label>
+        <UrlInput
+          value={element.linkUrl ?? ""}
+          onChange={(e) =>
+            update(element.id, { linkUrl: e.target.value.trim() || undefined })
+          }
+          placeholder="https://github.com/yourname/project"
+        />
+        <p className="mt-1 text-[10px] text-subtle">
+          Optional. When set, the image becomes a clickable link in the
+          exported PDF.
+        </p>
+      </div>
     </Section>
   );
 }
@@ -1263,6 +1331,29 @@ function NumField({
   );
 }
 
+/** Brand-canonical preset palette — short curated list of colors that
+ *  reliably work on a CV (high-contrast accents, neutral text colors,
+ *  and the design system's blue). Surfaces in every inspector
+ *  ColorField popover so the user has a sensible starting point
+ *  without typing hex codes from memory. */
+const INSPECTOR_PRESETS = [
+  "#0f172a", // slate-900 — text on light bgs
+  "#ffffff", // white
+  "#2563eb", // blue-600 — slothcv accent
+  "#dc2626", // red-600
+  "#ea580c", // orange-600
+  "#f59e0b", // amber-500
+  "#10b981", // emerald-500
+  "#0891b2", // cyan-600
+  "#7c3aed", // violet-600
+  "#be185d", // pink-700
+  "#475569", // slate-600 — secondary text
+  "#94a3b8", // slate-400 — muted
+];
+
+/** Inspector ColorField — wraps `ColorPickerPopover` so the inspector
+ *  surface stays simple. Adds the per-CV preset palette and forwards
+ *  the rest of the prop API the inspector callers already use. */
 function ColorField({
   label,
   value,
@@ -1273,23 +1364,12 @@ function ColorField({
   onChange: (v: string) => void;
 }) {
   return (
-    <div>
-      <Label>{label}</Label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value && /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000"}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 cursor-pointer rounded border border-border bg-surface"
-        />
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="#000000 or transparent"
-          className="h-9 flex-1 font-mono text-xs"
-        />
-      </div>
-    </div>
+    <ColorPickerPopover
+      label={label}
+      value={value}
+      onChange={onChange}
+      presets={INSPECTOR_PRESETS}
+    />
   );
 }
 

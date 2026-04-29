@@ -42,6 +42,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -233,7 +234,7 @@ function StripeSection({
             ...elementStyle(data, titleId),
           }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
       </div>
       <StripeBody section={section} design={design} data={data} />
@@ -314,11 +315,11 @@ function StripeExperience({
                   letterSpacing: "-0.01em",
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: INDIGO, fontWeight: 500 }}>
                     {" · "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -339,7 +340,7 @@ function StripeExperience({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}77` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <StripeBullets
@@ -394,7 +395,7 @@ function StripeProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: INDIGO }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -402,7 +403,7 @@ function StripeProjects({
                 {it.role && (
                   <span style={{ color: `${design.textColor}88`, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -425,7 +426,7 @@ function StripeProjects({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}88` }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <StripeBullets
@@ -467,14 +468,14 @@ function StripeEducation({
                 className="text-[0.95em]"
                 style={{ color: design.textColor, fontWeight: 600 }}
               >
-                {it.degree}
-                {it.field ? ` · ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` · ${it.field || "Field of study"}` : ""}
               </span>
               <span
                 className="ml-2 text-[0.85em]"
                 style={{ color: `${design.textColor}99` }}
               >
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
@@ -545,7 +546,7 @@ function StripeSkills({
                     ...elementStyle(data, id),
                   }}
                 >
-                  {s.name}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                 </span>
               );
             })}
@@ -578,11 +579,11 @@ function StripeCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: `${design.textColor}88` }}>
                   {" · "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -591,7 +592,7 @@ function StripeCerts({
                 className="text-[0.82em] italic"
                 style={{ color: `${design.textColor}88` }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

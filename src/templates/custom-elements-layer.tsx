@@ -30,6 +30,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useEditorStore } from "@/lib/store/editor";
 import { SOCIAL_ICONS_BY_NAME, isSocialIconName } from "@/lib/social-icons";
+import { safeHref } from "./components";
 import type {
   ArrowElement,
   CrossElement,
@@ -302,10 +303,14 @@ function CustomElementNode({
           y={el.y}
           w={bounds.w}
           h={bounds.h}
+          rotate={el.rotate ?? 0}
           aspectLock={
             el.kind === "image" && (el.fit ?? "cover") === "contain"
           }
           onCommit={(next) => updateCustomElement(el.id, next)}
+          onRotateCommit={(rotate) =>
+            updateCustomElement(el.id, { rotate })
+          }
         />
       )}
     </div>
@@ -456,14 +461,19 @@ function ResizeHandles({
   y,
   w,
   h,
+  rotate,
   aspectLock,
   onCommit,
+  onRotateCommit,
 }: {
   elementId: string;
   x: number;
   y: number;
   w: number;
   h: number;
+  /** Current rotation in degrees, used as the start angle for the rotate
+   *  handle's gesture. */
+  rotate: number;
   /** Force aspect-ratio lock for this element regardless of Shift state.
    *  Set true for image-with-contain so a freehand resize never breaks
    *  the wrapper / image alignment we worked to establish via the
@@ -471,6 +481,9 @@ function ResizeHandles({
    *  inverted-meaning that PS Smart Objects use. */
   aspectLock?: boolean;
   onCommit: (next: { x: number; y: number; w: number; h: number }) => void;
+  /** Commit a new rotation angle in degrees. Called once at gesture-end
+   *  so the undo stack gets a single entry per rotate. */
+  onRotateCommit: (rotate: number) => void;
 }) {
   const positions: Array<{
     corner: ResizeCorner;
@@ -505,6 +518,208 @@ function ResizeHandles({
           onCommit={onCommit}
         />
       ))}
+      <RotateHandle
+        cx={w / 2}
+        cy={h}
+        boxW={w}
+        boxH={h}
+        currentRotate={rotate}
+        onCommit={onRotateCommit}
+      />
+    </>
+  );
+}
+
+/** Photoshop / Figma-style rotate grip.
+ *
+ *  Visual: 12 px circle, 28 px above the bounding-box top-edge midpoint,
+ *  connected by a thin 1 px stem. Same convention Figma, Canva, PowerPoint,
+ *  Excalidraw all converge on — the dedicated grip is far more
+ *  discoverable than the PS "drag just outside any corner" model.
+ *
+ *  Math:
+ *    - On pointerdown, snapshot the element's centre (in client coords),
+ *      the cursor's current angle from that centre, and the element's
+ *      starting rotation.
+ *    - On pointermove, compute the new cursor angle and add the delta
+ *      to the start rotation. Shift held = snap to 15° increments
+ *      (matching PS / Affinity / Figma).
+ *    - On pointerup, commit the rotation via `onCommit` so undo gets
+ *      one entry per drag.
+ *
+ *  The handle is drawn INSIDE the wrapper's transform space, so it
+ *  rotates with the element. That's intentional — when an element is
+ *  already at 45°, the grip sits at "above the rotated top edge", not
+ *  above the original axis-aligned top. Matches Figma's convention.
+ */
+function RotateHandle({
+  cx,
+  cy,
+  boxW,
+  boxH,
+  currentRotate,
+  onCommit,
+}: {
+  cx: number;
+  cy: number;
+  /** Bounding box width — used to compute element centre for angle math. */
+  boxW: number;
+  boxH: number;
+  currentRotate: number;
+  onCommit: (rotate: number) => void;
+}) {
+  const handleRef = useRef<HTMLDivElement | null>(null);
+  const gestureRef = useRef<{
+    active: boolean;
+    pointerId: number;
+    /** Element centre in client (viewport) coords — fixed for the whole
+     *  gesture since we're rotating around it. */
+    centerX: number;
+    centerY: number;
+    /** Cursor angle at gesture start (radians, atan2 from centre). */
+    startAngle: number;
+    /** Element rotation at gesture start (degrees). */
+    startRotate: number;
+    /** Wrapper element so we can write `transform` directly during drag
+     *  without React rerenders. */
+    wrap: HTMLElement;
+    pendingRotate: number;
+  } | null>(null);
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const handle = handleRef.current;
+    if (!handle) return;
+    const wrap = handle.closest("[data-element-id]") as HTMLElement | null;
+    if (!wrap) return;
+    // Element centre in client coords. getBoundingClientRect already
+    // includes any ancestor transform: scale() / rotate(), so this works
+    // at any zoom level and any current rotation.
+    const rect = wrap.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    handle.setPointerCapture(e.pointerId);
+    gestureRef.current = {
+      active: true,
+      pointerId: e.pointerId,
+      centerX,
+      centerY,
+      startAngle,
+      startRotate: currentRotate,
+      wrap,
+      pendingRotate: currentRotate,
+    };
+    document.body.classList.add("slothcv-resizing");
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+    wrap.setAttribute("data-being-dragged", "true");
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const g = gestureRef.current;
+    if (!g || !g.active || e.pointerId !== g.pointerId) return;
+    const angle = Math.atan2(e.clientY - g.centerY, e.clientX - g.centerX);
+    const deltaRad = angle - g.startAngle;
+    const deltaDeg = (deltaRad * 180) / Math.PI;
+    let next = g.startRotate + deltaDeg;
+    // Shift = snap to 15° increments. PS / Affinity / Figma all use 15°
+    // as the standard rotation snap. The user can press / release Shift
+    // mid-drag and the snap toggles live.
+    if (e.shiftKey) {
+      next = Math.round(next / 15) * 15;
+    }
+    // Normalize to (-360, 360) so the persisted value stays small.
+    next = ((next % 360) + 540) % 360 - 180;
+    g.pendingRotate = next;
+    // Direct DOM mutation for 60fps. The wrapper's existing left/top
+    // stay; only `transform` changes. We have to re-write the whole
+    // transform because Konva-style additive transforms aren't a thing
+    // in CSS — `transform: rotate(deg)` overrides the wrapper's
+    // existing none/rotate.
+    g.wrap.style.transform = `rotate(${next}deg)`;
+    g.wrap.style.willChange = "transform";
+  }
+
+  function endGesture(e: React.PointerEvent<HTMLDivElement>) {
+    const g = gestureRef.current;
+    if (!g || !g.active) return;
+    g.active = false;
+    document.body.classList.remove("slothcv-resizing");
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+    g.wrap.removeAttribute("data-being-dragged");
+    try {
+      handleRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+      // releasePointerCapture can throw if the capture was never set —
+      // swallow, the commit still goes through.
+    }
+    g.wrap.style.willChange = "";
+    onCommit(Math.round(g.pendingRotate));
+    gestureRef.current = null;
+  }
+
+  // Reference unused parameters to satisfy the linter while keeping the
+  // signature future-proof (we may need boxW/boxH for non-uniform
+  // bounding-box centre math when supporting transform-origin overrides).
+  void boxW;
+  void boxH;
+  void cx;
+
+  // Stem connects the bounding box's top edge to the rotate grip 28 px
+  // above. Drawn as a 1 px line (a thin div) underneath the circle.
+  // pointer-events: none so only the circle itself is clickable.
+  const stemHeight = 16;
+  const grip = 14;
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className="absolute"
+        style={{
+          left: cy === 0 ? cx : cx, // currently top-center only
+          top: -stemHeight,
+          width: 1,
+          height: stemHeight,
+          background: "#2563eb",
+          transform: "translateX(-50%)",
+          pointerEvents: "none",
+          zIndex: 9998,
+        }}
+      />
+      <div
+        ref={handleRef}
+        data-resize-handle="rotate"
+        className="absolute touch-none"
+        style={{
+          left: cx - grip / 2 - 6, // -6 for 24px hit area centre offset
+          top: -stemHeight - grip / 2 - 6,
+          width: 24,
+          height: 24,
+          cursor: "grab",
+          pointerEvents: "auto",
+          zIndex: 9999,
+        }}
+        title="Drag to rotate. Hold Shift to snap to 15°."
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endGesture}
+        onPointerCancel={endGesture}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+          style={{
+            width: grip,
+            height: grip,
+            pointerEvents: "none",
+            boxShadow: "0 0 0 1px #2563eb, 0 1px 3px rgba(0,0,0,0.25)",
+          }}
+        />
+      </div>
     </>
   );
 }
@@ -771,10 +986,16 @@ function ResizeHandle({
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-white"
         style={{
-          width: 11,
-          height: 11,
+          // 9 px visible square — matches Photoshop / Affinity / Figma
+          // convention. 1 px ring (was 2 px — the doubled stroke read
+          // as "huge" on top of the white fill). Drop shadow softer so
+          // the handle reads as a small, precise affordance instead
+          // of a chunky button. Hit area stays 24 × 24 in the parent
+          // wrapper above.
+          width: 9,
+          height: 9,
           pointerEvents: "none",
-          boxShadow: "0 0 0 2px #2563eb, 0 1px 4px rgba(0,0,0,0.35)",
+          boxShadow: "0 0 0 1px #2563eb, 0 1px 2px rgba(0,0,0,0.25)",
         }}
       />
     </div>
@@ -1000,31 +1221,9 @@ function renderIcon(el: IconElement) {
   const def = isSocialIconName(el.iconName)
     ? SOCIAL_ICONS_BY_NAME[el.iconName]
     : null;
-  if (!def) {
-    // Fallback — a faint dashed square with a "?" so the user notices
-    // and can swap to a known icon via the inspector. Far better than
-    // an invisible element that the user thinks they "lost".
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "2px dashed #cbd5e1",
-          borderRadius: 6,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#94a3b8",
-          fontSize: 18,
-          fontWeight: 700,
-        }}
-        aria-label="Unknown icon — open the inspector to choose a brand"
-      >
-        ?
-      </div>
-    );
-  }
-  return (
+  // Inner SVG / fallback — same as before, just extracted so we can
+  // optionally wrap it in an `<a>` for the link-URL case.
+  const inner = def ? (
     <svg
       viewBox={def.viewBox}
       width="100%"
@@ -1035,6 +1234,63 @@ function renderIcon(el: IconElement) {
     >
       <path d={def.path} fill={el.color} />
     </svg>
+  ) : (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        border: "2px dashed #cbd5e1",
+        borderRadius: 6,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#94a3b8",
+        fontSize: 18,
+        fontWeight: 700,
+      }}
+      aria-label="Unknown icon — open the inspector to choose a brand"
+    >
+      ?
+    </div>
+  );
+
+  // No URL set — render the icon directly. Wrapping with an `<a>`
+  // unconditionally would break the editor's drag/select flow (the
+  // browser would chase the href on every click that didn't quite
+  // become a drag). Skip the wrap entirely when there's nothing to
+  // link to.
+  if (!el.url || !el.url.trim()) return inner;
+
+  // URL set — wrap in `<a>` so the BROWSER'S PRINT ENGINE emits a
+  // PDF link annotation around the icon's bounding box. The
+  // exported PDF reader gets a real clickable hyperlink.
+  //
+  // In the editor, `onClick={preventDefault}` blocks the
+  // navigation that would otherwise fire on a quiet (non-drag)
+  // click — clicks should still SELECT the icon for editing,
+  // never open the URL. The print path doesn't run any JS, so
+  // preventDefault has no effect there.
+  //
+  // `display: block` + full-size styles so the anchor wraps the
+  // icon's full bounding box (default `<a>` is inline and would
+  // shrink-wrap to its children, leaving slivers of empty space
+  // around large icons that wouldn't be clickable).
+  return (
+    <a
+      href={safeHref(el.url)}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.preventDefault()}
+      style={{
+        display: "block",
+        width: "100%",
+        height: "100%",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      {inner}
+    </a>
   );
 }
 
@@ -1059,7 +1315,9 @@ function renderImage(el: ImageElement) {
       </div>
     );
   }
-  return (
+  // The image element itself — same as before. Extracted so we can
+  // optionally wrap it in an `<a>` for the link-URL case below.
+  const inner = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={el.url}
@@ -1088,5 +1346,35 @@ function renderImage(el: ImageElement) {
         WebkitTouchCallout: "none",
       }}
     />
+  );
+
+  // No clickable destination — render the image directly. Wrapping
+  // with `<a>` only when a `linkUrl` is set keeps the editor's
+  // drag/select flow uncluttered for purely-decorative images.
+  if (!el.linkUrl || !el.linkUrl.trim()) return inner;
+
+  // `linkUrl` set — wrap the image in `<a>` so the browser's print
+  // engine emits a PDF link annotation around the image's bounding
+  // box. Recruiter clicks the screenshot in the PDF → opens the
+  // case-study URL the user attached. Same `onClick={preventDefault}`
+  // editor-side guard as the icon path: clicks select the element,
+  // they never navigate.
+  return (
+    <a
+      href={safeHref(el.linkUrl)}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.preventDefault()}
+      style={{
+        display: "block",
+        width: "100%",
+        height: "100%",
+        textDecoration: "none",
+        color: "inherit",
+        borderRadius: el.radius ?? 0,
+      }}
+    >
+      {inner}
+    </a>
   );
 }

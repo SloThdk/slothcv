@@ -19,21 +19,28 @@
 
 import {
   Document,
+  Image as PdfImage,
+  Link as PdfLink,
   Page,
+  Path,
   StyleSheet,
+  Svg,
   Text,
   View,
-  Link as PdfLink,
 } from "@react-pdf/renderer";
 import type {
   AwardsSection,
   CertificationsSection,
+  CustomElement,
   CustomSection,
   EducationSection,
   ExperienceSection,
   GlobalDesign,
   HobbiesSection,
+  IconElement,
+  ImageElement,
   LanguagesSection,
+  LineElement,
   ProjectsSection,
   PublicationsSection,
   ReferencesSection,
@@ -42,8 +49,14 @@ import type {
   SkillsSection,
   SummarySection,
   TalksSection,
+  TextElement,
   VolunteerSection,
 } from "@/types/resume";
+import {
+  SOCIAL_ICONS_BY_NAME,
+  isSocialIconName,
+} from "@/lib/social-icons";
+import type { Style as PdfStyle } from "@react-pdf/types";
 import {
   bulletGlyph,
   formatDateRange,
@@ -68,26 +81,41 @@ const FULL_HEADER_TEMPLATES = new Set(["madrid"]);
 export function ResumePdf({ data }: { data: ResumeData }) {
   const { design } = data;
   const m = marginMm(design);
+  // Page itself has NO padding now. The doc-content padding moves to a
+  // sibling <View>, leaving the page-level coordinate space free for
+  // an absolutely-positioned custom-elements overlay whose x/y match
+  // the editor's A4-sheet-edge coordinates 1:1.
+  const marginPt = m * 2.83465;
   const pageStyle = StyleSheet.create({
     page: {
       backgroundColor: design.pageBg,
       color: design.textColor,
       fontFamily: "Helvetica",
-      // react-pdf uses points; A4 default is 595x842pt. Margins given in mm
-      // are converted to pt (1mm = 2.83465pt).
-      paddingTop: m * 2.83465,
-      paddingBottom: m * 2.83465,
-      paddingLeft: m * 2.83465,
-      paddingRight: m * 2.83465,
       fontSize: 10 * design.fontScale,
       lineHeight: design.lineSpacing,
+    },
+    // Doc content lives inside a padded wrapper. flexGrow: 1 so it fills
+    // the page vertically (matches the previous Page-padding behaviour).
+    docPad: {
+      paddingTop: marginPt,
+      paddingBottom: marginPt,
+      paddingLeft: marginPt,
+      paddingRight: marginPt,
+      flexGrow: 1,
     },
   });
 
   return (
     <Document>
       <Page size={mapPageSize(data.design.pageSize)} style={pageStyle.page}>
-        <Layout data={data} />
+        <View style={pageStyle.docPad}>
+          <Layout data={data} />
+        </View>
+        {/* Custom elements (toolshelf shapes / icons / images / text) —
+            absolutely positioned in editor-page-edge coordinates so the
+            PDF reflects exactly what the user assembled in the visual
+            designer. Rendered AFTER the layout so it stacks on top. */}
+        <CustomElementsPdfLayer data={data} />
       </Page>
     </Document>
   );
@@ -938,4 +966,445 @@ function normalizeHref(s: string): string {
   }
   if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(t)) return `https://${t}`;
   return "#";
+}
+
+// ===========================================================================
+// Custom-elements PDF layer
+// ---------------------------------------------------------------------------
+//
+// The toolshelf lets users drop free-form shapes / icons / text / images /
+// social-icons onto the canvas at absolute (x, y) page coordinates. The
+// editor preview renders them via `templates/custom-elements-layer.tsx`.
+//
+// PIXEL-PERFECT export contract:
+//   - Editor canvas uses CSS pixels at 96 DPI; an A4 page is 794×1123 px.
+//   - PDF uses points at 72 DPI; an A4 page is 595×842 pt.
+//   - Conversion: pt = px × 72/96 = px × 0.75 (exact).
+// Multiplying every x/y/w/h by 0.75 lands each element at precisely the
+// same visual position the user dragged it to in the editor.
+//
+// react-pdf semantics worth remembering:
+//   - Yoga (the layout engine) supports `position: 'absolute'` with
+//     `left/top/width/height` and uses the nearest positioned ancestor as
+//     the offset origin. We make the <Page> the positioning ancestor so
+//     custom elements are positioned relative to the A4 page edge — same
+//     as the editor's `customElements[].x/y` semantics.
+//   - SVG paths render via <Svg viewBox=... ><Path d=.../></Svg>. The
+//     <Svg> sizes itself to its parent's width/height; the path scales
+//     with the viewBox. Same paths the editor uses on the canvas — what
+//     you see is what you export.
+//   - <Link src=...>...</Link> wraps any child in a clickable annotation.
+//     Used for IconElement.url and ImageElement.linkUrl.
+//   - Rotation: `transform: 'rotate(<deg>deg)'` works on Views, with
+//     transformOrigin defaulting to top-left. We override to "center
+//     center" so the element rotates around its centre — matches the
+//     editor's CSS `transformOrigin: center center`.
+
+const PT_PER_PX = 0.75;
+
+function CustomElementsPdfLayer({ data }: { data: ResumeData }) {
+  const items = (data.customElements ?? [])
+    .filter((e) => e.visible !== false)
+    // Sort ascending by z so DOM order matches stack order — react-pdf,
+    // like the browser, paints later elements on top of earlier ones.
+    .sort((a, b) => a.z - b.z);
+  if (items.length === 0) return null;
+  return (
+    <View
+      // Full-page absolute overlay. The Page is the positioning context;
+      // 0/0/0/0 makes this view fill exactly the page rect. Children
+      // with their own absolute position are placed relative to this
+      // overlay's top-left, which equals the page top-left (matches
+      // the editor's `el.x/el.y` are page-edge coords).
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+      }}
+    >
+      {items.map((el) => (
+        <PdfCustomElement key={el.id} el={el} />
+      ))}
+    </View>
+  );
+}
+
+function PdfCustomElement({ el }: { el: CustomElement }) {
+  // Rotation transform string. Empty string means no transform — applied
+  // to every kind below so wrapper styling stays consistent.
+  const rotateXfm = el.rotate ? `rotate(${el.rotate}deg)` : undefined;
+  const baseStyle = {
+    position: "absolute" as const,
+    left: el.x * PT_PER_PX,
+    top: el.y * PT_PER_PX,
+    width: el.w * PT_PER_PX,
+    height: el.h * PT_PER_PX,
+    opacity: el.opacity ?? 1,
+    transform: rotateXfm,
+    // Match the editor's `transformOrigin: center center`. react-pdf
+    // accepts the same CSS string syntax.
+    transformOrigin: "center center",
+  };
+
+  switch (el.kind) {
+    case "rect":
+      return (
+        <View
+          style={{
+            ...baseStyle,
+            backgroundColor: el.fill,
+            borderRadius: el.radius ?? 0,
+            borderWidth: el.strokeWidth ?? 0,
+            borderColor: el.stroke ?? "transparent",
+          }}
+        />
+      );
+    case "ellipse":
+      return (
+        <View
+          style={{
+            ...baseStyle,
+            backgroundColor: el.fill,
+            // 9999 forces a fully-rounded shape regardless of dimensions —
+            // an ellipse becomes a true ellipse, a square becomes a circle.
+            borderRadius: 9999,
+            borderWidth: el.strokeWidth ?? 0,
+            borderColor: el.stroke ?? "transparent",
+          }}
+        />
+      );
+    case "line":
+      return <PdfLineElement el={el} baseStyle={baseStyle} />;
+    case "text":
+      return <PdfTextElement el={el} baseStyle={baseStyle} />;
+    case "image":
+      return <PdfImageElement el={el} baseStyle={baseStyle} />;
+    case "icon":
+      return <PdfIconElement el={el} baseStyle={baseStyle} />;
+    // Polygon-family — all share an SVG path render. The path strings
+    // are duplicated from `templates/custom-elements-layer.tsx` so the
+    // PDF stays self-contained (no editor-runtime imports).
+    case "triangle":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path="M 50 0 L 100 100 L 0 100 Z"
+        />
+      );
+    case "star":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path={starPath()}
+        />
+      );
+    case "hexagon":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path={hexagonPath()}
+        />
+      );
+    case "octagon":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path={octagonPath()}
+        />
+      );
+    case "diamond":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path="M 50 0 L 100 50 L 50 100 L 0 50 Z"
+        />
+      );
+    case "heart":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 95"
+          path="M 50 15 C 30 -5, -5 5, 5 35 C 12 60, 30 75, 50 92 C 70 75, 88 60, 95 35 C 105 5, 70 -5, 50 15 Z"
+        />
+      );
+    case "cross":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path="M 35 0 L 65 0 L 65 35 L 100 35 L 100 65 L 65 65 L 65 100 L 35 100 L 35 65 L 0 65 L 0 35 L 35 35 Z"
+        />
+      );
+    case "sparkle":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 100 100"
+          path="M 50 0 L 56 44 L 100 50 L 56 56 L 50 100 L 44 56 L 0 50 L 44 44 Z"
+        />
+      );
+    case "arrow":
+      return (
+        <PdfShape
+          baseStyle={baseStyle}
+          fill={el.fill}
+          stroke={el.stroke}
+          strokeWidth={el.strokeWidth}
+          viewBox="0 0 200 100"
+          path="M 0 35 L 130 35 L 130 10 L 200 50 L 130 90 L 130 65 L 0 65 Z"
+        />
+      );
+  }
+}
+
+/** Render a line element. Editor draws a horizontal line via `border-top`
+ *  inside the wrapper; in PDF we just paint a filled View at the
+ *  configured thickness. Position is the wrapper's mid-Y so the visible
+ *  line lands at the same baseline the editor renders it at. */
+function PdfLineElement({
+  el,
+  baseStyle,
+}: {
+  el: LineElement;
+  baseStyle: PdfStyle;
+}) {
+  // Centred within the wrapper's height — same as the editor's
+  // `marginTop: (el.h - el.thickness) / 2` rule.
+  const thickPt = el.thickness * PT_PER_PX;
+  const heightPt = el.h * PT_PER_PX;
+  const offset = (heightPt - thickPt) / 2;
+  return (
+    <View style={{ ...baseStyle }}>
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: offset,
+          height: thickPt,
+          backgroundColor: el.color,
+        }}
+      />
+    </View>
+  );
+}
+
+/** Render a text element. Wraps inside the wrapper's box (paragraph
+ *  semantics — react-pdf doesn't support CSS `white-space: nowrap`
+ *  cleanly, so single-line headings just render at one line if the
+ *  user sized the box wide enough, else they wrap). Font props mirror
+ *  the editor's TextElement. */
+function PdfTextElement({
+  el,
+  baseStyle,
+}: {
+  el: TextElement;
+  baseStyle: PdfStyle;
+}) {
+  return (
+    <View style={baseStyle}>
+      <Text
+        style={{
+          color: el.color,
+          fontSize: el.fontSize * PT_PER_PX,
+          fontWeight: el.fontWeight,
+          fontFamily: el.fontFamily ?? "Helvetica",
+          textAlign: el.align ?? "left",
+          fontStyle: el.italic ? "italic" : "normal",
+          textDecoration: el.underline ? "underline" : "none",
+        }}
+      >
+        {el.text}
+      </Text>
+    </View>
+  );
+}
+
+/** Render an image element. Empty url → skip render entirely (the
+ *  editor's striped placeholder is editor-only chrome; in the exported
+ *  PDF an empty box would just look broken). When `linkUrl` is set,
+ *  wrap the image in a clickable PdfLink. The wrapper View carries the
+ *  position/rotation; the inner PdfImage fills it. */
+function PdfImageElement({
+  el,
+  baseStyle,
+}: {
+  el: ImageElement;
+  baseStyle: PdfStyle;
+}) {
+  if (!el.url) return null;
+  // react-pdf's Image cannot consume blob: URLs reliably — they're
+  // editor-temporary previews. Skip them; the user's persistent
+  // Supabase URL replaces the blob within seconds of upload.
+  if (el.url.startsWith("blob:")) return null;
+  const inner = (
+    <PdfImage
+      src={el.url}
+      style={{
+        width: "100%",
+        height: "100%",
+        // react-pdf accepts the same objectFit values as CSS for
+        // most cases. "fill" is the default; "cover" / "contain"
+        // map directly.
+        objectFit: el.fit ?? "cover",
+        borderRadius: el.radius ?? 0,
+      }}
+    />
+  );
+  if (el.linkUrl && el.linkUrl.trim()) {
+    return (
+      <View style={baseStyle}>
+        <PdfLink src={normalizeHref(el.linkUrl)} style={{ textDecoration: "none" }}>
+          {inner}
+        </PdfLink>
+      </View>
+    );
+  }
+  return <View style={baseStyle}>{inner}</View>;
+}
+
+/** Render a brand-glyph icon element. Looks up the SVG path in the
+ *  social-icons registry, draws it via react-pdf's <Svg>/<Path>, and
+ *  wraps in a clickable PdfLink when `url` is set. The fill colour
+ *  comes from `el.color` so users who recoloured the icon in the
+ *  inspector get the same recolouring in the PDF. */
+function PdfIconElement({
+  el,
+  baseStyle,
+}: {
+  el: IconElement;
+  baseStyle: PdfStyle;
+}) {
+  if (!isSocialIconName(el.iconName)) return null;
+  const def = SOCIAL_ICONS_BY_NAME[el.iconName];
+  // The viewBox string in the registry is "0 0 24 24" (Simple-Icons
+  // standard); react-pdf's <Svg> takes width/height plus a viewBox
+  // attr. Filling the wrapper completely so the icon scales with the
+  // user's resize.
+  const inner = (
+    <Svg
+      width="100%"
+      height="100%"
+      viewBox={def.viewBox}
+    >
+      <Path d={def.path} fill={el.color} />
+    </Svg>
+  );
+  if (el.url && el.url.trim()) {
+    return (
+      <View style={baseStyle}>
+        <PdfLink src={normalizeHref(el.url)} style={{ textDecoration: "none" }}>
+          {inner}
+        </PdfLink>
+      </View>
+    );
+  }
+  return <View style={baseStyle}>{inner}</View>;
+}
+
+/** Generic SVG-path shape wrapper. Used for triangle / star / hexagon /
+ *  octagon / diamond / heart / cross / sparkle / arrow — all of which
+ *  share the same fill+stroke schema and only differ by their path
+ *  string. Keeping the path data inline (vs importing from the editor
+ *  module) so this PDF module stays free of editor-runtime imports
+ *  and can be lazy-loaded without dragging the editor bundle in. */
+function PdfShape({
+  baseStyle,
+  fill,
+  stroke,
+  strokeWidth,
+  viewBox,
+  path,
+}: {
+  baseStyle: PdfStyle;
+  fill: string;
+  stroke?: string;
+  strokeWidth?: number;
+  viewBox: string;
+  path: string;
+}) {
+  return (
+    <View style={baseStyle}>
+      <Svg width="100%" height="100%" viewBox={viewBox}>
+        <Path
+          d={path}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth ?? 0}
+        />
+      </Svg>
+    </View>
+  );
+}
+
+/** Star path — duplicated from custom-elements-layer.tsx so this file
+ *  stays self-contained. Five-point star with outer radius 48 / inner 22
+ *  on a 100×100 viewBox. */
+function starPath(): string {
+  const cx = 50,
+    cy = 50,
+    R = 48,
+    r = 22;
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI / 5) * i - Math.PI / 2;
+    const radius = i % 2 === 0 ? R : r;
+    pts.push(`${cx + radius * Math.cos(angle)} ${cy + radius * Math.sin(angle)}`);
+  }
+  return `M ${pts.join(" L ")} Z`;
+}
+
+function hexagonPath(): string {
+  const cx = 50,
+    cy = 50,
+    R = 48;
+  const pts: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 2;
+    pts.push(`${cx + R * Math.cos(angle)} ${cy + R * Math.sin(angle)}`);
+  }
+  return `M ${pts.join(" L ")} Z`;
+}
+
+function octagonPath(): string {
+  const cx = 50,
+    cy = 50,
+    R = 48;
+  const pts: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI / 4) * i - Math.PI / 8;
+    pts.push(`${cx + R * Math.cos(angle)} ${cy + R * Math.sin(angle)}`);
+  }
+  return `M ${pts.join(" L ")} Z`;
 }

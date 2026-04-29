@@ -23,10 +23,22 @@
 import { create } from "zustand";
 import { saveResumeData } from "@/lib/resumes";
 import {
+  defaultAwardItem,
+  defaultCertificationItem,
   defaultCustomElement,
   defaultDesignForTemplate,
+  defaultEducationItem,
+  defaultExperienceItem,
+  defaultHobbyItem,
+  defaultLanguageItem,
+  defaultProjectItem,
+  defaultPublicationItem,
+  defaultReferenceItem,
   defaultResumeData,
   defaultSection,
+  defaultSkillItem,
+  defaultTalkItem,
+  defaultVolunteerItem,
 } from "@/lib/resume-defaults";
 import type {
   CustomElement,
@@ -91,6 +103,15 @@ interface EditorState {
   removeSection: (id: string) => void;
   toggleSectionVisible: (id: string) => void;
   updateSection: <T extends Section>(id: string, patch: Partial<T>) => void;
+  /** Append a new default-shaped item to the end of an items-bearing
+   *  section's `items[]`. Returns the new item id (so the caller can
+   *  scroll to / select it) or null if the section doesn't have an
+   *  items concept (summary, custom — those use a `body` string or
+   *  bullets array). Picks the right default factory based on
+   *  `section.type`, so callers don't have to know which factory
+   *  function to call — a single "+ Add entry" gesture in the live
+   *  preview works for every section type. */
+  addItemToSection: (sectionId: string) => string | null;
 
   /** Request the section list to scroll/expand a given section id when
    *  it mounts (or immediately if already mounted). Pass null to clear. */
@@ -121,6 +142,14 @@ interface EditorState {
    *  inspector panel UI. Lives in the store so click-on-preview and
    *  Layers panel can both write to it. */
   selectedElementId: string | null;
+  /** In-app clipboard for CTRL-C / CTRL-V on custom elements. Holds a
+   *  cloned snapshot of the selected element(s) so paste produces a
+   *  fresh copy with new ids. Lives in-memory only — survives across
+   *  selection changes within a session, but not across reloads
+   *  (intentional: clipboard contents shouldn't accumulate forever).
+   *  System clipboard is also written via navigator.clipboard.writeText
+   *  for cross-tab paste; that path is best-effort. */
+  clipboard: CustomElement[] | null;
   /** Add a default-shaped element of the given kind. Returns its new id
    *  so the caller can immediately select it. Optional `at` overrides
    *  the default (80, 80) drop position — used by the toolshelf's
@@ -151,6 +180,20 @@ interface EditorState {
   removeCustomElement: (id: string) => void;
   /** Set the selected element id. Pass null to deselect. */
   selectElement: (id: string | null) => void;
+  /** Copy the selected custom element(s) into the in-app clipboard.
+   *  No-op if no element is selected. Returns the count copied so
+   *  callers can show a toast. */
+  copySelectedElement: () => number;
+  /** Cut = copy + delete. Returns the count cut. */
+  cutSelectedElement: () => number;
+  /** Paste the clipboard's contents at +offset from the originals.
+   *  Returns the new element id(s) so callers can select them. The
+   *  paste produces FRESH ids so the originals are untouched. */
+  pasteClipboard: (offsetPx?: number) => string[];
+  /** Duplicate the selected element in place — same as copy + paste
+   *  without touching the clipboard. PS/Figma keystroke is Cmd-D.
+   *  Returns the new element id, or null if nothing selected. */
+  duplicateSelectedElement: () => string | null;
 }
 
 // ---------- Save scheduling ----------
@@ -270,6 +313,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   lastSavedAt: null,
   saveError: null,
   selectedElementId: null,
+  clipboard: null,
   pendingJumpId: null,
   editingElementId: null,
   history: [defaultResumeData()],
@@ -504,6 +548,112 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     scheduleSave();
   },
 
+  addItemToSection(sectionId) {
+    const state = get();
+    const section = state.data.sections.find((s) => s.id === sectionId);
+    if (!section) return null;
+    // Each section type maps to a default-item factory. Sections
+    // without a list (summary / custom) return null so the caller can
+    // disable the "+ Add" affordance for them. Custom sections DO
+    // have items[] but they're typed as `Bullet[]` and editing happens
+    // via the form's bullets editor — adding inline isn't a clear UX,
+    // so we exclude them here too. References is special: its
+    // onRequest=true mode hides the items list entirely; we still
+    // append, and the user is expected to flip onRequest=false in the
+    // form if they want the new reference visible.
+    let newItem: { id: string } | null = null;
+    let nextItems: unknown[] | null = null;
+    switch (section.type) {
+      case "experience": {
+        newItem = defaultExperienceItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "education": {
+        newItem = defaultEducationItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "skills": {
+        // Inherit the previous skill's group so a "+ Add" from the
+        // canvas appends to whichever sub-group the user is currently
+        // building, not a fresh "Skills" group. Mirrors the same
+        // policy the form's "+ Add skill" button uses.
+        const last = section.items[section.items.length - 1];
+        const fresh = defaultSkillItem();
+        if (last) fresh.group = last.group;
+        newItem = fresh;
+        nextItems = [...section.items, fresh];
+        break;
+      }
+      case "languages": {
+        newItem = defaultLanguageItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "projects": {
+        newItem = defaultProjectItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "certifications": {
+        newItem = defaultCertificationItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "awards": {
+        newItem = defaultAwardItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "publications": {
+        newItem = defaultPublicationItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "volunteer": {
+        newItem = defaultVolunteerItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "talks": {
+        newItem = defaultTalkItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "hobbies": {
+        newItem = defaultHobbyItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      case "references": {
+        newItem = defaultReferenceItem();
+        nextItems = [...section.items, newItem];
+        break;
+      }
+      // summary / custom — no items list to append to.
+      default:
+        return null;
+    }
+    if (!newItem || !nextItems) return null;
+    set((s) => ({
+      data: {
+        ...s.data,
+        sections: s.data.sections.map((sec) =>
+          sec.id === sectionId
+            ? ({ ...sec, items: nextItems } as Section)
+            : sec,
+        ),
+      },
+      saveStatus: "dirty",
+      // Surface the section in the left rail so the user can fill in
+      // the new entry's fields. Same pattern as click-on-preview-jump.
+      pendingJumpId: sectionId,
+    }));
+    scheduleSave();
+    return newItem.id;
+  },
+
   setElementPosition(id, pos) {
     set((s) => {
       const next = { ...(s.data.elementOverrides ?? {}) };
@@ -548,6 +698,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const topZ =
       existing.length === 0 ? 1 : Math.max(...existing.map((e) => e.z)) + 1;
     const base = defaultCustomElement(kind, topZ);
+    // Stagger the default click-add position based on how many elements
+    // already share the default top-left corner — without this, clicking
+    // "Add LinkedIn" then "Add Telegram" lands BOTH at (80, 80), the
+    // second perfectly covering the first, and the user reports "the
+    // first icon disappeared". Drag-drop already provides a real `at`,
+    // so the stagger only kicks in for click-to-add.
+    //
+    // Shift by 60 px diagonal × index. 60 px is just over the default
+    // social-icon size (48 px) so consecutive icon adds visibly clear
+    // each other instead of overlapping ~50 % (the symptom Philip
+    // reported as "icons replacing each other"). Wraps after 8
+    // elements so the chain stays inside the visible top-left quadrant
+    // of the A4 page (8 × 60 = 480 px on a 794 px-wide page).
+    const stagger = at
+      ? null
+      : (() => {
+          const n = existing.length;
+          const cycle = n % 8;
+          return { dx: cycle * 60, dy: cycle * 60 };
+        })();
     // If a drop position was provided, anchor the element so its CENTER
     // sits under the cursor — that matches user intent ("I dropped it
     // here") better than top-left anchoring, which feels off by half
@@ -558,7 +728,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           x: Math.round(at.x - base.w / 2),
           y: Math.round(at.y - base.h / 2),
         } as typeof base)
-      : base;
+      : stagger
+        ? ({ ...base, x: base.x + stagger.dx, y: base.y + stagger.dy } as typeof base)
+        : base;
     // Apply caller-supplied init last. Used by the social-icon palette
     // to stamp the network-specific iconName + brand color in the same
     // operation as the create — so the undo stack gets ONE entry for
@@ -657,7 +829,134 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectElement(id) {
     set({ selectedElementId: id });
   },
+
+  copySelectedElement() {
+    const state = get();
+    const id = state.selectedElementId;
+    if (!id) return 0;
+    const el = (state.data.customElements ?? []).find((c) => c.id === id);
+    if (!el) return 0;
+    // structuredClone preserves the discriminated union shape better
+    // than JSON.parse(JSON.stringify(...)) — Date / Map / circular refs
+    // aren't in CustomElement today but if they ever are, this stays safe.
+    const snapshot: CustomElement[] = [structuredClone(el)];
+    set({ clipboard: snapshot });
+    // Also write to the system clipboard so paste works in another tab
+    // (or after a reload, since the in-app clipboard doesn't persist).
+    // Best-effort — Safari requires user gesture + HTTPS, but Cmd-C IS
+    // a user gesture so this should land. Wrap with `void` to silence
+    // the "unhandled promise" lint without an explicit `.catch`.
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      void navigator.clipboard
+        .writeText(
+          JSON.stringify({ type: "slothcv-elements", v: 1, payload: snapshot }),
+        )
+        .catch(() => {
+          // Permission denied / not focused — silently swallow. The
+          // in-app clipboard is the primary path; system clipboard is a bonus.
+        });
+    }
+    return snapshot.length;
+  },
+
+  cutSelectedElement() {
+    const count = get().copySelectedElement();
+    if (count > 0) {
+      const id = get().selectedElementId;
+      if (id) get().removeCustomElement(id);
+    }
+    return count;
+  },
+
+  pasteClipboard(offsetPx = 12) {
+    const state = get();
+    const buffer = state.clipboard;
+    if (!buffer || buffer.length === 0) return [];
+    // Compute next available z so pasted elements land on top.
+    const existing = state.data.customElements ?? [];
+    const baseZ = existing.length === 0
+      ? 1
+      : Math.max(...existing.map((e) => e.z)) + 1;
+    // Each paste re-stamps a fresh id, offsets by +offsetPx, and
+    // bumps z so the chain `paste, paste, paste` produces a visible
+    // diagonal trail rather than a perfect overlap.
+    const newEls: CustomElement[] = buffer.map((src, i) => ({
+      ...structuredClone(src),
+      id: nanoIdLike(),
+      x: src.x + offsetPx,
+      y: src.y + offsetPx,
+      z: baseZ + i,
+    }));
+    set((s) => ({
+      data: {
+        ...s.data,
+        customElements: [...(s.data.customElements ?? []), ...newEls],
+      },
+      saveStatus: "dirty",
+      // Select the FIRST pasted element so the inspector lights up
+      // with its properties — power users can then refine without
+      // hunting on the canvas.
+      selectedElementId: newEls[0]?.id ?? s.selectedElementId,
+    }));
+    scheduleSave();
+    return newEls.map((e) => e.id);
+  },
+
+  duplicateSelectedElement() {
+    const state = get();
+    const id = state.selectedElementId;
+    if (!id) return null;
+    const el = (state.data.customElements ?? []).find((c) => c.id === id);
+    if (!el) return null;
+    const existing = state.data.customElements ?? [];
+    const baseZ = existing.length === 0
+      ? 1
+      : Math.max(...existing.map((e) => e.z)) + 1;
+    const dup: CustomElement = {
+      ...structuredClone(el),
+      id: nanoIdLike(),
+      // 16 px diagonal — Figma uses ~10-20 px so the dupe is visibly
+      // distinct from the original yet adjacent enough that it's
+      // obviously the same element pattern.
+      x: el.x + 16,
+      y: el.y + 16,
+      z: baseZ,
+    };
+    set((s) => ({
+      data: {
+        ...s.data,
+        customElements: [...(s.data.customElements ?? []), dup],
+      },
+      saveStatus: "dirty",
+      selectedElementId: dup.id,
+    }));
+    scheduleSave();
+    return dup.id;
+  },
 }));
+
+/** Local id helper — `nanoid` is already used elsewhere; pull from the
+ *  same package via dynamic import to avoid a circular import on
+ *  resume-defaults. We just need ~12 chars, URL-safe, collision-resistant
+ *  within a single CV. */
+function nanoIdLike(): string {
+  // Inline the alphabet so this module stays standalone.
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let s = "";
+  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
+    const buf = new Uint8Array(12);
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < 12; i++) {
+      s += alphabet[buf[i] % alphabet.length];
+    }
+  } else {
+    for (let i = 0; i < 12; i++) {
+      s += alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+  }
+  return s;
+}
 
 // Subscribe to data changes globally — every mutation that changes the
 // `data` reference schedules a debounced history snapshot. We compare

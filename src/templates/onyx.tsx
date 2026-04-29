@@ -44,6 +44,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -256,7 +257,7 @@ function OnyxSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <OnyxBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -335,11 +336,11 @@ function OnyxExperience({
                   fontWeight: 600,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: PINK, fontWeight: 500 }}>
                     {" → "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -354,7 +355,7 @@ function OnyxExperience({
             </div>
             {it.location && (
               <div className="text-[0.82em]" style={{ color: TEXT_DIM }}>
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <OnyxBullets
@@ -408,7 +409,7 @@ function OnyxProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: PINK }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -416,7 +417,7 @@ function OnyxProjects({
                 {it.role && (
                   <span style={{ color: TEXT_DIM, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -433,7 +434,7 @@ function OnyxProjects({
             </div>
             {it.techStack && (
               <div className="text-[0.82em]" style={{ color: TEXT_DIM }}>
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <OnyxBullets
@@ -475,11 +476,11 @@ function OnyxEducation({
                 className="text-[0.95em]"
                 style={{ color: TEXT, fontWeight: 600 }}
               >
-                {it.degree}
-                {it.field ? ` · ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` · ${it.field || "Field of study"}` : ""}
               </span>
               <span className="ml-2 text-[0.85em]" style={{ color: PINK }}>
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span className="text-[0.82em]" style={{ color: TEXT_DIM }}>
@@ -546,7 +547,7 @@ function OnyxSkills({
                     ...elementStyle(data, id),
                   }}
                 >
-                  {s.name}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                 </span>
               );
             })}
@@ -578,17 +579,17 @@ function OnyxCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: TEXT_DIM }}>
                   {" · "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
             {c.date && (
               <span className="text-[0.82em]" style={{ color: TEXT_DIM }}>
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

@@ -262,6 +262,12 @@ export function Preview() {
   const removeCustomElement = useEditorStore((s) => s.removeCustomElement);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
+  const copySelectedElement = useEditorStore((s) => s.copySelectedElement);
+  const cutSelectedElement = useEditorStore((s) => s.cutSelectedElement);
+  const pasteClipboard = useEditorStore((s) => s.pasteClipboard);
+  const duplicateSelectedElement = useEditorStore(
+    (s) => s.duplicateSelectedElement,
+  );
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       // Ignore key presses inside form fields / contenteditable so the
@@ -294,6 +300,74 @@ export function Preview() {
         e.preventDefault();
         redo();
         return;
+      }
+
+      // Cmd/Ctrl + C / X / V / D — copy / cut / paste / duplicate of
+      // the selected custom element. Skipped when typing in a form
+      // field so native text-clipboard behaviour stays intact (Cmd-C
+      // copies selected text in an input, NOT the canvas element).
+      // The store's clipboard slot AND the system clipboard are both
+      // populated on copy; paste reads either depending on which has
+      // content. Each shortcut is only meaningful when at least ONE
+      // custom element is selected (or, for paste, when the clipboard
+      // has content) — bail out otherwise so the keystroke falls
+      // through to the browser default.
+      const isCmd = e.metaKey || e.ctrlKey;
+      if (!inField && isCmd && !e.shiftKey && !e.altKey) {
+        if ((e.key === "c" || e.key === "C") && selectedElementId) {
+          e.preventDefault();
+          copySelectedElement();
+          return;
+        }
+        if ((e.key === "x" || e.key === "X") && selectedElementId) {
+          e.preventDefault();
+          cutSelectedElement();
+          return;
+        }
+        if (e.key === "v" || e.key === "V") {
+          // Try in-app clipboard first (fast). If empty, fall through
+          // to the system clipboard read — best-effort, requires user
+          // gesture which Cmd-V already qualifies as.
+          const ids = pasteClipboard();
+          if (ids.length > 0) {
+            e.preventDefault();
+            return;
+          }
+          // System-clipboard fallback. Async, so we let the keystroke
+          // proceed normally — if the read succeeds and the payload
+          // looks like ours, we instantiate elements via the store's
+          // addCustomElement-equivalent path.
+          if (typeof navigator !== "undefined" && navigator.clipboard) {
+            void navigator.clipboard
+              .readText()
+              .then((txt) => {
+                try {
+                  const parsed = JSON.parse(txt);
+                  if (parsed?.type === "slothcv-elements" && Array.isArray(parsed.payload)) {
+                    // Seed the in-app clipboard then paste — re-uses the
+                    // same offset / id / z logic as the synchronous path.
+                    useEditorStore.setState({ clipboard: parsed.payload });
+                    pasteClipboard();
+                  }
+                } catch {
+                  // Not our payload — silently ignore. User pasted
+                  // plain text from elsewhere; canvas paste isn't
+                  // applicable.
+                }
+              })
+              .catch(() => {
+                // Permission denied — clipboard read requires user gesture
+                // + secure context. Cmd-V satisfies the gesture but
+                // localhost may flake; swallow.
+              });
+          }
+          return;
+        }
+        if ((e.key === "d" || e.key === "D") && selectedElementId) {
+          e.preventDefault();
+          duplicateSelectedElement();
+          return;
+        }
       }
 
       // Other shortcuts only fire OUTSIDE form fields.
@@ -382,6 +456,10 @@ export function Preview() {
     removeCustomElement,
     undo,
     redo,
+    copySelectedElement,
+    cutSelectedElement,
+    pasteClipboard,
+    duplicateSelectedElement,
   ]);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -980,9 +1058,16 @@ export function Preview() {
             footprint matches what's drawn. Without an explicit height,
             CSS `transform: scale()` would leave the layout box at the
             intrinsic A4 height, producing dead space below the document
-            equal to (1 - scale) × pageHeight. */}
+            equal to (1 - scale) × pageHeight.
+
+            data-pdf-page-outer marks the OUTER (scaled-display) wrapper
+            so the PDF exporter can find it by selector. The exporter
+            temporarily strips the inner transform during capture so
+            html2canvas reads the document at its intrinsic CSS-px size
+            and the resulting PNG is rendered into a 1:1 A4 PDF. */}
         <div
           ref={pageSheetRef}
+          data-pdf-page-outer="true"
           className="group/sheet mx-auto bg-white shadow-lg ring-1 ring-transparent transition-shadow hover:ring-2 hover:ring-neutral-900/10 hover:shadow-xl"
           style={{
             width: pageWidthPx * scale,
@@ -993,7 +1078,11 @@ export function Preview() {
             // Position relative so the SnapGuidesOverlay (absolute, full-
             // sheet) lays itself out over the same coordinate space as
             // the rendered template + custom elements.
+            // data-pdf-page-content marks this unscaled inner content
+            // node — what the exporter actually rasterises. Width/height
+            // here are the intrinsic A4 size in CSS pixels.
             className="relative"
+            data-pdf-page-content="true"
             style={{
               transform: `scale(${scale})`,
               transformOrigin: "top left",

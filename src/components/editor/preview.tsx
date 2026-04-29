@@ -242,13 +242,20 @@ export function Preview() {
     elementOverridesRef.current = data.elementOverrides ?? {};
   }, [data.elementOverrides]);
 
-  // Mirror custom-element positions by id. Used at mousedown to seed
-  // the drag's startPos with the element's current absolute (x, y).
-  const customElementsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  // Mirror custom-element positions + rotations by id. Used at
+  // mousedown to seed the drag's startPos / startRotation with the
+  // element's current absolute (x, y, rotate). Rotation is needed so
+  // the drag move handler can compose a transform that includes the
+  // user's rotate while moving — without it, switching from a
+  // left/top model to a transform-translate model during drag would
+  // wipe the rendered rotation for the duration of the gesture.
+  const customElementsRef = useRef<
+    Map<string, { x: number; y: number; rotate: number }>
+  >(new Map());
   useEffect(() => {
-    const m = new Map<string, { x: number; y: number }>();
+    const m = new Map<string, { x: number; y: number; rotate: number }>();
     for (const el of data.customElements ?? []) {
-      m.set(el.id, { x: el.x, y: el.y });
+      m.set(el.id, { x: el.x, y: el.y, rotate: el.rotate ?? 0 });
     }
     customElementsRef.current = m;
   }, [data.customElements]);
@@ -575,7 +582,11 @@ export function Preview() {
       const isCustom = elementHit.id.startsWith("custom.");
       if (isCustom) {
         const customId = elementHit.id.slice("custom.".length);
-        const cur = customElementsRef.current.get(customId) ?? { x: 0, y: 0 };
+        const cur = customElementsRef.current.get(customId) ?? {
+          x: 0,
+          y: 0,
+          rotate: 0,
+        };
         // Build the snap-candidate list ONCE on press — the candidates
         // don't move during a single drag (we're moving THIS element,
         // not them). On every move we just run the snap pass against
@@ -611,10 +622,12 @@ export function Preview() {
           snapCandidates,
           snapW: dragged?.w ?? 0,
           snapH: dragged?.h ?? 0,
-          // Custom elements drive their rotation through their own
-          // CustomElementsLayer wrapper, not through the inline transform
-          // we mutate — left at 0 here, the layer keeps applying it.
-          startRotation: 0,
+          // Custom elements rotate via the rendered `transform: rotate(...)`
+          // on their CustomElementsLayer wrapper. The drag move handler
+          // composes a transform of the form `translate(dx,dy) rotate(rot)`
+          // (replacing the rotate-only render) so the existing rotation has
+          // to ride along. `cur.rotate` carries it from the data mirror.
+          startRotation: cur.rotate,
         };
         return;
       }
@@ -756,17 +769,32 @@ export function Preview() {
       const sc = scaleRef.current || 1;
 
       if (drag.kind === "custom") {
-        // Custom (toolshelf) elements use absolute page coordinates that
-        // get written to `el.style.left/top`. We can't use `transform`
-        // here because the underlying CustomElementsLayer already sets
-        // `left`/`top` from the data, so transform would compose with
-        // those. Easiest mental model: drive `left/top` directly during
-        // drag, commit to the store on mouseup.
+        // Custom (toolshelf) elements live at absolute page coordinates
+        // — `left: el.x; top: el.y` set by React render. The PREVIOUS
+        // implementation drove drag by overwriting `left/top` per
+        // mousemove, which forced the browser to re-layout the entire
+        // document subtree on every frame. Text elements were the worst
+        // offenders because text shaping is one of the heaviest layout
+        // ops there is — drag felt sticky and laggy by 100-200 ms.
         //
-        // No POSITION_BOUND clamp here because custom elements legitimately
-        // span the whole A4 page — but we DO clamp to the wider Zod
-        // bounds (-200..2000 / -200..3000) so a runaway drag can't push
-        // the element into "save fails" territory.
+        // The fix: write a `transform: translate(dx, dy) rotate(rot)`
+        // delta during drag. The rendered `left/top` stays put; the
+        // GPU-composited transform layers a delta over it. Zero layout
+        // reflow per frame, native 60+ FPS at any zoom level. On
+        // mouseup we synchronously commit the new absolute `left/top`
+        // + rotate-only transform to the inline style so the visual
+        // outcome is identical to the React rerender that follows.
+        //
+        // Sections / personal-block elements already use this pattern
+        // (line ~825-832 below). Custom elements were the laggard
+        // because they rendered with `left/top` directly instead of
+        // through a `position: absolute` flow that transform-only
+        // could ride on top of.
+        //
+        // No POSITION_BOUND clamp here because custom elements
+        // legitimately span the whole A4 page — but we DO clamp to
+        // the wider Zod bounds (-200..2000 / -200..3000) so a runaway
+        // drag can't push the element into "save fails" territory.
         let nx = drag.startPos.x + dx / sc;
         let ny = drag.startPos.y + dy / sc;
 
@@ -798,9 +826,20 @@ export function Preview() {
         const cy = Math.max(-200, Math.min(3000, ny));
         const rx = Math.round(cx);
         const ry = Math.round(cy);
-        drag.el.style.left = `${rx}px`;
-        drag.el.style.top = `${ry}px`;
-        drag.el.style.willChange = "left, top";
+        // Translation delta from the element's rendered (start) position.
+        // Using deltas + transform means we never touch left/top during
+        // the gesture, which is what keeps reflow at zero.
+        const tx = rx - drag.startPos.x;
+        const ty = ry - drag.startPos.y;
+        const rotPart =
+          drag.startRotation !== 0
+            ? ` rotate(${drag.startRotation}deg)`
+            : "";
+        drag.el.style.transform = `translate(${tx}px, ${ty}px)${rotPart}`;
+        drag.el.style.willChange = "transform";
+        // Pending coords stay ABSOLUTE (rx/ry), not deltas — onUp commits
+        // them to `updateCustomElement({x, y})` and the next React render
+        // produces the same visual via `left/top` + rotate-only transform.
         drag.pendingX = rx;
         drag.pendingY = ry;
 
@@ -880,6 +919,20 @@ export function Preview() {
             dy: drag.pendingY,
           });
         } else if (drag.kind === "custom") {
+          // Synchronously bake the new position into inline left/top
+          // and replace the drag's translate-transform with a
+          // rotate-only one (matching what React will render once the
+          // store updates). Doing this BEFORE the store write means
+          // there's no 1-frame window where the element snaps back to
+          // its original left/top with no transform delta — the visual
+          // outcome from drag-end → React-rerender is byte-identical
+          // to the inline write here, so React's diff is a no-op.
+          drag.el.style.left = `${drag.pendingX}px`;
+          drag.el.style.top = `${drag.pendingY}px`;
+          drag.el.style.transform =
+            drag.startRotation !== 0
+              ? `rotate(${drag.startRotation}deg)`
+              : "";
           // Commit absolute coords back to the data so subsequent renders
           // place the element at its new home — and so a refresh keeps
           // the change. Inspector x/y sliders read from the same field.
@@ -963,8 +1016,15 @@ export function Preview() {
       // same outcome from store data, so no flicker.
       if (drag.el) {
         if (drag.kind === "custom") {
-          drag.el.style.left = `${drag.startPos.x}px`;
-          drag.el.style.top = `${drag.startPos.y}px`;
+          // Custom elements are dragged via a translate-delta over their
+          // rendered left/top + rotate(rot). Aborting means dropping the
+          // delta back to zero — replace the inline transform with a
+          // rotate-only one (or empty when rot is 0). left/top weren't
+          // touched during the drag so they're already at startPos.
+          drag.el.style.transform =
+            drag.startRotation !== 0
+              ? `rotate(${drag.startRotation}deg)`
+              : "";
         } else {
           const rotPart =
             drag.startRotation !== 0

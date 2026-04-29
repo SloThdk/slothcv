@@ -19,6 +19,7 @@
 
 "use client";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   bulletGlyph,
   elementStyle,
@@ -368,6 +369,7 @@ export function ExperienceBody({
   design,
   data,
 }: SectionProps<ExperienceSection>) {
+  const { t } = useLanguage();
   if (section.items.length === 0)
     return <Placeholder text="No experience yet." />;
   return (
@@ -396,7 +398,7 @@ export function ExperienceBody({
                     data={data}
                     fieldId={roleId}
                     value={it.role}
-                    placeholder="Role"
+                    placeholder={t("form.placeholder.role")}
                   />
                   <span className="cv-aux-field font-normal text-neutral-500">
                     {" · "}
@@ -404,7 +406,7 @@ export function ExperienceBody({
                       data={data}
                       fieldId={companyId}
                       value={it.company}
-                      placeholder="Company"
+                      placeholder={t("form.placeholder.company")}
                     />
                   </span>
                 </div>
@@ -422,7 +424,7 @@ export function ExperienceBody({
                 data={data}
                 fieldId={locationId}
                 value={it.location}
-                placeholder="Location"
+                placeholder={t("form.placeholder.location")}
                 inline={false}
                 className="text-[0.85em] text-neutral-500"
               />
@@ -444,6 +446,7 @@ export function EducationBody({
   design,
   data,
 }: SectionProps<EducationSection>) {
+  const { t } = useLanguage();
   if (section.items.length === 0)
     return <Placeholder text="No education yet." />;
   return (
@@ -465,7 +468,7 @@ export function EducationBody({
                     data={data}
                     fieldId={`${id}.degree`}
                     value={it.degree}
-                    placeholder="Degree"
+                    placeholder={t("form.placeholder.degree")}
                   />
                   <span className="cv-aux-field font-normal">
                     {", "}
@@ -473,7 +476,7 @@ export function EducationBody({
                       data={data}
                       fieldId={`${id}.field`}
                       value={it.field}
-                      placeholder="Field of study"
+                      placeholder={t("form.placeholder.field")}
                     />
                   </span>
                 </div>
@@ -492,7 +495,7 @@ export function EducationBody({
                   data={data}
                   fieldId={`${id}.institution`}
                   value={it.institution}
-                  placeholder="Institution"
+                  placeholder={t("form.placeholder.institution")}
                 />
                 <span className="cv-aux-field text-neutral-500">
                   {" · "}
@@ -500,7 +503,7 @@ export function EducationBody({
                     data={data}
                     fieldId={`${id}.location`}
                     value={it.location}
-                    placeholder="Location"
+                    placeholder={t("form.placeholder.location")}
                   />
                 </span>
                 <span className="cv-aux-field text-neutral-500">
@@ -768,6 +771,7 @@ export function ProjectsBody({
   design,
   data,
 }: SectionProps<ProjectsSection>) {
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No projects yet." />;
   return (
@@ -795,7 +799,7 @@ export function ProjectsBody({
                       data={data}
                       fieldId={`${id}.name`}
                       value={it.name}
-                      placeholder="Project name"
+                      placeholder={t("form.placeholder.projectName")}
                     />
                   </a>
                 ) : (
@@ -803,7 +807,7 @@ export function ProjectsBody({
                     data={data}
                     fieldId={`${id}.name`}
                     value={it.name}
-                    placeholder="Project name"
+                    placeholder={t("form.placeholder.projectName")}
                   />
                 )}
                 <span className="font-normal text-neutral-500">
@@ -812,7 +816,7 @@ export function ProjectsBody({
                     data={data}
                     fieldId={`${id}.role`}
                     value={it.role}
-                    placeholder="Role"
+                    placeholder={t("form.placeholder.role")}
                   />
                 </span>
               </div>
@@ -830,7 +834,7 @@ export function ProjectsBody({
               data={data}
               fieldId={`${id}.techStack`}
               value={it.techStack}
-              placeholder="Tech stack — e.g. React, Postgres, Stripe"
+              placeholder={t("form.placeholder.techStack")}
               inline={false}
               className="mt-0.5 text-[0.85em] text-neutral-500"
             />
@@ -852,6 +856,7 @@ export function CertificationsBody({
   design,
   data,
 }: SectionProps<CertificationsSection>) {
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
     return <Placeholder text="No certifications yet." />;
@@ -873,7 +878,7 @@ export function CertificationsBody({
                     data={data}
                     fieldId={`${id}.name`}
                     value={c.name}
-                    placeholder="Certification name"
+                    placeholder={t("form.placeholder.certName")}
                   />
                 </span>
                 <span className="cv-aux-field text-neutral-500">
@@ -882,7 +887,7 @@ export function CertificationsBody({
                     data={data}
                     fieldId={`${id}.issuer`}
                     value={c.issuer}
-                    placeholder="Issuer"
+                    placeholder={t("form.placeholder.issuer")}
                   />
                 </span>
               </div>
@@ -891,7 +896,7 @@ export function CertificationsBody({
                   data={data}
                   fieldId={`${id}.date`}
                   value={c.date}
-                  placeholder="Issued"
+                  placeholder={t("form.placeholder.issued")}
                 />
                 <span className="cv-aux-field">
                   {" – "}
@@ -899,7 +904,7 @@ export function CertificationsBody({
                     data={data}
                     fieldId={`${id}.expiry`}
                     value={c.expiry ?? ""}
-                    placeholder="Expires"
+                    placeholder={t("form.placeholder.expires")}
                   />
                 </span>
               </div>
@@ -936,6 +941,7 @@ export function CertificationsBody({
 }
 
 export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No awards yet." />;
   return (
@@ -956,7 +962,7 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
                     data={data}
                     fieldId={`${id}.name`}
                     value={a.name}
-                    placeholder="Award name"
+                    placeholder={t("form.placeholder.awardName")}
                   />
                 </span>
                 <span className="cv-aux-field text-neutral-500">
@@ -965,7 +971,7 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
                     data={data}
                     fieldId={`${id}.issuer`}
                     value={a.issuer}
-                    placeholder="Issuer"
+                    placeholder={t("form.placeholder.issuer")}
                   />
                 </span>
               </div>
@@ -974,7 +980,7 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
                   data={data}
                   fieldId={`${id}.date`}
                   value={a.date}
-                  placeholder="Date"
+                  placeholder={t("form.placeholder.date")}
                 />
               </div>
             </div>
@@ -982,7 +988,7 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
               data={data}
               fieldId={`${id}.description`}
               value={a.description}
-              placeholder="Description"
+              placeholder={t("form.placeholder.description")}
               inline={false}
               className="text-[0.9em] text-neutral-700"
             />
@@ -998,6 +1004,7 @@ export function PublicationsBody({
   design,
   data,
 }: SectionProps<PublicationsSection>) {
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No publications yet." />;
   return (
@@ -1016,7 +1023,7 @@ export function PublicationsBody({
                 data={data}
                 fieldId={`${id}.title`}
                 value={p.title}
-                placeholder="Publication title"
+                placeholder={t("form.placeholder.publicationTitle")}
               />
             </span>
             <span className="cv-aux-field text-neutral-700">
@@ -1025,7 +1032,7 @@ export function PublicationsBody({
                 data={data}
                 fieldId={`${id}.authors`}
                 value={p.authors}
-                placeholder="Authors"
+                placeholder={t("form.placeholder.authors")}
               />
             </span>
             <span className="cv-aux-field italic text-neutral-700">
@@ -1034,7 +1041,7 @@ export function PublicationsBody({
                 data={data}
                 fieldId={`${id}.venue`}
                 value={p.venue}
-                placeholder="Venue"
+                placeholder={t("form.placeholder.venue")}
               />
             </span>
             <span className="cv-aux-field text-neutral-500">
@@ -1043,7 +1050,7 @@ export function PublicationsBody({
                 data={data}
                 fieldId={`${id}.date`}
                 value={p.date}
-                placeholder="Date"
+                placeholder={t("form.placeholder.date")}
               />
               {")"}
             </span>
@@ -1073,6 +1080,7 @@ export function VolunteerBody({
   design,
   data,
 }: SectionProps<VolunteerSection>) {
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
     return <Placeholder text="No volunteer experience yet." />;
@@ -1093,7 +1101,7 @@ export function VolunteerBody({
                   data={data}
                   fieldId={`${id}.role`}
                   value={it.role}
-                  placeholder="Role"
+                  placeholder={t("form.placeholder.role")}
                 />
                 <span className="font-normal text-neutral-500">
                   {" · "}
@@ -1101,7 +1109,7 @@ export function VolunteerBody({
                     data={data}
                     fieldId={`${id}.organization`}
                     value={it.organization}
-                    placeholder="Organization"
+                    placeholder={t("form.placeholder.organization")}
                   />
                 </span>
               </div>
@@ -1137,24 +1145,27 @@ export function VolunteerBody({
 }
 
 export function TalksBody({ section, design, data }: SectionProps<TalksSection>) {
+  // Iterator renamed `talk` (was `t`) to avoid shadowing the
+  // useLanguage `t` translator function in this scope.
+  const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No talks yet." />;
   return (
     <div className="space-y-1.5 text-[0.95em]">
-      {items.map((t) => {
-        const id = eid.item(section.id, t.id);
+      {items.map((talk) => {
+        const id = eid.item(section.id, talk.id);
         return (
           <div
-            key={t.id}
+            key={talk.id}
             data-element-id={id}
             className={dragClass}
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <div>
-                {t.url ? (
+                {talk.url ? (
                   <a
-                    href={safeHref(t.url)}
+                    href={safeHref(talk.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-semibold underline-offset-2 hover:underline"
@@ -1163,8 +1174,8 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
                     <EditableFallback
                       data={data}
                       fieldId={`${id}.title`}
-                      value={t.title}
-                      placeholder="Talk title"
+                      value={talk.title}
+                      placeholder={t("form.placeholder.talkTitle")}
                     />
                   </a>
                 ) : (
@@ -1172,8 +1183,8 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
                     <EditableFallback
                       data={data}
                       fieldId={`${id}.title`}
-                      value={t.title}
-                      placeholder="Talk title"
+                      value={talk.title}
+                      placeholder={t("form.placeholder.talkTitle")}
                     />
                   </span>
                 )}
@@ -1182,8 +1193,8 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
                   <EditableFallback
                     data={data}
                     fieldId={`${id}.venue`}
-                    value={t.venue}
-                    placeholder="Venue"
+                    value={talk.venue}
+                    placeholder={t("form.placeholder.venue")}
                   />
                 </span>
               </div>
@@ -1191,8 +1202,8 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
                 <EditableFallback
                   data={data}
                   fieldId={`${id}.date`}
-                  value={t.date}
-                  placeholder="Date"
+                  value={talk.date}
+                  placeholder={t("form.placeholder.date")}
                 />
               </div>
             </div>
@@ -1225,6 +1236,7 @@ export function ReferencesBody({
   section,
   data,
 }: SectionProps<ReferencesSection>) {
+  const { t } = useLanguage();
   if (section.onRequest) {
     const id = `section.${section.id}.body`;
     return (
@@ -1255,7 +1267,7 @@ export function ReferencesBody({
                 data={data}
                 fieldId={`${id}.name`}
                 value={r.name}
-                placeholder="Reference name"
+                placeholder={t("form.placeholder.referenceName")}
               />
             </div>
             <div className="text-neutral-700">
@@ -1280,7 +1292,7 @@ export function ReferencesBody({
                 data={data}
                 fieldId={`${id}.email`}
                 value={r.email}
-                placeholder="email@example.com"
+                placeholder={t("form.placeholder.email")}
               />
               <span className="cv-aux-field">
                 {" · "}
@@ -1288,7 +1300,7 @@ export function ReferencesBody({
                   data={data}
                   fieldId={`${id}.phone`}
                   value={r.phone}
-                  placeholder="+45 12 34 56 78"
+                  placeholder={t("form.placeholder.phone")}
                 />
               </span>
             </div>

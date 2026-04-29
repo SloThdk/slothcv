@@ -17,7 +17,15 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, FileText, Copy, Layers, Trash2, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  Copy,
+  Layers,
+  Trash2,
+  Pencil,
+  AlertTriangle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,6 +43,8 @@ import {
   duplicateResume,
   duplicateAsVariant,
   groupResumesByMaster,
+  renameResume,
+  renameVariantLabel,
   CvLimitReachedError,
   MAX_CVS_PER_USER,
   type ResumeRow,
@@ -243,6 +253,69 @@ function DashboardInner() {
     }
   }
 
+  /** Rename flow. Behaviour branches on whether the row is a master or
+   *  a variant:
+   *    - Master  → edits the shared `title` column. All variants under
+   *                this master will start showing the new title in their
+   *                "Variant of <master>" badge.
+   *    - Variant → edits ONLY this row's `variant_label`. The master's
+   *                title and every sibling variant's data stays
+   *                untouched.
+   *
+   *  Either way the prompt seeds with the row's current label so the
+   *  user can edit a few characters instead of retyping. Empty input
+   *  cancels (matches the existing variant-create prompt's contract).
+   */
+  async function onRename(id: string) {
+    const row = resumes?.find((r) => r.id === id);
+    if (!row) return;
+    const isVariant = !!row.parent_id;
+    // Variant renames edit variant_label; master renames edit title.
+    // The currentValue seeds the prompt so the user is editing, not
+    // retyping from scratch.
+    const currentValue = isVariant
+      ? row.variant_label ?? ""
+      : row.title ?? "";
+    const label = await prompt({
+      title: isVariant
+        ? t("dashboard.renameVariantPromptTitle")
+        : t("dashboard.renamePromptTitle"),
+      description: isVariant
+        ? t("dashboard.renameVariantPromptDesc")
+        : t("dashboard.renamePromptDesc"),
+      inputLabel: isVariant
+        ? t("dashboard.variantPromptLabel")
+        : t("dashboard.renamePromptLabel"),
+      placeholder: isVariant
+        ? t("dashboard.variantPromptPlaceholder")
+        : t("dashboard.renamePromptPlaceholder"),
+      confirmLabel: t("dashboard.renamePromptConfirm"),
+      cancelLabel: t("common.cancel"),
+      defaultValue: currentValue,
+      // 80 for variants (matches duplicateAsVariant's cap), 120 for
+      // titles (matches renameResume's cap). Surfaces the cap to the
+      // user via the prompt UI's character counter.
+      maxLength: isVariant ? 80 : 120,
+    });
+    if (!label) return; // user cancelled or cleared the field
+    // No-op if the label didn't actually change. Avoids a pointless
+    // round-trip + a "Renamed." toast on a click that did nothing.
+    if (label.trim() === currentValue.trim()) return;
+    try {
+      if (isVariant) {
+        await renameVariantLabel(id, label);
+      } else {
+        await renameResume(id, label);
+      }
+      toast.success(t("dashboard.toastRenamed"));
+      await refresh();
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : t("dashboard.toastRenameFailed"),
+      );
+    }
+  }
+
   /** Save-as-variant flow. Pops a prompt for a label, then clones the
    *  source CV with `parent_id` set to the source's master (or the source
    *  itself if it IS a master). The new variant lands grouped under its
@@ -380,6 +453,7 @@ function DashboardInner() {
                 <ResumeCard
                   row={group.master}
                   isVariant={false}
+                  onRename={onRename}
                   onDuplicate={onDuplicate}
                   onSaveAsVariant={onSaveAsVariant}
                   onDelete={onDelete}
@@ -400,6 +474,7 @@ function DashboardInner() {
                         row={v}
                         isVariant
                         masterTitle={group.master.title}
+                        onRename={onRename}
                         onDuplicate={onDuplicate}
                         onSaveAsVariant={onSaveAsVariant}
                         onDelete={onDelete}
@@ -439,6 +514,7 @@ function ResumeCard({
   row,
   isVariant,
   masterTitle,
+  onRename,
   onDuplicate,
   onSaveAsVariant,
   onDelete,
@@ -447,6 +523,7 @@ function ResumeCard({
   row: ResumeRow;
   isVariant: boolean;
   masterTitle?: string;
+  onRename: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSaveAsVariant: (id: string) => void;
   onDelete: (id: string) => void;
@@ -481,6 +558,24 @@ function ResumeCard({
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            {/* Pencil icon → rename. First in the row because rename
+                is the most-expected action on a CV in a dashboard
+                list — keep it discoverable. Hover wiggles the pencil
+                so the affordance reads as "edit", not just a static
+                glyph. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("dashboard.renameAria")}
+              title={t("dashboard.renameAria")}
+              onClick={() => {
+                onRename(row.id);
+              }}
+              className="group/rename"
+            >
+              <Pencil className="h-4 w-4 transition-transform duration-200 ease-out group-hover/rename:scale-110 group-hover/rename:-rotate-12" />
+            </Button>
             {/* Layers icon → save-as-variant. The icon itself gets a
                 subtle scale + rotate on hover via group-hover so the
                 user feels the "stack" gesture. The Button's own

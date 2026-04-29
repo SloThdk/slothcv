@@ -219,6 +219,10 @@ export function InlineTextEditor() {
   const data = useEditorStore((s) => s.data);
   const setPersonal = useEditorStore((s) => s.setPersonal);
   const updateSection = useEditorStore((s) => s.updateSection);
+  // setDesign is needed by the lens for `design.watermark` (corner
+  // letters). Without it the lens write path silently no-ops and
+  // double-click-to-edit on the watermark looks broken.
+  const setDesign = useEditorStore((s) => s.setDesign);
   const setEditingElementId = useEditorStore((s) => s.setEditingElementId);
 
   const [overlay, setOverlay] = useState<OverlayRect | null>(null);
@@ -294,7 +298,11 @@ export function InlineTextEditor() {
 
   // Resolve the lens for the active element-id.
   const lens = editingElementId
-    ? elementTextLens(editingElementId, data, { setPersonal, updateSection })
+    ? elementTextLens(editingElementId, data, {
+        setPersonal,
+        updateSection,
+        setDesign,
+      })
     : null;
 
   // Capture rect + font + hide source text when an edit starts; the

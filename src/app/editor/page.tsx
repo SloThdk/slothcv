@@ -334,13 +334,20 @@ function Tabs({
     { id: "templates", label: trans("editor.tab.templates"), icon: Eye },
     { id: "settings", label: trans("editor.tab.settings"), icon: Settings2 },
   ];
+  // The Linear-style "magic ink" tab bar. Each button hosts a relative
+  // motion.div on the active tab; framer-motion's layoutId animates the
+  // SAME virtual element from button to button using a transform-only
+  // 200ms slide. Inactive tabs render plain (no underline element), so
+  // there's only ever one visible indicator at a time.
+  //
+  // Layout: flex with min-width:0 + flex-1 per item so each tab gets
+  // equal share but content can shrink to fit. Fixed-width equal
+  // columns (grid-cols-6) crammed Danish "Indstillinger" against the
+  // right edge with no breathing room while shorter labels ("Lag")
+  // had empty space on either side. flex also handles add/remove of
+  // tabs without grid recalculation noise.
   return (
-    // The Linear-style "magic ink" tab bar. Each button hosts a relative
-    // motion.div on the active tab; framer-motion's layoutId animates the
-    // SAME virtual element from button to button using a transform-only
-    // 200ms slide. Inactive tabs render plain (no underline element), so
-    // there's only ever one visible indicator at a time.
-    <div className="relative grid grid-cols-6 border-b border-border bg-surface">
+    <div className="relative flex border-b border-border bg-surface">
       {items.map((it) => {
         const Icon = it.icon;
         const active = tab === it.id;
@@ -349,18 +356,19 @@ function Tabs({
             key={it.id}
             type="button"
             onClick={() => onChange(it.id)}
-            className={`relative flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
+            className={`relative flex min-w-0 flex-1 items-center justify-center gap-1.5 px-1.5 py-2.5 text-[11px] font-medium transition-colors ${
               active ? "text-fg" : "text-muted hover:text-fg"
             }`}
             aria-label={it.label}
             title={it.label}
           >
-            <Icon className="h-3.5 w-3.5" />
-            {/* Hide label on narrow viewports — at 393px, 5 cells +
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            {/* Hide label on narrow viewports — at 393px, 6 cells +
                 icon + label wraps awkwardly. The `aria-label` and
                 `title` above keep accessibility + tooltip discoverability
-                intact. Show again at sm: (640px). */}
-            <span className="hidden sm:inline">{it.label}</span>
+                intact. Show again at sm: (640px). `truncate` avoids
+                overflow on the longest Danish label (Indstillinger). */}
+            <span className="hidden truncate sm:inline">{it.label}</span>
             {active && (
               // 2px slab at the bottom edge. layoutId="editor-tab-active"
               // means framer-motion treats every render of this element

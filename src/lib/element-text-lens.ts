@@ -71,6 +71,13 @@ export function elementTextLens(
     };
   }
 
+  // Graphite's "Contact" sidebar header is left unhandled here. It's
+  // a fixed-string label that needs its own schema field
+  // (`design.labels.contact: string`) to be properly editable.
+  // Falling through to null returns "no inline edit" which is the
+  // honest behaviour until the schema gets the field. TODO when we
+  // ship the design.labels block.
+
   // ----- personal.* ------------------------------------------------
   if (id === "personal.name") {
     return {
@@ -139,6 +146,37 @@ export function elementTextLens(
     return {
       read: () => section.title,
       write: (s) => writers.updateSection(sid, { title: s }),
+    };
+  }
+
+  // section.<sid>.kv.<index> — Aurora's Personal Info sidebar splits a
+  // custom section's body into "Key: Value" lines and renders each as
+  // a draggable KV row. Without this lens entry, double-clicking a
+  // line ("Based: Stockholm" / "Focus: Production reliability" /
+  // "Open to: Remote") fell through to "jump to form" — the user
+  // could see the values rendered but couldn't edit them inline.
+  // Read/write operates on the WHOLE line so the user can rename the
+  // key, change the value, or both in one inline-edit gesture.
+  if (tail.startsWith("kv.") && section.type === "custom") {
+    const indexStr = tail.slice("kv.".length);
+    const idx = Number(indexStr);
+    if (!Number.isFinite(idx) || idx < 0) return null;
+    const sec = section as CustomSection;
+    const lines = (sec.body ?? "").split("\n");
+    if (idx >= lines.length) return null;
+    return {
+      read: () => lines[idx] ?? "",
+      write: (s) => {
+        const next = [...lines];
+        next[idx] = s;
+        // Drop trailing empty lines that result from the user clearing
+        // a row entirely; keep the original separator semantics
+        // otherwise so the rest of the body block stays intact.
+        const compact = next.length > 0 && next[next.length - 1] === ""
+          ? next.slice(0, -1)
+          : next;
+        writers.updateSection(sid, { body: compact.join("\n") });
+      },
     };
   }
 

@@ -120,6 +120,56 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useEditorStore } from "@/lib/store/editor";
 import { elementTextLens } from "@/lib/element-text-lens";
 
+/**
+ * Module-level handoff for the dblclick coordinates that triggered
+ * the current edit session. preview.tsx writes the viewport-space
+ * `clientX/clientY` of the dblclick BEFORE calling
+ * `setEditingElementId(id)`; the rect-capture useLayoutEffect below
+ * reads + clears it so the focus useLayoutEffect can place the caret
+ * at exactly the click point (then expand to word boundaries) instead
+ * of the previous behaviour of "select all on every edit start".
+ *
+ * Why a module-level ref vs Zustand state: this is a one-shot piece of
+ * UI metadata that should not survive a re-render, should not trigger
+ * a re-render itself, and is only meaningful for ~10ms (between the
+ * dblclick and the focus effect). Putting it in Zustand would cause an
+ * extra re-render and need cleanup logic; a plain ref is sufficient
+ * and dies with the page.
+ */
+export const inlineEditorClickPoint: { current: { x: number; y: number } | null } = {
+  current: null,
+};
+
+/**
+ * Photoshop's text tool has two modes that behave differently:
+ *
+ *   - "point text" — single line that grows horizontally as you type.
+ *     Names, headlines, emails, dates, role/company/location fields,
+ *     section titles. Treat as `width: max-content; white-space: nowrap`
+ *     so typing past the source's rendered width extends the box to
+ *     the right rather than wrapping the text down a line.
+ *
+ *   - "paragraph text" — fixed-width box that wraps text inside.
+ *     Summary body, custom-section body, bullet items. Keep
+ *     `width: rect.width; white-space: pre-wrap` so the editor wraps
+ *     at the same column the rendered template wraps at.
+ *
+ * Detection by element-id: bullets and `*.body` are paragraph; every
+ * other lens-supported field is point. Aligns with the lens routes in
+ * `lib/element-text-lens.ts`.
+ *
+ * The user-visible bug this solves: typing "John" → "John Smith" in a
+ * point field used to wrap to two lines (because width was locked to
+ * the source's current rendered width, ~40px). The user perceived it
+ * as the text "jumping out of the container". Now the box grows
+ * rightward and the typed text stays on the original baseline.
+ */
+function detectKind(elementId: string): "point" | "paragraph" {
+  if (elementId.endsWith(".body")) return "paragraph";
+  if (elementId.includes(".bullet.")) return "paragraph";
+  return "point";
+}
+
 interface OverlayRect {
   /** Bounding rect of the element being edited, in viewport coordinates.
    *  This is POST-SCALE — if the preview is at 60% zoom, the rect is
@@ -129,6 +179,10 @@ interface OverlayRect {
    *  parents). Multiply font/spacing CSS values by this to get the
    *  actual rendered size. */
   visualScale: number;
+  /** Photoshop's point-text vs paragraph-text distinction. See
+   *  `detectKind()`. Drives `whiteSpace`, `wordBreak`, and width
+   *  policy on the wrapper + sharedStyle. */
+  kind: "point" | "paragraph";
   /** Computed font styles copied from the source element. Pixel values
    *  are CSS px (pre-scale) — visualScale is applied at render time.
    *  All four paddings are captured so the editing overlay never has
@@ -347,7 +401,8 @@ export function InlineTextEditor() {
     const intrinsicW = el.offsetWidth || rect.width || 1;
     const visualScale = rect.width / intrinsicW || 1;
 
-    setOverlay({ rect, visualScale, font: fontSnapshot });
+    const kind = detectKind(editingElementId);
+    setOverlay({ rect, visualScale, kind, font: fontSnapshot });
 
     const initialText = lens.read();
     setText(initialText);
@@ -535,15 +590,45 @@ export function InlineTextEditor() {
     // user double-clicks an empty placeholder field.
     el.innerText = latestTextRef.current;
     el.focus({ preventScroll: true });
-    // Select all so the user's first keystroke replaces the text —
-    // matches textarea / browser-form behaviour for "I just opened
-    // this for editing, I'm about to retype."
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const sel = window.getSelection();
-    if (sel) {
-      sel.removeAllRanges();
-      sel.addRange(range);
+
+    // Photoshop-grade caret placement.
+    //
+    // The previous behaviour was "select all" on every edit start.
+    // That made sense as a "I just opened this, I'm about to retype"
+    // shortcut, but it's wrong for the more common case of "I want to
+    // fix one word in a sentence" — the user double-clicks the typo,
+    // gets the entire field selected, presses a key, and watches
+    // their entire text disappear.
+    //
+    // Photoshop's Type Tool: dblclick at point P → caret lands at
+    // the character closest to P, then the WORD around P is selected
+    // (so a dblclick on "Smht" selects exactly "Smht" so the user
+    // can retype the word). Triple-click selects line; single-click
+    // places caret. Browsers natively do single/double/triple-click
+    // selection on contenteditable, but only AFTER focus is in.
+    // Since we're synthesizing the focus + setup ourselves, we have
+    // to recreate the dblclick = word-select behaviour.
+    //
+    // Click point comes from `inlineEditorClickPoint` (set by
+    // preview.tsx onDoubleClick). If absent (e.g. programmatic edit
+    // start) we fall back to select-all so the user still has a
+    // sensible starting point.
+    const click = inlineEditorClickPoint.current;
+    inlineEditorClickPoint.current = null;
+    let placed = false;
+    if (click && latestTextRef.current.length > 0) {
+      placed = placeCaretAtPointAndExpandToWord(el, click.x, click.y);
+    }
+    if (!placed) {
+      // Fallback: select all. Empty initial content also lands here —
+      // a "select all" of an empty editable is a no-op cursor at offset 0.
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
     focusedSessionRef.current = editingElementId;
   }, [editingElementId, overlay]);
@@ -632,11 +717,20 @@ export function InlineTextEditor() {
   const letterSpacing = /^-?\d+(\.\d+)?px$/.test(ls)
     ? `${parseFloat(ls) * sc}px`
     : ls;
+  const isPoint = overlay.kind === "point";
 
   // Shared typography style applied to BOTH the textarea AND the
   // hidden replica div so they wrap and lay out IDENTICALLY. Per-
   // element overrides (caret color, focus outline, visibility) diverge
   // below in their respective inline `style` props.
+  //
+  // Point-text vs paragraph-text wrapping (see detectKind() above):
+  //   - point: nowrap + normal word-break — typing past the source's
+  //     rendered width grows the box rightward via `width: max-content`
+  //     on the wrapper. Photoshop "point text" semantics.
+  //   - paragraph: pre-wrap + break-word — text wraps inside a fixed-
+  //     width box at the same column the rendered template wrapped at.
+  //     Photoshop "area type" semantics.
   const sharedStyle: React.CSSProperties = {
     fontFamily: overlay.font.fontFamily,
     fontSize: `${fontSizePx}px`,
@@ -660,9 +754,9 @@ export function InlineTextEditor() {
       overlay.font.fontVariantNumeric as React.CSSProperties["fontVariantNumeric"],
     fontKerning: overlay.font.fontKerning as React.CSSProperties["fontKerning"],
     tabSize: overlay.font.tabSize as React.CSSProperties["tabSize"],
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    overflowWrap: "break-word",
+    whiteSpace: isPoint ? "nowrap" : "pre-wrap",
+    wordBreak: isPoint ? "normal" : "break-word",
+    overflowWrap: isPoint ? "normal" : "break-word",
   };
 
   return (
@@ -676,24 +770,30 @@ export function InlineTextEditor() {
           position: "fixed",
           left: overlay.rect.left,
           top: overlay.rect.top,
-          width: overlay.rect.width,
-          // Source rect is the floor; grid grows above it as content
-          // wraps. The wrapper never shrinks below the original element
-          // so single-line fields stay visually anchored.
-          minHeight: overlay.rect.height,
+          // Width policy depends on Photoshop kind (point vs paragraph):
+          //   - point: max-content so typing extends the box rightward
+          //     instead of wrapping. Cap to the source's width as a
+          //     minimum so an empty edit still has a clickable bbox
+          //     visible at the source's position.
+          //   - paragraph: source's width is a fixed-width box and the
+          //     content wraps inside.
+          width: isPoint ? "max-content" : overlay.rect.width,
+          minWidth: isPoint ? overlay.rect.width : undefined,
+          // Source rect is the floor only for paragraph-text; for
+          // point-text the natural one-line height drives, so we
+          // don't pin a min-height that would overstuff a tiny field.
+          minHeight: isPoint ? undefined : overlay.rect.height,
           display: "grid",
-          // Faint surface tint distinguishes the active edit from
-          // surrounding template content without obscuring it. Works
-          // on light + dark templates because alpha is low.
-          background: "rgb(255 255 255 / 0.04)",
-          // Layered box-shadow ring inherits the source's border-radius
-          // (outline can't follow border-radius and snaps in flat).
-          // 140 ms cubic-bezier matches Linear / Notion / Figma pacing.
+          // Photoshop's edit indicator is a thin DASHED bounding box,
+          // not a solid framed surface. We match: transparent fill,
+          // 1px dashed outline in the brand-blue caret colour. Outline
+          // sits OUTSIDE the box and doesn't take layout space, so the
+          // editor's content lays out at the exact same coordinates as
+          // the source's content — no chrome-driven drift.
+          background: "transparent",
+          outline: "1px dashed rgb(37 99 235 / 0.7)",
+          outlineOffset: "0px",
           borderRadius: overlay.font.borderRadius,
-          boxShadow:
-            "0 0 0 1.5px rgb(37 99 235 / 0.6), 0 0 0 5px rgb(37 99 235 / 0.10), 0 6px 16px -8px rgb(0 0 0 / 0.18)",
-          transition:
-            "box-shadow 140ms cubic-bezier(0.4, 0, 0.2, 1), background-color 140ms ease-out",
           // Layout containment: sizing changes inside the wrapper
           // don't trigger ancestor reflows. Cheap perf insurance for
           // typing-heavy editing in a heavily-styled template tree.
@@ -764,41 +864,106 @@ export function InlineTextEditor() {
             // an inner scrollbar should never appear.
             overflow: "hidden",
             caretColor: overlay.font.color,
-            // Browsers can break-line in unexpected places inside
-            // contentEditable; pre-wrap + word-break match the
-            // textarea's wrapping behaviour and the replica's. (Also
-            // already in sharedStyle but explicit here is defence in
-            // depth.)
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
           }}
         />
       </div>
-      {/* Status hint — pinned to viewport bottom-center, NOT attached
-          to the editor, so it never overlaps the document text below
-          the field being edited. Reads like an editor's status bar:
-          informational, not in the way. The keys reflect the actual
-          binding policy in `onKeyDown` above. */}
-      <div
-        className="pointer-events-none fixed left-1/2 bottom-4 -translate-x-1/2 select-none rounded-full bg-blue-600 px-3 py-1 text-[11px] font-medium text-white shadow-lg"
-        style={{ zIndex: 10001 }}
-      >
-        <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
-          Enter
-        </kbd>{" "}
-        save{"  ·  "}
-        <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
-          Shift+Enter
-        </kbd>{" "}
-        newline{"  ·  "}
-        <kbd className="rounded bg-white/20 px-1 font-mono text-[10px]">
-          Esc
-        </kbd>{" "}
-        save{"  ·  "}
-        <span className="opacity-80">click outside to save</span>
-      </div>
     </>
   );
+}
+
+/**
+ * Photoshop-style "click to position caret + expand to word" used on
+ * edit-start when the user double-clicked a specific point. Returns
+ * true on success, false if the browser couldn't resolve a caret
+ * position from the supplied (x, y) — caller falls back to select-all.
+ *
+ * Implementation:
+ *   1. Standard `document.caretPositionFromPoint(x, y)` → resolves to
+ *      `{ offsetNode, offset }`. Available in Chromium / Firefox /
+ *      Safari (Baseline 2025).
+ *   2. WebKit-legacy `document.caretRangeFromPoint(x, y)` → returns a
+ *      pre-built collapsed `Range`. Older Safari / Chromium fallback.
+ *   3. If neither resolves, return false. The caller's fallback
+ *      select-all keeps the user from being stuck with no caret.
+ *
+ * Word expansion uses `Selection.modify("move", "backward", "word")`
+ * + `Selection.modify("extend", "forward", "word")`. `Selection.modify`
+ * is non-standard (originated in WebKit, implemented across Chromium /
+ * Firefox / Safari) — wrapped in try/catch so any browser that drops
+ * support degrades to a collapsed cursor at the click point rather
+ * than throwing.
+ *
+ * @param el  The contentEditable host. Used as a sanity check that
+ *            the resolved caret node is inside the editor (not, e.g.,
+ *            the replica div which lives in the same grid cell).
+ * @param x   Viewport-space click X (CSS px) — `MouseEvent.clientX`.
+ * @param y   Viewport-space click Y (CSS px) — `MouseEvent.clientY`.
+ */
+function placeCaretAtPointAndExpandToWord(
+  el: HTMLElement,
+  x: number,
+  y: number,
+): boolean {
+  let range: Range | null = null;
+
+  // Standard API.
+  if (typeof document.caretPositionFromPoint === "function") {
+    try {
+      const cp = document.caretPositionFromPoint(x, y);
+      if (cp && el.contains(cp.offsetNode)) {
+        range = document.createRange();
+        range.setStart(cp.offsetNode, cp.offset);
+        range.collapse(true);
+      }
+    } catch {
+      // Fall through to webkit fallback.
+    }
+  }
+
+  // Webkit fallback. The double-cast through `unknown` keeps the
+  // experimental method out of the global TS types without forcing a
+  // global declaration merge.
+  if (!range) {
+    const docAny = document as unknown as {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+    };
+    if (typeof docAny.caretRangeFromPoint === "function") {
+      try {
+        const cr = docAny.caretRangeFromPoint(x, y);
+        if (cr && el.contains(cr.startContainer)) {
+          range = cr;
+        }
+      } catch {
+        // No caret resolvable — fall through to select-all in caller.
+      }
+    }
+  }
+
+  if (!range) return false;
+  const sel = window.getSelection();
+  if (!sel) return false;
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  // Expand to word boundaries. `Selection.modify` is non-standard but
+  // is the only browser API that knows the locale-correct word break
+  // boundaries for the current document — manually walking text nodes
+  // would lose Unicode word-break support (CJK, RTL, hyphens, etc.).
+  // If a browser ever drops support, the cursor stays at the click
+  // point — a usable degradation.
+  const selWithModify = sel as Selection & {
+    modify?: (alter: string, direction: string, granularity: string) => void;
+  };
+  if (typeof selWithModify.modify === "function") {
+    try {
+      selWithModify.modify("move", "backward", "word");
+      selWithModify.modify("extend", "forward", "word");
+    } catch {
+      // Leave as collapsed cursor at the click point.
+    }
+  }
+
+  return true;
 }
 
 /** Minimal CSS-escape for the data-element-id attribute selector. */

@@ -52,7 +52,10 @@ import {
   isSocialIconName,
 } from "@/lib/social-icons";
 import { Button } from "@/components/ui/button";
-import { InlineTextEditor } from "@/components/editor/inline-text-editor";
+import {
+  InlineTextEditor,
+  inlineEditorClickPoint,
+} from "@/components/editor/inline-text-editor";
 import { SnapGuidesOverlay } from "@/components/editor/snap-guides-overlay";
 import {
   buildSnapCandidates,
@@ -906,6 +909,18 @@ export function Preview() {
           if (!lens) return; // Not editable inline — falls back to form jump on click.
           e.stopPropagation();
           e.preventDefault();
+          // Stash the dblclick coordinates so the inline editor's
+          // focus useLayoutEffect can place the caret AT THE CLICK
+          // POINT and expand to a word selection — Photoshop's Type
+          // Tool semantics. Without this, every edit-start would
+          // select-all, which wipes the user's text on the first
+          // keystroke and breaks the "double-click a typo to fix it"
+          // expectation. Coordinates are viewport-space (clientX/Y);
+          // `caretPositionFromPoint` consumes the same space.
+          inlineEditorClickPoint.current = {
+            x: e.clientX,
+            y: e.clientY,
+          };
           setEditingElementId(id);
         }}
         onDragOver={(e) => {

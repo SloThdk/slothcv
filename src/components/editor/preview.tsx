@@ -199,6 +199,12 @@ export function Preview() {
         /** Dragged element's w/h in page coords — needed for snap math. */
         snapW: number;
         snapH: number;
+        /** Existing rotation on the dragged element/section, in degrees.
+         *  Captured on mousedown so the inline transform we write during
+         *  drag preserves the rotation. Without this, rotated sections
+         *  un-rotate the instant drag starts and snap back to rotated on
+         *  mouseup — the "elements teleport" symptom Philip reported. */
+        startRotation: number;
       })
     | null
   >(null);
@@ -207,20 +213,31 @@ export function Preview() {
     scaleRef.current = scale;
   }, [scale]);
 
-  // Mirror sections by id for fast lookup of the current `position`.
-  const sectionsById = useRef(new Map<string, { x: number; y: number }>());
+  // Mirror sections by id for fast lookup of the current `position` AND
+  // the current `rotation`. Rotation is captured here too so the drag
+  // handler can preserve it while writing the inline transform — without
+  // that, a section with rotation un-rotates the moment drag starts and
+  // snaps back on mouseup, which reads as "the element teleported".
+  const sectionsById = useRef(
+    new Map<string, { x: number; y: number; rotation: number }>(),
+  );
   useEffect(() => {
-    const m = new Map<string, { x: number; y: number }>();
+    const m = new Map<string, { x: number; y: number; rotation: number }>();
     for (const s of data.sections) {
-      m.set(s.id, s.position ?? { x: 0, y: 0 });
+      const p = s.position ?? { x: 0, y: 0 };
+      m.set(s.id, { x: p.x, y: p.y, rotation: s.rotation ?? 0 });
     }
     sectionsById.current = m;
   }, [data.sections]);
 
   // Mirror element overrides for fast lookup. Same pattern as
   // sectionsById — the live ref means our window-level mousemove handler
-  // doesn't have to re-subscribe whenever overrides change.
-  const elementOverridesRef = useRef<Record<string, { dx?: number; dy?: number }>>({});
+  // doesn't have to re-subscribe whenever overrides change. `rotate`
+  // is included so keyboard nudge / Escape rollback can preserve the
+  // user's existing rotation when they translate.
+  const elementOverridesRef = useRef<
+    Record<string, { dx?: number; dy?: number; rotate?: number }>
+  >({});
   useEffect(() => {
     elementOverridesRef.current = data.elementOverrides ?? {};
   }, [data.elementOverrides]);
@@ -253,11 +270,26 @@ export function Preview() {
   //   - Cmd/Ctrl + Z    → undo (any data change)
   //   - Cmd/Ctrl + Shift + Z (or Ctrl+Y) → redo
   //   - R / Shift+R     → rotate selected element ±15° in place
-  //   - Delete / Backspace → remove the selected element
-  //   - Arrow keys      → nudge selected element by 1 px (10 with Shift)
+  //   - Delete / Backspace → remove the selected element (custom only)
+  //   - Arrow keys / WASD → nudge whatever was last clicked by 1 px
+  //                         (10 with Shift). Works for custom toolshelf
+  //                         elements, content elements (text / photo /
+  //                         contact rows), AND whole sections.
   //
   // All shortcuts bail when the user is typing in a form field or
   // contentEditable region — otherwise they'd fire mid-text-edit.
+  //
+  // Nudge target tracker — set on every click that doesn't cross the
+  // drag threshold (i.e. a normal click selects for nudge). Cleared on
+  // background click. Custom elements use the existing
+  // `selectedElementId` store field; content elements and sections use
+  // this local ref so we don't have to reshape the global store for a
+  // Preview-only feature.
+  const nudgeTargetRef = useRef<
+    | { kind: "element"; id: string }
+    | { kind: "section"; id: string }
+    | null
+  >(null);
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const removeCustomElement = useEditorStore((s) => s.removeCustomElement);
   const undo = useEditorStore((s) => s.undo);
@@ -392,6 +424,74 @@ export function Preview() {
         return;
       }
 
+      // ── Pixel-precise nudge — works for EVERY element type ──────────
+      // Arrow keys AND WASD both move the last-clicked target by 1 px
+      // (10 px with Shift). Photoshop / Figma muscle memory: arrows for
+      // most users, WASD for power users / gamers who keep their right
+      // hand on the mouse. We resolve a (kind, id) tuple from either the
+      // store (custom toolshelf elements) or the local nudgeTargetRef
+      // (content elements + sections) and dispatch the correct mutator.
+      const NUDGE_DIRS: Record<string, [number, number]> = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+        a: [-1, 0],
+        A: [-1, 0],
+        d: [1, 0],
+        D: [1, 0],
+        w: [0, -1],
+        W: [0, -1],
+        s: [0, 1],
+        S: [0, 1],
+      };
+      const dir = NUDGE_DIRS[e.key];
+      if (dir) {
+        const mult = e.shiftKey ? 10 : 1;
+        const dx = dir[0] * mult;
+        const dy = dir[1] * mult;
+        // Priority 1: custom toolshelf element (selectedElementId).
+        if (selectedElementId) {
+          const els = data.customElements ?? [];
+          const cur = els.find((c) => c.id === selectedElementId);
+          if (cur) {
+            e.preventDefault();
+            updateCustomElement(selectedElementId, {
+              x: cur.x + dx,
+              y: cur.y + dy,
+            });
+            return;
+          }
+        }
+        // Priority 2: last-clicked content element or section.
+        const target = nudgeTargetRef.current;
+        if (target) {
+          e.preventDefault();
+          if (target.kind === "element") {
+            const ov = elementOverridesRef.current[target.id] ?? {};
+            setElementPosition(target.id, {
+              dx: (ov.dx ?? 0) + dx,
+              dy: (ov.dy ?? 0) + dy,
+              ...(ov.rotate !== undefined ? { rotate: ov.rotate } : {}),
+            });
+          } else {
+            const cur = sectionsById.current.get(target.id) ?? {
+              x: 0,
+              y: 0,
+              rotation: 0,
+            };
+            updateSection(target.id, {
+              position: { x: cur.x + dx, y: cur.y + dy },
+            });
+          }
+          return;
+        }
+        // No target — silently swallow so WASD doesn't fire on every
+        // empty preview click. Otherwise the keystroke would leak to
+        // anything else listening (form fields are guarded by inField).
+      }
+
+      // ── Custom-element-specific shortcuts (require a custom in selection) ──
       if (!selectedElementId) return;
       const els = data.customElements ?? [];
       const cur = els.find((c) => c.id === selectedElementId);
@@ -428,24 +528,6 @@ export function Preview() {
         updateCustomElement(selectedElementId, { visible: !cur.visible });
         return;
       }
-
-      // Arrow nudge — 1 px, 10 px with Shift. Reads from current position
-      // each call so multiple presses accumulate cleanly.
-      const arrows: Record<string, [number, number]> = {
-        ArrowLeft: [-1, 0],
-        ArrowRight: [1, 0],
-        ArrowUp: [0, -1],
-        ArrowDown: [0, 1],
-      };
-      const arrow = arrows[e.key];
-      if (arrow) {
-        e.preventDefault();
-        const mult = e.shiftKey ? 10 : 1;
-        updateCustomElement(selectedElementId, {
-          x: cur.x + arrow[0] * mult,
-          y: cur.y + arrow[1] * mult,
-        });
-      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -460,6 +542,8 @@ export function Preview() {
     cutSelectedElement,
     pasteClipboard,
     duplicateSelectedElement,
+    setElementPosition,
+    updateSection,
   ]);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -527,6 +611,10 @@ export function Preview() {
           snapCandidates,
           snapW: dragged?.w ?? 0,
           snapH: dragged?.h ?? 0,
+          // Custom elements drive their rotation through their own
+          // CustomElementsLayer wrapper, not through the inline transform
+          // we mutate — left at 0 here, the layer keeps applying it.
+          startRotation: 0,
         };
         return;
       }
@@ -546,6 +634,11 @@ export function Preview() {
         snapCandidates: [],
         snapW: 0,
         snapH: 0,
+        // Carry the element's existing rotation through the drag so we
+        // can re-emit it on every onMove transform write (otherwise
+        // setting `transform: translate(...)` clobbers the rotation
+        // that React applied via elementStyle).
+        startRotation: ov?.rotate ?? 0,
       };
       return;
     }
@@ -554,13 +647,17 @@ export function Preview() {
     // draggable as a whole — it's a group of separately-draggable elements.
     const sectionHit = findAncestorAttr(target, "data-section-id");
     if (sectionHit && sectionHit.id !== "personal" && sectionsById.current.has(sectionHit.id)) {
-      const start = sectionsById.current.get(sectionHit.id) ?? { x: 0, y: 0 };
+      const start = sectionsById.current.get(sectionHit.id) ?? {
+        x: 0,
+        y: 0,
+        rotation: 0,
+      };
       dragRef.current = {
         kind: "section",
         id: sectionHit.id,
         startX: e.clientX,
         startY: e.clientY,
-        startPos: start,
+        startPos: { x: start.x, y: start.y },
         hasMoved: false,
         el: sectionHit.el,
         pendingX: 0,
@@ -569,6 +666,7 @@ export function Preview() {
         snapCandidates: [],
         snapW: 0,
         snapH: 0,
+        startRotation: start.rotation,
       };
       return;
     }
@@ -588,6 +686,7 @@ export function Preview() {
       snapCandidates: [],
       snapW: 0,
       snapH: 0,
+      startRotation: 0,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -724,7 +823,13 @@ export function Preview() {
       const ry = Math.round(clampedY);
 
       // (1) Direct style write — no React, no reconciliation, native FPS.
-      drag.el.style.transform = `translate(${rx}px, ${ry}px)`;
+      // Preserve any existing rotation on the dragged element/section so
+      // the user-applied rotate doesn't disappear during drag and snap
+      // back on mouseup. positionStyle/elementStyle compose the same
+      // string on re-render so the transition is seamless.
+      const rotPart =
+        drag.startRotation !== 0 ? ` rotate(${drag.startRotation}deg)` : "";
+      drag.el.style.transform = `translate(${rx}px, ${ry}px)${rotPart}`;
       drag.el.style.willChange = "transform";
       drag.pendingX = rx;
       drag.pendingY = ry;
@@ -795,7 +900,23 @@ export function Preview() {
       } else if (!drag.hasMoved) {
         // No movement — treat as click. Background → Design tab; element
         // or section → jump to its form. Element-id wins over section-id
-        // for the jump because it's more specific.
+        // for the jump because it's more specific. We also stash the
+        // click target as the keyboard-nudge focus so arrow keys / WASD
+        // can move it from here on out (until the next click elsewhere).
+        if (drag.kind === "element") {
+          nudgeTargetRef.current = { kind: "element", id: drag.id };
+        } else if (drag.kind === "section") {
+          nudgeTargetRef.current = { kind: "section", id: drag.id };
+        } else if (drag.kind === "custom") {
+          // Custom elements track focus via selectedElementId in the
+          // store — selectElement(customId) was already called in
+          // onMouseDown, so we clear the local ref so the keyboard
+          // handler doesn't try to nudge two things at once.
+          nudgeTargetRef.current = null;
+        } else {
+          // Background click → clear focus. Arrow keys do nothing.
+          nudgeTargetRef.current = null;
+        }
         if (drag.kind === "background") {
           // Click on empty paper deselects custom elements only.
           // The editor page listens for selection changes and restores
@@ -845,10 +966,16 @@ export function Preview() {
           drag.el.style.left = `${drag.startPos.x}px`;
           drag.el.style.top = `${drag.startPos.y}px`;
         } else {
-          drag.el.style.transform =
-            drag.startPos.x === 0 && drag.startPos.y === 0
-              ? ""
-              : `translate(${drag.startPos.x}px, ${drag.startPos.y}px)`;
+          const rotPart =
+            drag.startRotation !== 0
+              ? ` rotate(${drag.startRotation}deg)`
+              : "";
+          const hasPos = drag.startPos.x !== 0 || drag.startPos.y !== 0;
+          drag.el.style.transform = hasPos
+            ? `translate(${drag.startPos.x}px, ${drag.startPos.y}px)${rotPart}`
+            : drag.startRotation !== 0
+              ? `rotate(${drag.startRotation}deg)`
+              : "";
         }
         drag.el.style.willChange = "";
         drag.el.removeAttribute("data-being-dragged");

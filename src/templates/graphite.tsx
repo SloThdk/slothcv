@@ -222,9 +222,24 @@ function SidebarContact({ data }: { data: ResumeData }) {
   // its own elementStyle (avoids double-translate).
   const grab =
     "flex w-full gap-2 cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent";
+  // The "Contact" label is the only fixed string in this template — it
+  // doesn't correspond to a section.title (it labels the personal-info
+  // contact list). We give it a stable `design.contactLabel` element-id
+  // so users can free-drag it independently of the contact rows beneath.
+  // Inline-edit isn't wired yet (no lens writer for design.* fields);
+  // drag works today, edit is a follow-up.
+  const labelId = "design.contactLabel";
   return (
     <div>
-      <SidebarHeader>Contact</SidebarHeader>
+      <SidebarHeader>
+        <span
+          data-element-id={labelId}
+          className="inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+          style={elementStyle(data, labelId)}
+        >
+          Contact
+        </span>
+      </SidebarHeader>
       <div
         className="space-y-1.5 text-[0.85em]"
         style={{ color: TEXT_SIDEBAR }}

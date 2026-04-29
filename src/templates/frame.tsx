@@ -17,6 +17,7 @@ import { useEditorStore } from "@/lib/store/editor";
 import {
   PAGE_DIMENSIONS_MM,
   basePx,
+  elementStyle,
   letterSpacingEm,
   marginMm,
   mmToPx,
@@ -73,7 +74,7 @@ export function TemplateFrame({
   return (
     <div className="relative overflow-hidden break-words" style={style}>
       {children}
-      <Watermark design={design} />
+      <Watermark design={design} data={data} />
       {!skipOverlay && <ToolshelfOverlay data={data} />}
     </div>
   );
@@ -93,9 +94,14 @@ function ToolshelfOverlay({ data }: { data: ResumeData }) {
  * four corners. Rendered LAST so it sits on top of the page background but
  * stays under the content visually due to low opacity.
  *
+ * Draggable + inline-editable in the visual editor. Carries the canonical
+ * `design.watermark` element-id so users can free-drag the corner letters
+ * (e.g. "CV") wherever they want and double-click to inline-edit the text.
+ * `elementStyle` applies the saved offset so positions survive reload.
+ *
  * Hidden when `watermarkPosition === "off"` or `watermarkText` is empty.
  */
-function Watermark({ design }: { design: GlobalDesign }) {
+function Watermark({ design, data }: { design: GlobalDesign; data: ResumeData }) {
   const text = (design.watermarkText ?? "").trim();
   const pos = design.watermarkPosition ?? "off";
   if (!text || pos === "off") return null;
@@ -109,10 +115,11 @@ function Watermark({ design }: { design: GlobalDesign }) {
         : pos === "top-left"
           ? "left-3 top-3"
           : "right-3 top-3";
+  const id = "design.watermark";
   return (
     <div
-      aria-hidden
-      className={`pointer-events-none absolute ${cornerClass} select-none`}
+      data-element-id={id}
+      className={`absolute ${cornerClass} cursor-text select-none rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-2`}
       style={{
         color,
         fontWeight: 800,
@@ -120,6 +127,7 @@ function Watermark({ design }: { design: GlobalDesign }) {
         lineHeight: 1,
         letterSpacing: "0.04em",
         opacity: 0.85,
+        ...elementStyle(data, id),
       }}
     >
       {text}

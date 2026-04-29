@@ -101,14 +101,14 @@ export function defaultDesignForTemplate(
         headerStyle: "uppercase",
         skillBarStyle: "pills",
         photo: { enabled: true, shape: "circle", position: "top-right" },
-        // Watermark defaults left "off" — Aurora used to ship a "CV"
-        // letter watermark in the bottom-left, but first-time users
-        // confused it with a real label. The schema field stays so
-        // older saved data parses cleanly; the template just no
-        // longer opts in by default.
-        watermarkText: "",
-        watermarkPosition: "off",
-        watermarkColor: "",
+        // Aurora's signature look includes oversized "CV" letters in
+        // the bottom-left corner, mint-tinted at 85 % opacity. Users
+        // can rename the text by double-clicking it on the canvas
+        // (the inline-edit lens picks up `design.watermark`), or
+        // override position / colour / clear via Design → Watermark.
+        watermarkText: "CV",
+        watermarkPosition: "bottom-left",
+        watermarkColor: "#7FFAB6",
       };
     case "eclipse":
       return {

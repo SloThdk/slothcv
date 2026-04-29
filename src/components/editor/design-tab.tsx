@@ -26,6 +26,7 @@ import type {
   PhotoPosition,
   PhotoShape,
   SkillBarStyle,
+  WatermarkPosition,
 } from "@/types/resume";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -531,13 +532,52 @@ export function DesignTab() {
           and react-pdf reflows accordingly, (b) exposing it as a chip
           row added cognitive load without practical payoff. */}
 
-      {/* Watermark section removed — the corner-letter watermark
-          ("CV" / initials / etc.) was a decoration users either
-          ignored or turned off, and several first-time users reported
-          confusion about the big random letters appearing on their
-          CV. The schema fields stay so older saved data parses
-          cleanly, but the UI no longer surfaces them and every
-          template's factory defaults set watermarkPosition: "off". */}
+      {/* Watermark — the big corner letters ("CV" / initials / "RESUME").
+          Users can also double-click the watermark on the canvas to
+          inline-edit the text, but this Section gives them the full
+          control surface (position, colour, clear). */}
+      <Section title={t("design.watermark")} onReset={() => onResetGroup("watermark")}>
+        <div>
+          <Label>Watermark text</Label>
+          <Input
+            value={design.watermarkText ?? ""}
+            placeholder='e.g. "CV", initials, "RESUME"'
+            maxLength={40}
+            onChange={(e) => setDesign({ watermarkText: e.target.value })}
+          />
+        </div>
+        <ChipRow
+          label={t("design.position")}
+          value={design.watermarkPosition ?? "off"}
+          options={[
+            "off",
+            "bottom-left",
+            "bottom-right",
+            "top-left",
+            "top-right",
+          ] as WatermarkPosition[]}
+          onChange={(v) => setDesign({ watermarkPosition: v })}
+        />
+        <div>
+          <Label>Watermark color</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              aria-label="Watermark colour"
+              value={(design.watermarkColor || "#000000").slice(0, 7)}
+              onChange={(e) => setDesign({ watermarkColor: e.target.value })}
+              className="h-8 w-10 cursor-pointer rounded border border-border bg-surface p-0.5"
+            />
+            <Input
+              value={design.watermarkColor ?? ""}
+              placeholder={t("design.borderColorAuto")}
+              maxLength={64}
+              onChange={(e) => setDesign({ watermarkColor: e.target.value })}
+              className="flex-1 font-mono text-xs"
+            />
+          </div>
+        </div>
+      </Section>
     </div>
   );
 }

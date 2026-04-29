@@ -119,7 +119,13 @@ function Watermark({ design, data }: { design: GlobalDesign; data: ResumeData })
   return (
     <div
       data-element-id={id}
-      className={`absolute ${cornerClass} cursor-text select-none rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-2`}
+      // Hover-ring uses the watermark's own colour at 35 % so it stays
+      // visible on every page background (dark Aurora / Onyx / Midnight
+      // get a tinted ring; light Helsinki / Berlin get the accent).
+      // `--tw-ring-color` is the underlying CSS variable Tailwind v4
+      // resolves for `ring-*` utilities; setting it inline lets the
+      // ring colour adapt per template without static class lookups.
+      className={`absolute ${cornerClass} cursor-text select-none rounded-sm transition-shadow hover:ring-2 hover:ring-offset-2 hover:ring-offset-transparent`}
       style={{
         color,
         fontWeight: 800,
@@ -127,6 +133,7 @@ function Watermark({ design, data }: { design: GlobalDesign; data: ResumeData })
         lineHeight: 1,
         letterSpacing: "0.04em",
         opacity: 0.85,
+        ["--tw-ring-color" as string]: `${color}59`,
         ...elementStyle(data, id),
       }}
     >

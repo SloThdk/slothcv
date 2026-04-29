@@ -199,6 +199,203 @@ body.slothcv-resizing * {
   -webkit-user-select: none !important;
 }
 
+/*
+ * PRINT MODE — true pixel-perfect PDF export.
+ *
+ * The previous html2canvas-pro path rasterised the DOM through a
+ * separate text-measurement engine, which caused subpixel font drift
+ * (1-2 px word-position shift accumulating over a wide line). The
+ * only way to get genuinely identical output is to use the browser's
+ * own print engine — it's the same code path that renders the
+ * editor on screen, so no measurement disagreement is possible.
+ *
+ * Mechanics:
+ *   1. `pdf-export.tsx` clones the live `[data-pdf-page-content]` div
+ *      into a new top-level `#slothcv-print-container` at `<body>` root.
+ *   2. Adds a unique inline `<style id="slothcv-print-style">` with
+ *      the user-chosen `@page { size }` so the resulting PDF is sized
+ *      to A4 / Letter / Legal exactly.
+ *   3. Calls `window.print()`. The browser shows its native print
+ *      dialog where the user picks "Save as PDF" (or any printer).
+ *   4. `afterprint` event triggers cleanup.
+ *
+ * The @media print block below only applies during the actual print
+ * render — not on screen. It hides EVERY direct child of body except
+ * the print container, then resets the cloned page content to print
+ * unscaled and unstyled by editor chrome.
+ *
+ * Editor chrome that lives INSIDE the page-content (resize handles,
+ * inline-edit dashed outlines, hover rings, italic-gray placeholders)
+ * is also stripped here so it doesn't bleed into the printed page.
+ */
+@media print {
+  /* Hide everything at body root. Only #slothcv-print-container
+     stays visible (and gets explicit display below). Use display:
+     none rather than visibility:hidden so the hidden elements
+     don't reserve space on the print page. */
+  body > *:not(#slothcv-print-container) {
+    display: none !important;
+  }
+
+  /* The print container fills the page. The cloned page-content
+     inside it is laid out at intrinsic CSS pixel size so glyph
+     positioning matches what the user designed at 100% zoom. */
+  #slothcv-print-container {
+    display: block !important;
+    position: relative !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* The inner page-content carries `transform: scale(zoom)` for the
+     editor preview; for print we strip it so the glyphs render at
+     the same intrinsic size their layout was authored for. Margin
+     auto centres the page horizontally on the print sheet (jsPDF /
+     real printers handle the actual margins via @page). */
+  #slothcv-print-container [data-pdf-page-content="true"] {
+    transform: none !important;
+    transform-origin: top left !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Strip editor-only chrome inside the cloned page content. The
+     resize-handle nodes are visible to html2canvas-style captures
+     but they should never appear in a printed CV. */
+  #slothcv-print-container [data-resize-handle] {
+    display: none !important;
+  }
+
+  /* Placeholder fields — collapse them entirely from the print
+     layout. EditableFallback stamps `data-placeholder="true"` on any
+     field whose value is empty; we use display:none so the space
+     they occupied also disappears. (Earlier visibility:hidden left
+     the surrounding separators stranded as " · · GPA" — explicit
+     bug Philip flagged.) */
+  #slothcv-print-container [data-placeholder="true"] {
+    display: none !important;
+  }
+
+  /* When a separator-wrapping span (marked with `cv-aux-field`)
+     contains an empty EditableFallback, hide the WHOLE wrapper —
+     separator text included. This prevents orphaned "·" / "GPA"
+     labels rendering next to nothing. The `:has()` selector reads
+     "any cv-aux-field that contains a [data-placeholder='true']
+     descendant"; supported in Chrome 105+, Firefox 121+, Safari
+     15.4+ — every browser current enough to render the rest of
+     the editor. */
+  #slothcv-print-container .cv-aux-field:has([data-placeholder="true"]) {
+    display: none !important;
+  }
+
+  /* Tailwind's hover: utilities can paint background colours / rings
+     onto elements that the printer head would actually mark. Strip
+     every ring / outline inside the print container so we get a
+     clean document. */
+  #slothcv-print-container * {
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    outline: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Disable browser-default print headers/footers. The user will
+     also get the option in their print dialog under "More
+     settings" → "Headers and footers", but disabling on the page
+     side is belt-and-braces. */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Force background colors / images to print regardless of the
+     user's "Background graphics" toggle in the print dialog. The
+     browser's "Background graphics" checkbox normally controls this
+     — we override via `print-color-adjust: exact` so the user can't
+     accidentally print a CV with all the accent colors stripped.
+     Three property names because:
+     - print-color-adjust: standard, modern browsers
+     - color-adjust: legacy
+     - -webkit-print-color-adjust: Chrome/Safari before they
+       implemented the standard
+     Setting all three covers every browser that's likely to print. */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/*
+ * PDF-export mode — body.slothcv-exporting is toggled by `pdf-export.tsx`
+ * for the duration of the html2canvas capture. Strips every editor-only
+ * affordance off the page sheet so the captured PNG is exactly the
+ * "final document" the user wants printed:
+ *   - hover rings (Tailwind `hover:ring-*`, `hover:bg-*`, `hover:shadow-*`)
+ *     don't fire because the cursor is gone (modal blur), but defensive
+ *     `transition: none` makes sure no leftover transition state ghosts in
+ *   - selection outlines on custom elements + their resize handles vanish
+ *   - the page-sheet's white halo (`shadow-lg ring-1`) is suppressed so
+ *     the PDF doesn't have a gray box around the document edge
+ *   - cursor is reset to default (no caret/grab affordances visible to
+ *     html2canvas's cursor-position read)
+ * Restored at the end of export by removing the body class — every
+ * editor-only affordance comes back automatically.
+ */
+body.slothcv-exporting [data-pdf-page-outer="true"] {
+  /* Outer paper-drop-shadow + Tailwind ring on the page sheet — both
+     are editor-only affordances. Strip them so the captured PNG has
+     a clean, edge-to-edge white-page rasterisation. */
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  outline: none !important;
+}
+
+/* Hide custom-element resize handles + drag-state markers so the
+   captured page doesn't show any selection chrome. */
+body.slothcv-exporting [data-pdf-page-content="true"] [data-resize-handle] {
+  display: none !important;
+}
+
+/* Strip ONLY Tailwind ring custom properties + outlines on every
+   editor-only affordance inside the page. We deliberately do NOT
+   nuke `box-shadow` globally — templates legitimately use shadows on
+   photos, banner cards, etc., and stripping them all would change the
+   document's visible look. The Tailwind ring system uses dedicated
+   `--tw-ring-*` custom properties that only apply to `ring-*` utility
+   classes (hover affordances, selection rings); zeroing them removes
+   the editor-chrome rings without touching content shadows. */
+body.slothcv-exporting [data-pdf-page-content="true"] *,
+body.slothcv-exporting [data-pdf-page-content="true"] {
+  outline: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  cursor: default !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* The custom-elements layer applies the SELECTED element's "blue
+   ring + white halo" via inline `outline` and `box-shadow` (see
+   custom-elements-layer.tsx selectedRingStyle). Strip both so a CV
+   that happened to be exported with an element selected doesn't
+   include the ring in the output. User-data shapes don't apply
+   their own box-shadow (the schema has no box-shadow field), so
+   nuking it here is safe — only the editor-chrome ring goes. */
+body.slothcv-exporting [data-pdf-page-content="true"] [data-element-id^="custom."] {
+  box-shadow: none !important;
+}
+
 /* Hover-ring nesting: only the LEAFMOST hovered targetable element
  * shows its hover ring. Without this, every template's per-element
  * `hover:ring-2 hover:ring-neutral-900/X` (text spans) AND the wrapping

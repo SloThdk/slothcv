@@ -27,7 +27,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -212,7 +212,7 @@ function SidebarSection({
         className="mb-2 text-[0.78em] font-bold uppercase tracking-[0.2em]"
         style={{ color: d.accentColor }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <SectionBody section={section} design={d} data={data} />
       <SectionActions section={section} />
@@ -243,7 +243,7 @@ function MainSection({
         className="mb-2 text-[0.82em] font-bold uppercase tracking-[0.18em]"
         style={{ color: d.accentColor }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <SectionBody section={section} design={d} data={data} />
       <SectionActions section={section} />

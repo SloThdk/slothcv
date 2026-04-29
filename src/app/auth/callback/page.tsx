@@ -68,7 +68,7 @@ function CallbackInner() {
       ) {
         // Google OAuth attempted with an email that already belongs to a
         // magic-link account. The only path that reaches /auth/callback
-        // with a DB-layer error in slothcv is the prevent_provider_mixing
+        // with a DB-layer error in SlothCV is the prevent_provider_mixing
         // trigger blocking the identity insert, so we route everything
         // matching the wide net above to the specific "use magic link"
         // toast.

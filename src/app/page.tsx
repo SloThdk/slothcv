@@ -1,5 +1,5 @@
 /**
- * Landing page — slothcv marketing front door.
+ * Landing page — SlothCV marketing front door.
  *
  * Mobile-first hero, then a feature trio, then a clickable template gallery.
  * Every clickable card is a real <Link> to /dashboard?template=<id>; the

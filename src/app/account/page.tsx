@@ -8,7 +8,7 @@
  *                  to profile + every CV via FK ON DELETE CASCADE; storage
  *                  is purged client-side then again server-side by the RPC).
  *
- * Why no password section: slothcv enforces strict provider separation
+ * Why no password section: SlothCV enforces strict provider separation
  * (every account has exactly one auth method — magic-link OR Google).
  * Letting magic-link users add a password as a "backup" silently gives
  * the same email two ways in, which violates the rule. If a user loses
@@ -249,7 +249,7 @@ function AccountInner() {
         </div>
       </Section>
 
-      {/* Password section removed: slothcv enforces strict provider
+      {/* Password section removed: SlothCV enforces strict provider
           separation. See top-of-file docstring for the rationale. */}
 
       {/* ---------- Sign out ---------- */}

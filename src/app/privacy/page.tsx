@@ -1,5 +1,5 @@
 /**
- * Privacy Policy — slothcv.
+ * Privacy Policy — SlothCV.
  *
  * GDPR-shaped, written plainly. Every claim here matches what the codebase
  * actually does, not what a generic policy template says:
@@ -34,7 +34,7 @@ export default function PrivacyPage(): JSX.Element {
           {isDa ? "Privatlivspolitik" : "Privacy"}
         </p>
         <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          {isDa ? "Hvad slothcv samler, helt klart." : "What slothcv collects, plainly."}
+          {isDa ? "Hvad SlothCV samler, helt klart." : "What SlothCV collects, plainly."}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--color-text-subtle)]">
           {isDa ? "Sidst opdateret" : "Last updated"}: {LAST_UPDATED}
@@ -42,15 +42,15 @@ export default function PrivacyPage(): JSX.Element {
 
         <p className="mt-8 text-base text-[color:var(--color-text-muted)] sm:text-lg">
           {isDa
-            ? "slothcv er bygget til at lave CV'er — intet andet. Ingen analytics, ingen tracking-pixels, ingen reklame-netværk, ingen tredjeparts-fingerprinting. Det vi gemmer er det du selv lægger ind, og det vi har brug for at holde dig logget ind. Her er præcist hvad det betyder."
-            : "slothcv is built to make CVs — nothing else. No analytics, no tracking pixels, no advertising networks, no third-party fingerprinting. What we store is what you put in, plus what we need to keep you signed in. Here is exactly what that means."}
+            ? "SlothCV er bygget til at lave CV'er — intet andet. Ingen analytics, ingen tracking-pixels, ingen reklame-netværk, ingen tredjeparts-fingerprinting. Det vi gemmer er det du selv lægger ind, og det vi har brug for at holde dig logget ind. Her er præcist hvad det betyder."
+            : "SlothCV is built to make CVs — nothing else. No analytics, no tracking pixels, no advertising networks, no third-party fingerprinting. What we store is what you put in, plus what we need to keep you signed in. Here is exactly what that means."}
         </p>
 
         <Section title={isDa ? "Hvem står bag" : "Who is behind this"}>
           <p>
             {isDa
-              ? "slothcv drives af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Du kan kontakte mig direkte på "
-              : "slothcv is operated by Philip Sloth, a sole proprietorship based in Denmark. You can contact me directly at "}
+              ? "SlothCV drives af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Du kan kontakte mig direkte på "
+              : "SlothCV is operated by Philip Sloth, a sole proprietorship based in Denmark. You can contact me directly at "}
             <a className="underline underline-offset-4" href="mailto:philipsloth1@gmail.com">
               philipsloth1@gmail.com
             </a>
@@ -142,8 +142,8 @@ export default function PrivacyPage(): JSX.Element {
           <ul className="space-y-3">
             <Item label="Supabase">
               {isDa
-                ? "Database, godkendelse og fil-storage. Behandler dine data på vegne af slothcv. EU-region."
-                : "Database, authentication, and file storage. Processes your data on behalf of slothcv. EU region."}
+                ? "Database, godkendelse og fil-storage. Behandler dine data på vegne af SlothCV. EU-region."
+                : "Database, authentication, and file storage. Processes your data on behalf of SlothCV. EU region."}
             </Item>
             <Item label="Cloudflare">
               {isDa
@@ -152,8 +152,8 @@ export default function PrivacyPage(): JSX.Element {
             </Item>
             <Item label="Google (kun ved Google-login / only if you sign in with Google)">
               {isDa
-                ? "Hvis du klikker 'Fortsæt med Google', sendes du til Google for at godkende. Google deler din e-mail og dit navn med slothcv. Vi anmoder ikke om kontakter, kalender eller andet."
-                : "If you click 'Continue with Google', you are redirected to Google to authenticate. Google shares your email and name with slothcv. We do not request contacts, calendar, or anything else."}
+                ? "Hvis du klikker 'Fortsæt med Google', sendes du til Google for at godkende. Google deler din e-mail og dit navn med SlothCV. Vi anmoder ikke om kontakter, kalender eller andet."
+                : "If you click 'Continue with Google', you are redirected to Google to authenticate. Google shares your email and name with SlothCV. We do not request contacts, calendar, or anything else."}
             </Item>
             <Item label="Resend">
               {isDa
@@ -215,8 +215,8 @@ export default function PrivacyPage(): JSX.Element {
         <Section title={isDa ? "Børn" : "Children"}>
           <p>
             {isDa
-              ? "slothcv er ikke målrettet personer under 16 år. Hvis du er forælder og opdager at dit barn har oprettet en konto, så skriv til mig — jeg sletter den."
-              : "slothcv is not directed at people under 16. If you are a parent and discover your child has created an account, contact me and I will delete it."}
+              ? "SlothCV er ikke målrettet personer under 16 år. Hvis du er forælder og opdager at dit barn har oprettet en konto, så skriv til mig — jeg sletter den."
+              : "SlothCV is not directed at people under 16. If you are a parent and discover your child has created an account, contact me and I will delete it."}
           </p>
         </Section>
 

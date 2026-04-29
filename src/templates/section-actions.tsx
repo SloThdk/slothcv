@@ -16,16 +16,57 @@
 
 "use client";
 
-import { ArrowDown, ArrowUp, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useEditorStore } from "@/lib/store/editor";
 import { useConfirm } from "@/components/ui/confirm-modal";
 import type { Section } from "@/types/resume";
 
+/** Section types that carry an items[] list — they get the "+ Add entry"
+ *  button on hover. summary and custom omit the button: summary has a
+ *  single body string, custom uses bullets that the form already
+ *  manages explicitly with a different mental model. */
+const ITEMS_BEARING_TYPES = new Set<Section["type"]>([
+  "experience",
+  "education",
+  "skills",
+  "languages",
+  "projects",
+  "certifications",
+  "awards",
+  "publications",
+  "volunteer",
+  "talks",
+  "hobbies",
+  "references",
+]);
+
+/** Human-readable labels for the "+ Add {entry}" tooltip. Keeping the
+ *  word "entry" out of the visible UI — each section gets its own
+ *  domain noun so the affordance feels purpose-built ("Add education",
+ *  "Add skill") rather than generic ("Add entry"). */
+const ADD_LABELS: Record<Section["type"], string> = {
+  summary: "Edit summary",
+  experience: "Add experience",
+  education: "Add education",
+  skills: "Add skill",
+  languages: "Add language",
+  projects: "Add project",
+  certifications: "Add certification",
+  awards: "Add award",
+  publications: "Add publication",
+  volunteer: "Add volunteer role",
+  talks: "Add talk",
+  hobbies: "Add hobby",
+  references: "Add reference",
+  custom: "Edit custom",
+};
+
 export function SectionActions({ section }: { section: Section }) {
   const sections = useEditorStore((s) => s.data.sections);
   const setSections = useEditorStore((s) => s.setSections);
   const removeSection = useEditorStore((s) => s.removeSection);
+  const addItemToSection = useEditorStore((s) => s.addItemToSection);
   const confirm = useConfirm();
 
   const idx = sections.findIndex((s) => s.id === section.id);
@@ -33,6 +74,8 @@ export function SectionActions({ section }: { section: Section }) {
   if (idx < 0) return null;
   const canUp = idx > 0;
   const canDown = idx < sections.length - 1;
+  const canAddItem = ITEMS_BEARING_TYPES.has(section.type);
+  const addLabel = ADD_LABELS[section.type];
 
   function stop(e: React.MouseEvent) {
     e.stopPropagation();
@@ -79,6 +122,25 @@ export function SectionActions({ section }: { section: Section }) {
       >
         <ArrowDown className="h-3 w-3" />
       </ActionBtn>
+      {canAddItem && (
+        // "+ Add" — the missing affordance that prompted Philip's "I
+        // don't see a + button to add more education" complaint. Lives
+        // alongside Move up / Move down / Delete on the section's
+        // hover overlay so users never have to leave the live preview
+        // to grow a section. Backs onto the same default-item
+        // factories the form's own "+ Add entry" button calls, so
+        // both code paths produce identical-shaped items.
+        <ActionBtn
+          label={addLabel}
+          tone="primary"
+          onClick={(e) => {
+            stop(e);
+            addItemToSection(section.id);
+          }}
+        >
+          <Plus className="h-3 w-3" />
+        </ActionBtn>
+      )}
       <ActionBtn label={`Delete ${section.title}`} tone="danger" onClick={onDelete}>
         <X className="h-3 w-3" />
       </ActionBtn>
@@ -96,7 +158,7 @@ function ActionBtn({
   label: string;
   disabled?: boolean;
   onClick: (e: React.MouseEvent) => void;
-  tone?: "danger";
+  tone?: "danger" | "primary";
   children: React.ReactNode;
 }) {
   return (
@@ -109,7 +171,9 @@ function ActionBtn({
       className={`flex h-6 w-6 items-center justify-center rounded-md border border-border bg-surface/95 shadow-sm backdrop-blur transition-all hover:scale-110 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 ${
         tone === "danger"
           ? "text-red-600 hover:border-red-200 hover:bg-red-50"
-          : "text-fg hover:border-strong"
+          : tone === "primary"
+            ? "text-blue-600 hover:border-blue-200 hover:bg-blue-50"
+            : "text-fg hover:border-strong"
       }`}
     >
       {children}

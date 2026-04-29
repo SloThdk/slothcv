@@ -36,6 +36,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -127,7 +128,7 @@ function EclipseSection({
             ...elementStyle(data, titleId),
           }}
         >
-          {section.title}
+          <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
         </h2>
         <span
           className="h-px flex-1"
@@ -189,7 +190,7 @@ function EclipseBody({
                   ...elementStyle(data, id),
                 }}
               >
-                {s.name}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
               </span>
             );
           })}
@@ -233,11 +234,11 @@ function EclipseExperience({
                   fontStyle: "italic",
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company ? (
                   <span style={{ color: `${design.textColor}cc` }}>
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 ) : null}
               </h3>
@@ -262,7 +263,7 @@ function EclipseExperience({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}88` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <EclipseBullets
@@ -317,12 +318,12 @@ function EclipseProjects({
                     style={{ color: design.accentColor }}
                     className="underline-offset-2 hover:underline"
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
                 )}
-                {it.role ? ` · ${it.role}` : ""}
+                {it.role ? ` · ${it.role || "Role"}` : ""}
               </h3>
               <span
                 className="text-[0.78em]"
@@ -345,7 +346,7 @@ function EclipseProjects({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}88` }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <EclipseBullets

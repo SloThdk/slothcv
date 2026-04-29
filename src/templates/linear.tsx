@@ -42,6 +42,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -230,7 +231,7 @@ function LinearSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <LinearBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -334,7 +335,7 @@ function LinearExperience({
                     fontWeight: 600,
                   }}
                 >
-                  {it.role}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   {it.company && (
                     <span
                       style={{
@@ -343,7 +344,7 @@ function LinearExperience({
                       }}
                     >
                       {" · "}
-                      {it.company}
+                      <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                     </span>
                   )}
                 </h3>
@@ -369,7 +370,7 @@ function LinearExperience({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}77` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <LinearBullets
@@ -438,7 +439,7 @@ function LinearProjects({
                       className="underline-offset-2 hover:underline"
                       style={{ color: INDIGO }}
                     >
-                      {it.name}
+                      <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                     </a>
                   ) : (
                     it.name
@@ -451,7 +452,7 @@ function LinearProjects({
                       }}
                     >
                       {" · "}
-                      {it.role}
+                      <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                     </span>
                   )}
                 </h3>
@@ -483,7 +484,7 @@ function LinearProjects({
                     "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
                 }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <LinearBullets
@@ -528,14 +529,14 @@ function LinearEducation({
                   fontWeight: 600,
                 }}
               >
-                {it.degree}
-                {it.field ? ` · ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` · ${it.field || "Field of study"}` : ""}
               </span>
               <span
                 className="ml-2 text-[0.85em]"
                 style={{ color: `${design.textColor}99` }}
               >
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
@@ -610,7 +611,7 @@ function LinearSkills({
                     ...elementStyle(data, id),
                   }}
                 >
-                  {s.name}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                 </span>
               );
             })}
@@ -643,11 +644,11 @@ function LinearCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: `${design.textColor}88` }}>
                   {" · "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -660,7 +661,7 @@ function LinearCerts({
                     "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
                 }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

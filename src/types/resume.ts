@@ -288,11 +288,21 @@ export interface TextElement extends CustomElementBase {
 
 export interface ImageElement extends CustomElementBase {
   kind: "image";
+  /** Image source URL. Required field — without a src the renderer
+   *  draws a placeholder pattern. */
   url: string;
   /** object-fit value. */
   fit?: "cover" | "contain" | "fill";
   /** Border radius in px. */
   radius?: number;
+  /** Optional clickable destination. When set, the image becomes a
+   *  hyperlink in the exported PDF (recruiters click → opens the URL).
+   *  Independent of `url` (which is the IMAGE source) — a screenshot
+   *  uploaded to Supabase Storage might link to a live demo, a Behance
+   *  case study, etc. The editor canvas does NOT navigate on click;
+   *  clicks select the element for editing. Empty / undefined =
+   *  decorative image (no link). */
+  linkUrl?: string;
 }
 
 /** Brand-glyph element — LinkedIn / Instagram / Telegram etc. The
@@ -314,6 +324,13 @@ export interface IconElement extends CustomElementBase {
   /** Glyph fill color (hex / rgb / var). Defaults to the icon's
    *  brand-canonical color when first dropped from the toolshelf. */
   color: string;
+  /** Optional clickable URL. Renders the icon as a hyperlink in the
+   *  exported PDF (recruiters can click → opens LinkedIn, GitHub,
+   *  etc.). On the editor canvas the URL is non-interactive — clicks
+   *  select the element for editing rather than navigate. URLs are
+   *  scheme-validated server-side; only http/https/mailto are
+   *  accepted. Empty / undefined = decorative icon (no link). */
+  url?: string;
 }
 
 export type CustomElement =

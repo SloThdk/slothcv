@@ -537,6 +537,11 @@ const imageElementSchema = z.object({
   url: z.string().max(2048),
   fit: z.enum(["cover", "contain", "fill"]).optional(),
   radius: z.number().min(0).max(400).optional(),
+  // Optional clickable destination. Same scheme-validation policy as
+  // `iconElementSchema.url` — `normalizeHref` at render time rejects
+  // `javascript:` / `data:` before emitting any link into the PDF.
+  // Capped at 500 chars; longer URLs almost certainly aren't real.
+  linkUrl: z.string().max(500).optional(),
 });
 
 // Social-icon element. `iconName` is gated by the registry in
@@ -566,6 +571,13 @@ const iconElementSchema = z.object({
   kind: z.literal("icon"),
   iconName: z.enum(SOCIAL_ICON_NAMES),
   color: colorSchema,
+  // Optional clickable URL for PDF export. Hard-capped at 500 chars to
+  // prevent accidental data dumps. Scheme is checked at render time —
+  // schemas keep the validation cheap (string length only) so the
+  // load-from-Supabase path stays fast. The renderer's `normalizeHref`
+  // helper rejects `javascript:` and `data:` schemes before any link
+  // gets emitted to the PDF.
+  url: z.string().max(500).optional(),
 });
 
 const customElementSchema = z.discriminatedUnion("kind", [

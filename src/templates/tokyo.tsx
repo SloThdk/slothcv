@@ -16,7 +16,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
@@ -147,7 +147,7 @@ function Block({
           style={{ background: design.accentColor }}
         />
         <span style={{ color: design.accentColor }}>
-          {transformHeader(section.title, design)}
+          <EditableSectionTitle sid={section.id} data={data}>{transformHeader(section.title, design)}</EditableSectionTitle>
         </span>
       </h2>
       <SectionBody section={section} design={design} data={data} />

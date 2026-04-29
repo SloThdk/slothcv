@@ -79,8 +79,8 @@ TEMPLATE_FILES: dict[str, str] = {
 # untouched, comment its line out. Supabase substitutes {{ .SiteURL }} /
 # {{ .Email }} etc. inside subjects too.
 MAILER_SUBJECTS: dict[str, str] = {
-    "magic_link": "Your slothcv sign-in link",
-    "confirmation": "Welcome to slothcv — confirm your email",
+    "magic_link": "Your SlothCV sign-in link",
+    "confirmation": "Welcome to SlothCV — confirm your email",
     # Recovery / invite / email_change / reauthentication aren't part of
     # slothcv's active flows. Leaving them out preserves Supabase defaults.
 }

@@ -47,6 +47,7 @@ import type {
   Section,
   TalksSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const VIOLET = "#6d28d9";
 const INK = "#0a0a0a";
@@ -232,17 +233,17 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
                           className="underline-offset-2 hover:underline"
                           style={{ color: INK, fontWeight: 600 }}
                         >
-                          {t.title}
+                          <EditableFallback data={data} fieldId={`${id}.title`} value={t.title} placeholder="Title" />
                         </a>
                       ) : (
-                        <span className="font-semibold">{t.title}</span>
+                        <span className="font-semibold"><EditableFallback data={data} fieldId={`${id}.title`} value={t.title} placeholder="Title" /></span>
                       )}
                       {t.venue && (
-                        <div style={{ color: VIOLET }}>{t.venue}</div>
+                        <div style={{ color: VIOLET }}><EditableFallback data={data} fieldId={`${id}.venue`} value={t.venue} placeholder="Venue" /></div>
                       )}
                       {t.date && (
                         <div className="text-[0.82em]" style={{ color: MUTED }}>
-                          {t.date}
+                          <EditableFallback data={data} fieldId={`${id}.date`} value={t.date} placeholder="Date" />
                         </div>
                       )}
                     </article>
@@ -528,7 +529,7 @@ function FounderTailSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-2 h-px w-full"
@@ -595,7 +596,7 @@ function FounderTailBody({
             >
               {label}
               {it.proficiency && (
-                <span style={{ color: VIOLET }}> · {it.proficiency}</span>
+                <span style={{ color: VIOLET }}> · <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" /></span>
               )}
             </span>
           );

@@ -46,6 +46,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -227,7 +228,7 @@ function HelveticaSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-3 w-full"
@@ -325,7 +326,7 @@ function HelveticaExperience({
                   fontWeight: 600,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span
                     style={{
@@ -334,7 +335,7 @@ function HelveticaExperience({
                     }}
                   >
                     {" — "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -359,7 +360,7 @@ function HelveticaExperience({
                 className="text-[0.82em]"
                 style={{ color: `${design.textColor}77` }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <HelveticaBullets
@@ -413,7 +414,7 @@ function HelveticaProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: design.textColor }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -426,7 +427,7 @@ function HelveticaProjects({
                     }}
                   >
                     {" — "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -457,7 +458,7 @@ function HelveticaProjects({
                     "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
                 }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <HelveticaBullets
@@ -503,8 +504,8 @@ function HelveticaEducation({
                   fontWeight: 600,
                 }}
               >
-                {it.degree}
-                {it.field ? ` — ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` — ${it.field || "Field of study"}` : ""}
               </h3>
               <span
                 className="text-[0.78em]"
@@ -526,8 +527,8 @@ function HelveticaEducation({
               className="text-[0.85em]"
               style={{ color: `${design.textColor}99` }}
             >
-              {it.institution}
-              {it.location ? ` · ${it.location}` : ""}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
+              {it.location ? ` · ${it.location || "Location"}` : ""}
             </div>
           </article>
         );
@@ -583,7 +584,7 @@ function HelveticaSkills({
                     className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
                     style={elementStyle(data, id)}
                   >
-                    {s.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                   </span>
                 </span>
               );
@@ -616,7 +617,7 @@ function HelveticaLanguages({
             className="flex cursor-grab items-baseline justify-between rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
             style={elementStyle(data, id)}
           >
-            <span>{l.name}</span>
+            <span><EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.name`} value={l.name} placeholder="Name" /></span>
             <span
               className="text-[0.85em]"
               style={{
@@ -625,7 +626,7 @@ function HelveticaLanguages({
                   "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
               }}
             >
-              {l.proficiency}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.proficiency`} value={l.proficiency} placeholder="Proficiency" />
             </span>
           </div>
         );
@@ -656,11 +657,11 @@ function HelveticaCerts({
             style={elementStyle(data, id)}
           >
             <span>
-              <span style={{ fontWeight: 600 }}>{c.name}</span>
+              <span style={{ fontWeight: 600 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: `${design.textColor}99` }}>
                   {" — "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </span>
@@ -673,7 +674,7 @@ function HelveticaCerts({
                     "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
                 }}
               >
-                {c.date}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>
             )}
           </div>

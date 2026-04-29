@@ -15,7 +15,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -121,7 +121,7 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
                   color: d.accentColor,
                 }}
               >
-                {transformHeader(s.title, d)}
+                <EditableSectionTitle sid={s.id} data={data}>{transformHeader(s.title, d)}</EditableSectionTitle>
               </h2>
               <SectionBody section={s} design={d} data={data} />
               <SectionActions section={s} />

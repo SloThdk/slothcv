@@ -40,7 +40,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
     try {
       await renameResume(resumeId, title);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Rename failed.");
+      toast.error(e instanceof Error ? e.message : t("settings.cvTitleSavingFailed"));
     } finally {
       setSavingTitle(false);
     }
@@ -72,7 +72,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
     try {
       await exportPdf(data, title || "resume");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "PDF export failed.");
+      toast.error(e instanceof Error ? e.message : t("settings.exportPdfFailed"));
     } finally {
       setExporting(false);
     }
@@ -94,7 +94,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
 
   return (
     <div className="space-y-5">
-      <Group title="CV title">
+      <Group title={t("settings.cvTitle")}>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -111,7 +111,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           language" group has been removed; the header switch is the
           single source of truth. */}
 
-      <Group title="Export">
+      <Group title={t("settings.export")}>
         <Button
           type="button"
           variant="default"
@@ -120,7 +120,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           disabled={exporting}
         >
           <Download className="h-4 w-4" />
-          {exporting ? "Generating PDF…" : "Export PDF"}
+          {exporting ? t("settings.exportPdfGenerating") : t("settings.exportPdf")}
         </Button>
         <Button
           type="button"
@@ -129,11 +129,11 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           onClick={onExportJson}
         >
           <FileJson className="h-4 w-4" />
-          Export JSON (backup)
+          {t("settings.exportJson")}
         </Button>
       </Group>
 
-      <Group title="Navigate">
+      <Group title={t("settings.navigate")}>
         <Button
           type="button"
           variant="outline"
@@ -141,11 +141,11 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           onClick={() => router.push("/dashboard")}
         >
           <FileText className="h-4 w-4" />
-          Back to dashboard
+          {t("settings.backToDashboard")}
         </Button>
       </Group>
 
-      <Group title="Danger zone">
+      <Group title={t("settings.dangerZone")}>
         <Button
           type="button"
           variant="destructive"
@@ -153,7 +153,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           onClick={onDelete}
         >
           <Trash2 className="h-4 w-4" />
-          Delete this CV
+          {t("settings.deleteCv")}
         </Button>
       </Group>
     </div>

@@ -39,6 +39,28 @@ import { AddEntryButton } from "./shared";
 /** Language styles that ACTUALLY use the level value. */
 const LEVEL_STYLES = new Set(["bar", "dots"]);
 
+/** CEFR self-assessment ladder + the conventional "Native" peak. Order
+ *  matters: this is the order the chips render in (A1 → C2 → Native),
+ *  matching the official CEFR scale + the universal "best at the end"
+ *  reading direction. Clicking a chip writes its label into
+ *  `proficiency`; free text in the input is preserved if the user
+ *  types something off-ladder ("Conversational", "Bilingual"). */
+const CEFR_QUICK_PICKS = ["A1", "A2", "B1", "B2", "C1", "C2", "Native"] as const;
+
+/** CEFR label → 0-5 level mapping for templates that visualise level
+ *  alongside (or instead of) the text. A1 = 1 (lowest non-zero), C2 = 5
+ *  (highest before Native), Native = 5 (also max). Picked from CEFR's
+ *  self-assessment scale: A* = basic, B* = independent, C* = proficient. */
+const CEFR_TO_LEVEL: Record<string, number> = {
+  A1: 1,
+  A2: 2,
+  B1: 3,
+  B2: 4,
+  C1: 4,
+  C2: 5,
+  Native: 5,
+};
+
 export function LanguagesForm({ section }: { section: LanguagesSection }) {
   const update = useEditorStore((s) => s.updateSection);
   const design = useEditorStore((s) => s.data.design);
@@ -115,6 +137,7 @@ function SortableLanguageRow({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
+  const trimmedProf = item.proficiency.trim();
   return (
     <div
       ref={setNodeRef}
@@ -123,52 +146,88 @@ function SortableLanguageRow({
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="flex items-center gap-1.5"
+      className="space-y-1.5 rounded-md border border-transparent px-1 py-1 hover:border-border"
     >
-      <button
-        type="button"
-        aria-label="Drag to reorder"
-        title="Drag to reorder"
-        className="cursor-grab touch-none rounded p-1 text-subtle hover:bg-surface-hover hover:text-fg active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
-      <Input
-        value={item.name}
-        onChange={(e) => onChange({ name: e.target.value })}
-        placeholder="Language"
-        className="flex-1 h-9 text-sm"
-      />
-      <Input
-        value={item.proficiency}
-        onChange={(e) => onChange({ proficiency: e.target.value })}
-        placeholder="C1 / Fluent"
-        className="h-9 max-w-[110px] text-sm"
-      />
-      {showLevel && (
-        <input
-          type="range"
-          min={0}
-          max={5}
-          value={item.level}
-          onChange={(e) => onChange({ level: Number(e.target.value) })}
-          className="w-20"
-          aria-label="Level"
-          title={`Level ${item.level}/5`}
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          className="cursor-grab touch-none rounded p-1 text-subtle hover:bg-surface-hover hover:text-fg active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <Input
+          value={item.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="Language"
+          className="flex-1 h-9 text-sm"
         />
-      )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Remove language"
-        className="h-8 w-8"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-3.5 w-3.5 text-subtle" />
-      </Button>
+        <Input
+          value={item.proficiency}
+          onChange={(e) => onChange({ proficiency: e.target.value })}
+          placeholder="C1 / Fluent"
+          className="h-9 max-w-[110px] text-sm"
+        />
+        {showLevel && (
+          <input
+            type="range"
+            min={0}
+            max={5}
+            value={item.level}
+            onChange={(e) => onChange({ level: Number(e.target.value) })}
+            className="w-20"
+            aria-label="Level"
+            title={`Level ${item.level}/5`}
+          />
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Remove language"
+          className="h-8 w-8"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-3.5 w-3.5 text-subtle" />
+        </Button>
+      </div>
+      {/* CEFR quick-pick chips. Click sets proficiency text + matching
+          0-5 level in one undo step. Active chip is highlighted so the
+          user knows which level is currently set. Free-text in the
+          input still wins — users typing "Conversational" or
+          "Bilingual" keep their custom label and no chip lights up. */}
+      <div className="flex flex-wrap items-center gap-1 pl-7">
+        {CEFR_QUICK_PICKS.map((label) => {
+          const active = trimmedProf === label;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() =>
+                onChange({
+                  proficiency: label,
+                  level: CEFR_TO_LEVEL[label] ?? item.level,
+                })
+              }
+              title={
+                active
+                  ? `${label} — current proficiency`
+                  : `Set proficiency to ${label}`
+              }
+              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+                active
+                  ? "bg-blue-600 text-white"
+                  : "bg-surface-hover text-muted hover:bg-surface hover:text-fg"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

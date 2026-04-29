@@ -21,7 +21,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import {
   elementStyle,
@@ -167,7 +167,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                     ...elementStyle(data, titleId),
                   }}
                 >
-                  {s.title}
+                  <EditableSectionTitle sid={s.id} data={data}>{s.title}</EditableSectionTitle>
                 </h2>
               </div>
               <SectionBody section={s} design={d} data={data} />

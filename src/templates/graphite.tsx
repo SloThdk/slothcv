@@ -45,6 +45,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -307,7 +308,7 @@ function GraphiteSidebarSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <SidebarBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -379,7 +380,7 @@ function SidebarSkills({
                     className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
                     style={elementStyle(data, id)}
                   >
-                    {s.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                   </span>
                 </span>
               );
@@ -410,12 +411,12 @@ function SidebarLanguages({
             className="flex cursor-grab items-baseline justify-between rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
             style={{ color: TEXT_SIDEBAR, ...elementStyle(data, id) }}
           >
-            <span style={{ fontFamily: SANS }}>{l.name}</span>
+            <span style={{ fontFamily: SANS }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.name`} value={l.name} placeholder="Name" /></span>
             <span
               className="text-[0.85em]"
               style={{ color: TEXT_SIDEBAR_DIM, fontFamily: MONO }}
             >
-              {l.proficiency}
+              <EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.proficiency`} value={l.proficiency} placeholder="Proficiency" />
             </span>
           </div>
         );
@@ -443,14 +444,14 @@ function SidebarCerts({
             className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
             style={{ color: TEXT_SIDEBAR, ...elementStyle(data, id) }}
           >
-            <div style={{ fontFamily: SANS, fontWeight: 500 }}>{c.name}</div>
+            <div style={{ fontFamily: SANS, fontWeight: 500 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></div>
             {c.issuer && (
               <div
                 className="text-[0.85em] italic"
                 style={{ color: TEXT_SIDEBAR_DIM, fontFamily: SERIF }}
               >
-                {c.issuer}
-                {c.date ? ` · ${c.date}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
+                {c.date ? ` · ${c.date || "Date"}` : ""}
               </div>
             )}
           </div>
@@ -541,7 +542,7 @@ function GraphiteMainSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-3 h-px w-full"
@@ -620,11 +621,11 @@ function BodyExperience({
                   fontWeight: 600,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: `${TEXT_BODY}99`, fontWeight: 400 }}>
                     {" · "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -648,7 +649,7 @@ function BodyExperience({
                 className="text-[0.82em] italic"
                 style={{ color: `${TEXT_BODY}77`, fontFamily: SERIF }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <BodyBullets
@@ -702,7 +703,7 @@ function BodyProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: CHARCOAL }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -710,7 +711,7 @@ function BodyProjects({
                 {it.role && (
                   <span style={{ color: `${TEXT_BODY}99`, fontWeight: 400 }}>
                     {" · "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </h3>
@@ -736,7 +737,7 @@ function BodyProjects({
                 className="text-[0.82em]"
                 style={{ color: `${TEXT_BODY}88`, fontFamily: MONO }}
               >
-                {it.techStack}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
             )}
             <BodyBullets
@@ -782,14 +783,14 @@ function BodyEducation({
                   fontWeight: 600,
                 }}
               >
-                {it.degree}
-                {it.field ? ` · ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` · ${it.field || "Field of study"}` : ""}
               </span>
               <span
                 className="ml-2 text-[0.85em] italic"
                 style={{ color: `${TEXT_BODY}99`, fontFamily: SERIF }}
               >
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span

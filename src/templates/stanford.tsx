@@ -41,6 +41,7 @@ import type {
   Section,
   TalksSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const CARDINAL = "#8c1515";
 const INK = "#1a1a1a";
@@ -183,7 +184,7 @@ function StanfordSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-2.5 mt-1 h-[2px] w-full"
@@ -269,15 +270,15 @@ function StanfordExperience({
                   color: INK,
                 }}
               >
-                <span className="font-semibold">{it.role}</span>
+                <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" /></span>
                 {it.company && (
                   <span style={{ color: CARDINAL }}>
                     {", "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
                 {it.location && (
-                  <span className="opacity-70"> — {it.location}</span>
+                  <span className="opacity-70"> — <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" /></span>
                 )}
               </div>
               <span
@@ -331,13 +332,13 @@ function StanfordEducation({
               }}
             >
               <div className="font-semibold">
-                {it.degree}
-                {it.field ? `, ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? `, ${it.field || "Field of study"}` : ""}
               </div>
               <div style={{ color: CARDINAL }}>
-                {it.institution}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
                 {it.location && (
-                  <span className="opacity-80"> — {it.location}</span>
+                  <span className="opacity-80"> — <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" /></span>
                 )}
               </div>
             </div>
@@ -431,12 +432,12 @@ function StanfordCerts({
               ...elementStyle(data, id),
             }}
           >
-            <span className="font-semibold">{c.name}</span>
+            <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
             {c.issuer && (
-              <span style={{ color: `${INK}99` }}> — {c.issuer}</span>
+              <span style={{ color: `${INK}99` }}> — <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" /></span>
             )}
             {c.date && (
-              <span style={{ color: `${INK}88` }}> · {c.date}</span>
+              <span style={{ color: `${INK}88` }}> · <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" /></span>
             )}
           </div>
         );

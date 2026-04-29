@@ -22,7 +22,7 @@
 "use client";
 
 import { TemplateFrame } from "./frame";
-import { SectionBody } from "./components";
+import { EditableSectionTitle, SectionBody } from "./components";
 import { SectionActions } from "./section-actions";
 import { ContactLine } from "./scratch";
 import {
@@ -163,14 +163,37 @@ export function MarinaTemplate({ data, fixedSize, skipOverlay }: Props) {
 
 /** Section heading shared by both rails — tracked uppercase + short
  *  accent rule below. */
-function RailHeading({ title, accent }: { title: string; accent: string }) {
+function RailHeading({
+  title,
+  accent,
+  sectionId,
+  data,
+}: {
+  title: string;
+  accent: string;
+  /** Optional — when provided, wraps the rendered heading text in
+   *  `<EditableSectionTitle>` so users can double-click to inline-edit
+   *  the underlying raw `section.title`. Marina's heading style stays
+   *  uppercase + accent-coloured visually; the editor lens deals in
+   *  the raw string. */
+  sectionId?: string;
+  data?: ResumeData;
+}) {
+  const inner =
+    sectionId && data ? (
+      <EditableSectionTitle sid={sectionId} data={data}>
+        {title}
+      </EditableSectionTitle>
+    ) : (
+      title
+    );
   return (
     <div className="mb-2">
       <h2
         className="text-[0.95em] font-bold uppercase tracking-[0.22em]"
         style={{ color: accent }}
       >
-        {title}
+        {inner}
       </h2>
       <div
         aria-hidden
@@ -195,7 +218,7 @@ function RailSection({
       style={positionStyle(section)}
       className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-200/40 hover:ring-2 hover:ring-neutral-900/15"
     >
-      <RailHeading title={section.title} accent={d.accentColor} />
+      <RailHeading title={section.title} accent={d.accentColor} sectionId={section.id} data={data} />
       <SectionBody section={section} design={d} data={data} />
       <SectionActions section={section} />
     </section>

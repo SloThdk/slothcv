@@ -38,6 +38,7 @@ import type {
   Section,
   TalksSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -186,7 +187,7 @@ function CambridgeSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-3 h-px"
@@ -304,12 +305,12 @@ function CambridgeExperience({
                 }}
               >
                 <div className="font-semibold" style={{ color: "#1A1A1A" }}>
-                  {it.role}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 </div>
                 {it.company && (
                   <div className="italic" style={{ color: "#3a3a3a" }}>
-                    {it.company}
-                    {it.location ? `, ${it.location}` : ""}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
+                    {it.location ? `, ${it.location || "Location"}` : ""}
                   </div>
                 )}
                 <CambridgeBullets
@@ -355,12 +356,12 @@ function CambridgeEducation({
                 }}
               >
                 <div className="font-semibold" style={{ color: "#1A1A1A" }}>
-                  {it.degree}
-                  {it.field ? `, ${it.field}` : ""}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                  {it.field ? `, ${it.field || "Field of study"}` : ""}
                 </div>
                 <div className="italic" style={{ color: "#3a3a3a" }}>
-                  {it.institution}
-                  {it.location ? `, ${it.location}` : ""}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
+                  {it.location ? `, ${it.location || "Location"}` : ""}
                 </div>
               </div>
             </GutterRow>
@@ -401,11 +402,11 @@ function CambridgePublications({
               >
                 {p.authors && (
                   <span>
-                    {p.authors}.{" "}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.authors`} value={p.authors} placeholder="Authors" />.{" "}
                   </span>
                 )}
-                <span className="font-semibold">{p.title}.</span>
-                {p.venue && <span className="italic"> {p.venue}.</span>}
+                <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.title`} value={p.title} placeholder="Title" />.</span>
+                {p.venue && <span className="italic"> <EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.venue`} value={p.venue} placeholder="Venue" />.</span>}
                 {p.url && (
                   <>
                     {" "}
@@ -458,8 +459,8 @@ function CambridgeTalks({
                   color: "#1A1A1A",
                 }}
               >
-                <span className="font-semibold">{t.title}</span>
-                {t.venue && <span>, {t.venue}</span>}
+                <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${t.id}.title`} value={t.title} placeholder="Title" /></span>
+                {t.venue && <span>, <EditableFallback data={data} fieldId={`section.${section.id}.item.${t.id}.venue`} value={t.venue} placeholder="Venue" /></span>}
               </div>
             </GutterRow>
           </div>
@@ -496,8 +497,8 @@ function CambridgeCerts({
                   color: "#1A1A1A",
                 }}
               >
-                <span className="font-semibold">{c.name}</span>
-                {c.issuer && <span className="italic"> · {c.issuer}</span>}
+                <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
+                {c.issuer && <span className="italic"> · <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" /></span>}
               </div>
             </GutterRow>
           </div>

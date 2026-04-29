@@ -1,6 +1,6 @@
 /**
  * Translations — single source of truth for every user-facing string the
- * slothcv chrome renders. Mirrors the philipsloth-portfolio i18n shape so
+ * SlothCV chrome renders. Mirrors the philipsloth-portfolio i18n shape so
  * future cross-pollination is one-paste.
  *
  * Adding a new string:
@@ -30,7 +30,7 @@ export const TRANSLATIONS = {
   "theme.dark": { en: "Dark", da: "Mørk" },
 
   // ─── Header ───────────────────────────────────────────────────────
-  "header.brand": { en: "slothcv", da: "slothcv" },
+  "header.brand": { en: "SlothCV", da: "SlothCV" },
   "header.signIn": { en: "Sign in", da: "Log ind" },
   "header.dashboard": { en: "Dashboard", da: "Oversigt" },
   "header.account": { en: "Account", da: "Konto" },
@@ -86,7 +86,7 @@ export const TRANSLATIONS = {
   "templates.openDashboard": { en: "Open dashboard", da: "Åbn oversigten" },
 
   // ─── Login ────────────────────────────────────────────────────────
-  "login.title": { en: "Sign in to slothcv", da: "Log ind på slothcv" },
+  "login.title": { en: "Sign in to SlothCV", da: "Log ind på SlothCV" },
   "login.subtitle": {
     en: "Save your work and pick up where you left off, on any device.",
     da: "Gem dit arbejde og fortsæt hvor du slap, på enhver enhed.",
@@ -249,7 +249,7 @@ export const TRANSLATIONS = {
   },
 
   // ─── Signup ───────────────────────────────────────────────────────
-  "signup.title": { en: "Create your slothcv account", da: "Opret din slothcv-konto" },
+  "signup.title": { en: "Create your SlothCV account", da: "Opret din SlothCV-konto" },
   "signup.subtitle": {
     en: "Free. Build up to 10 CVs, no credit card needed.",
     da: "Gratis. Lav op til 10 CV'er, uden betalingskort.",
@@ -518,6 +518,14 @@ export const TRANSLATIONS = {
     en: 'Delete the "{name}" section?',
     da: 'Slet sektionen "{name}"?',
   },
+  "sections.alreadyExists": {
+    en: "{type} section already exists — opened it for you.",
+    da: "{type}-sektionen findes allerede — åbnet for dig.",
+  },
+  "sections.alreadyExistsHint": {
+    en: "Opens the existing {type} section instead of creating a duplicate.",
+    da: "Åbner den eksisterende {type}-sektion i stedet for at oprette en dublet.",
+  },
 
   // ─── Section type labels ──────────────────────────────────────────
   "section.summary": { en: "Summary", da: "Resumé" },
@@ -662,8 +670,8 @@ export const TRANSLATIONS = {
   "footer.privacy": { en: "Privacy", da: "Privatlivspolitik" },
   "footer.terms": { en: "Terms", da: "Vilkår" },
   "footer.copyright": {
-    en: "© {year} slothcv",
-    da: "© {year} slothcv",
+    en: "© {year} SlothCV",
+    da: "© {year} SlothCV",
   },
 
   // ─── Cookie banner ────────────────────────────────────────────────
@@ -678,12 +686,174 @@ export const TRANSLATIONS = {
     da: "Cookie-meddelelse",
   },
 
+  // ─── Settings tab ─────────────────────────────────────────────────
+  "settings.cvTitle": { en: "CV title", da: "CV-titel" },
+  "settings.cvTitleSavingFailed": { en: "Rename failed.", da: "Omdøbning mislykkedes." },
+  "settings.export": { en: "Export", da: "Eksport" },
+  "settings.exportPdf": { en: "Export PDF", da: "Eksportér PDF" },
+  "settings.exportPdfGenerating": { en: "Generating PDF…", da: "Genererer PDF…" },
+  "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
+  "settings.exportJson": { en: "Export JSON (backup)", da: "Eksportér JSON (sikkerhedskopi)" },
+  "settings.navigate": { en: "Navigate", da: "Naviger" },
+  "settings.backToDashboard": { en: "Back to dashboard", da: "Tilbage til oversigten" },
+  "settings.dangerZone": { en: "Danger zone", da: "Farezone" },
+  "settings.deleteCv": { en: "Delete this CV", da: "Slet dette CV" },
+
+  // ─── Toolshelf (Add tab) ──────────────────────────────────────────
+  "toolshelf.addToCanvas": { en: "Add to canvas", da: "Tilføj til lærred" },
+  "toolshelf.addToCanvasHint": {
+    en: "Drag a card onto the page, double-click to drop it at the default spot, or single-click to add and start tweaking.",
+    da: "Træk et kort til siden, dobbeltklik for at slippe det på standardpladsen, eller enkeltklik for at tilføje og finjustere.",
+  },
+  "toolshelf.socialIcons": { en: "Social icons", da: "Sociale ikoner" },
+  "toolshelf.socialIconsHint": {
+    en: "Drop a brand glyph instead of importing your own. Recolour from the inspector after — every glyph is a single SVG path that tints to any hex.",
+    da: "Slip et brand-symbol i stedet for at importere dit eget. Skift farve fra inspektøren bagefter — hvert symbol er en enkelt SVG-sti, der kan farves til enhver hex.",
+  },
+  "toolshelf.layers": { en: "Layers", da: "Lag" },
+  "toolshelf.dragToCanvasTitle": {
+    en: "Drag to canvas, double-click, or click to add a {label}",
+    da: "Træk til lærred, dobbeltklik eller klik for at tilføje en {label}",
+  },
+  "toolshelf.dragSocialTitle": {
+    en: "Drag to canvas, or click to add {label}",
+    da: "Træk til lærred, eller klik for at tilføje {label}",
+  },
+  "toolshelf.tooltipDragHint": {
+    en: "Tip: hold Shift while dragging to snap to 8 directions. Hold Ctrl/Cmd while dragging to disable snap-to-other-elements.",
+    da: "Tip: hold Shift mens du trækker for at låse til 8 retninger. Hold Ctrl/Cmd mens du trækker for at deaktivere snap til andre elementer.",
+  },
+
+  // ─── Inspector (selected element) ─────────────────────────────────
+  "inspector.selected": { en: "{kind} selected", da: "{kind} valgt" },
+  "inspector.dragInPreview": {
+    en: "Drag in the preview to move. Use these controls to fine-tune.",
+    da: "Træk i forhåndsvisningen for at flytte. Brug disse kontroller til finjustering.",
+  },
+  "inspector.position": { en: "Position", da: "Position" },
+  "inspector.size": { en: "Size", da: "Størrelse" },
+  "inspector.fillStroke": { en: "Fill & stroke", da: "Fyld og streg" },
+  "inspector.fill": { en: "Fill", da: "Fyld" },
+  "inspector.stroke": { en: "Stroke", da: "Streg" },
+  "inspector.strokeWidth": { en: "Stroke width", da: "Stregtykkelse" },
+  "inspector.cornerRadius": { en: "Corner radius", da: "Hjørneradius" },
+  "inspector.color": { en: "Color", da: "Farve" },
+  "inspector.thickness": { en: "Thickness", da: "Tykkelse" },
+  "inspector.dashed": { en: "Dashed", da: "Stiplet" },
+  "inspector.text": { en: "Text", da: "Tekst" },
+  "inspector.textContent": { en: "Content", da: "Indhold" },
+  "inspector.textPlaceholder": { en: "Type your text…", da: "Skriv din tekst…" },
+  "inspector.fontSize": { en: "Font size", da: "Skriftstørrelse" },
+  "inspector.fontWeight": { en: "Weight", da: "Vægt" },
+  "inspector.align": { en: "Align", da: "Justering" },
+  "inspector.alignLeft": { en: "Left", da: "Venstre" },
+  "inspector.alignCenter": { en: "Center", da: "Centreret" },
+  "inspector.alignRight": { en: "Right", da: "Højre" },
+  "inspector.italic": { en: "Italic", da: "Kursiv" },
+  "inspector.underline": { en: "Underline", da: "Understregning" },
+  "inspector.image": { en: "Image", da: "Billede" },
+  "inspector.uploadImage": { en: "Upload image", da: "Upload billede" },
+  "inspector.replaceImage": { en: "Replace", da: "Erstat" },
+  "inspector.uploading": { en: "Uploading…", da: "Uploader…" },
+  "inspector.clearImage": { en: "Clear", da: "Ryd" },
+  "inspector.pasteUrlInstead": { en: "Paste a URL instead", da: "Indsæt en URL i stedet" },
+  "inspector.imageUrl": { en: "Image URL", da: "Billed-URL" },
+  "inspector.fit": { en: "Fit", da: "Tilpasning" },
+  "inspector.fitCover": { en: "Cover", da: "Dæk" },
+  "inspector.fitContain": { en: "Contain", da: "Indeholde" },
+  "inspector.fitFill": { en: "Fill", da: "Fyld" },
+  "inspector.icon": { en: "Icon", da: "Ikon" },
+  "inspector.brand": { en: "Brand", da: "Brand" },
+  "inspector.url": { en: "Link URL", da: "Link-URL" },
+  "inspector.urlPlaceholder": {
+    en: "https://linkedin.com/in/yourname",
+    da: "https://linkedin.com/in/ditnavn",
+  },
+  "inspector.urlHint": {
+    en: "Optional. When set, the icon becomes a clickable link in the exported PDF.",
+    da: "Valgfrit. Når sat, bliver ikonet et klikbart link i den eksporterede PDF.",
+  },
+  "inspector.transform": { en: "Transform", da: "Transformér" },
+  "inspector.rotate": { en: "Rotate (deg)", da: "Rotér (grader)" },
+  "inspector.opacity": { en: "Opacity", da: "Gennemsigtighed" },
+  "inspector.layer": { en: "Layer", da: "Lag" },
+  "inspector.bringForward": { en: "Forward", da: "Frem" },
+  "inspector.sendBackward": { en: "Backward", da: "Tilbage" },
+  "inspector.hide": { en: "Hide", da: "Skjul" },
+  "inspector.show": { en: "Show", da: "Vis" },
+  "inspector.reset": { en: "Reset", da: "Nulstil" },
+  "inspector.resetTransform": { en: "Reset transform", da: "Nulstil transformation" },
+  "inspector.deleteElement": { en: "Delete element", da: "Slet element" },
+  "inspector.deletePromptTitle": {
+    en: "Delete this {kind}?",
+    da: "Slet dette {kind}?",
+  },
+  "inspector.deletePromptDesc": {
+    en: "The element will be removed from the canvas. Other elements stay where they are.",
+    da: "Elementet fjernes fra lærredet. Andre elementer bliver hvor de er.",
+  },
+  "inspector.eyedropper": { en: "Pick from canvas", da: "Vælg fra lærred" },
+  "inspector.eyedropperUnsupported": {
+    en: "Eyedropper requires Chrome 95+ or Edge 95+.",
+    da: "Pipette kræver Chrome 95+ eller Edge 95+.",
+  },
+  "inspector.recentColors": { en: "Recent", da: "Seneste" },
+  "inspector.brandPalette": { en: "Brand palette", da: "Brand-palette" },
+  "inspector.kind.rect": { en: "Rectangle", da: "Rektangel" },
+  "inspector.kind.ellipse": { en: "Ellipse", da: "Ellipse" },
+  "inspector.kind.line": { en: "Line", da: "Linje" },
+  "inspector.kind.triangle": { en: "Triangle", da: "Trekant" },
+  "inspector.kind.star": { en: "Star", da: "Stjerne" },
+  "inspector.kind.hexagon": { en: "Hexagon", da: "Sekskant" },
+  "inspector.kind.octagon": { en: "Octagon", da: "Ottekant" },
+  "inspector.kind.diamond": { en: "Diamond", da: "Diamant" },
+  "inspector.kind.heart": { en: "Heart", da: "Hjerte" },
+  "inspector.kind.cross": { en: "Cross", da: "Kors" },
+  "inspector.kind.sparkle": { en: "Sparkle", da: "Glimmer" },
+  "inspector.kind.arrow": { en: "Arrow", da: "Pil" },
+  "inspector.kind.text": { en: "Text", da: "Tekst" },
+  "inspector.kind.image": { en: "Image", da: "Billede" },
+  "inspector.kind.icon": { en: "Icon", da: "Ikon" },
+
+  // ─── Shape labels (toolshelf cards) ───────────────────────────────
+  "shape.text": { en: "Text", da: "Tekst" },
+  "shape.text.hint": { en: "Headline, paragraph, label", da: "Overskrift, afsnit, label" },
+  "shape.rect": { en: "Rectangle", da: "Rektangel" },
+  "shape.rect.hint": { en: "Block, divider band", da: "Blok, deler-bånd" },
+  "shape.ellipse": { en: "Ellipse", da: "Ellipse" },
+  "shape.ellipse.hint": { en: "Circle, accent dot", da: "Cirkel, accent-prik" },
+  "shape.line": { en: "Line", da: "Linje" },
+  "shape.line.hint": { en: "Divider, rule", da: "Deler, linje" },
+  "shape.triangle": { en: "Triangle", da: "Trekant" },
+  "shape.triangle.hint": { en: "Geometric accent", da: "Geometrisk accent" },
+  "shape.star": { en: "Star", da: "Stjerne" },
+  "shape.star.hint": { en: "Highlight, rating", da: "Fremhævelse, rating" },
+  "shape.hexagon": { en: "Hexagon", da: "Sekskant" },
+  "shape.hexagon.hint": { en: "Tile, badge", da: "Flise, badge" },
+  "shape.octagon": { en: "Octagon", da: "Ottekant" },
+  "shape.octagon.hint": { en: "Stop, badge", da: "Stop, badge" },
+  "shape.diamond": { en: "Diamond", da: "Diamant" },
+  "shape.diamond.hint": { en: "Accent, gemstone", da: "Accent, ædelsten" },
+  "shape.heart": { en: "Heart", da: "Hjerte" },
+  "shape.heart.hint": { en: "Like, passion", da: "Like, passion" },
+  "shape.cross": { en: "Cross", da: "Kors" },
+  "shape.cross.hint": { en: "Plus, medical", da: "Plus, medicinsk" },
+  "shape.sparkle": { en: "Sparkle", da: "Glimmer" },
+  "shape.sparkle.hint": { en: "Glitter, highlight", da: "Glitter, fremhævelse" },
+  "shape.arrow": { en: "Arrow", da: "Pil" },
+  "shape.arrow.hint": { en: "Pointer, callout", da: "Pegepil, callout" },
+  "shape.image": { en: "Image", da: "Billede" },
+  "shape.image.hint": { en: "Photo, logo, screenshot", da: "Foto, logo, skærmbillede" },
+
   // ─── Common ───────────────────────────────────────────────────────
   "common.cancel": { en: "Cancel", da: "Annuller" },
   "common.save": { en: "Save", da: "Gem" },
   "common.done": { en: "Done", da: "Færdig" },
   "common.delete": { en: "Delete", da: "Slet" },
   "common.duplicate": { en: "Duplicate", da: "Dupliker" },
+  "common.copy": { en: "Copy", da: "Kopiér" },
+  "common.paste": { en: "Paste", da: "Indsæt" },
+  "common.cut": { en: "Cut", da: "Klip" },
   "common.loading": { en: "Loading…", da: "Indlæser…" },
 } as const satisfies Record<string, Entry>;
 

@@ -3,7 +3,7 @@
  * page on the user's first visit.
  *
  * Why this is short and has no consent buttons:
- *   slothcv only sets cookies that are *strictly necessary* for the
+ *   SlothCV only sets cookies that are *strictly necessary* for the
  *   service the user explicitly requested — Supabase auth-session cookies
  *   (so signing in survives a refresh). Theme + language preferences live
  *   in `localStorage`, not cookies. There are no analytics, no advertising

@@ -43,6 +43,7 @@ import type {
   Section,
   SkillsSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 interface Props {
   data: ResumeData;
@@ -232,7 +233,7 @@ function CarbonSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {`> ${section.title}`}
+        {`> $<EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>`}
       </h2>
       <CarbonBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -332,17 +333,17 @@ function CarbonExperience({
               )}
             >
               <div style={{ color: TEXT_PRIMARY, fontWeight: 500 }}>
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span style={{ color: BLUE }}>
                     {" :: "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </div>
               {it.location && (
                 <div style={{ color: TEXT_TERTIARY }} className="text-[0.92em]">
-                  {it.location}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
                 </div>
               )}
               <CarbonBullets
@@ -401,7 +402,7 @@ function CarbonProjects({
                     className="underline-offset-2 hover:underline"
                     style={{ color: BLUE }}
                   >
-                    {it.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.name`} value={it.name} placeholder="Name" />
                   </a>
                 ) : (
                   it.name
@@ -409,13 +410,13 @@ function CarbonProjects({
                 {it.role && (
                   <span style={{ color: TEXT_SECONDARY, fontWeight: 400 }}>
                     {" :: "}
-                    {it.role}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
                 )}
               </div>
               {it.techStack && (
                 <div style={{ color: TEXT_TERTIARY }} className="text-[0.92em]">
-                  [{it.techStack}]
+                  [<EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />]
                 </div>
               )}
               <CarbonBullets
@@ -462,12 +463,12 @@ function CarbonEducation({
               )}
             >
               <div style={{ color: TEXT_PRIMARY, fontWeight: 500 }}>
-                {it.degree}
-                {it.field ? ` :: ${it.field}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                {it.field ? ` :: ${it.field || "Field of study"}` : ""}
               </div>
               <div style={{ color: TEXT_SECONDARY }}>
-                {it.institution}
-                {it.location ? ` // ${it.location}` : ""}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
+                {it.location ? ` // ${it.location || "Location"}` : ""}
               </div>
             </GridRow>
           </article>
@@ -515,7 +516,7 @@ function CarbonSkills({
                     className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
                     style={elementStyle(data, id)}
                   >
-                    {s.name}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
                   </span>
                 </span>
               );
@@ -551,11 +552,11 @@ function CarbonCerts({
             style={elementStyle(data, id)}
           >
             <GridRow date={c.date || "—"}>
-              <span style={{ fontWeight: 500 }}>{c.name}</span>
+              <span style={{ fontWeight: 500 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
               {c.issuer && (
                 <span style={{ color: TEXT_SECONDARY }}>
                   {" :: "}
-                  {c.issuer}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
               )}
             </GridRow>

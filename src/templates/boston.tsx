@@ -42,6 +42,7 @@ import type {
   Section,
   TalksSection,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 // Hardcoded Boston identity colors. Body text falls through to design.textColor
 // so users can still tune contrast — but the accent stays oxblood.
@@ -192,7 +193,7 @@ function BostonSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <div
         className="mb-2 h-px w-full"
@@ -288,12 +289,12 @@ function BostonExperience({
                   color: BOSTON_INK,
                 }}
               >
-                <span className="font-semibold">{it.role}</span>
+                <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" /></span>
                 {it.company && (
                   <span className="italic">
                     {" — "}
-                    {it.company}
-                    {it.location ? `, ${it.location}` : ""}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
+                    {it.location ? `, ${it.location || "Location"}` : ""}
                   </span>
                 )}
               </div>
@@ -340,16 +341,16 @@ function BostonEducation({
                 }}
               >
                 <span className="font-semibold">
-                  {it.degree}
-                  {it.field ? `, ${it.field}` : ""}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />
+                  {it.field ? `, ${it.field || "Field of study"}` : ""}
                 </span>
                 <span className="italic">
                   {" — "}
-                  {it.institution}
-                  {it.location ? `, ${it.location}` : ""}
+                  <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
+                  {it.location ? `, ${it.location || "Location"}` : ""}
                 </span>
                 {it.gpa && (
-                  <span className="opacity-70"> · GPA {it.gpa}</span>
+                  <span className="opacity-70"> · GPA <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.gpa`} value={it.gpa} placeholder="GPA" /></span>
                 )}
               </div>
               <span style={yearStyle}>{year}</span>
@@ -400,10 +401,10 @@ function BostonPublications({
               [{i + 1}]
             </span>
             <span className="leading-[1.45]">
-              {p.authors && <span>{p.authors}. </span>}
-              <span className="font-semibold">{p.title}.</span>
-              {p.venue && <span className="italic"> {p.venue}.</span>}
-              {p.date && <span> ({p.date}).</span>}
+              {p.authors && <span><EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.authors`} value={p.authors} placeholder="Authors" />. </span>}
+              <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.title`} value={p.title} placeholder="Title" />.</span>
+              {p.venue && <span className="italic"> <EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.venue`} value={p.venue} placeholder="Venue" />.</span>}
+              {p.date && <span> (<EditableFallback data={data} fieldId={`section.${section.id}.item.${p.id}.date`} value={p.date} placeholder="Date" />).</span>}
               {p.url && (
                 <>
                   {" "}
@@ -451,10 +452,10 @@ function BostonTalks({
             }}
           >
             <span>
-              <span className="font-semibold">{t.title}</span>
-              {t.venue && <span className="italic"> — {t.venue}</span>}
+              <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${t.id}.title`} value={t.title} placeholder="Title" /></span>
+              {t.venue && <span className="italic"> — <EditableFallback data={data} fieldId={`section.${section.id}.item.${t.id}.venue`} value={t.venue} placeholder="Venue" /></span>}
             </span>
-            <span style={yearStyle}>{t.date}</span>
+            <span style={yearStyle}><EditableFallback data={data} fieldId={`section.${section.id}.item.${t.id}.date`} value={t.date} placeholder="Date" /></span>
           </div>
         );
       })}
@@ -487,10 +488,10 @@ function BostonCerts({
             }}
           >
             <span>
-              <span className="font-semibold">{c.name}</span>
-              {c.issuer && <span className="italic"> — {c.issuer}</span>}
+              <span className="font-semibold"><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></span>
+              {c.issuer && <span className="italic"> — <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" /></span>}
             </span>
-            <span style={yearStyle}>{c.date}</span>
+            <span style={yearStyle}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" /></span>
           </div>
         );
       })}

@@ -43,6 +43,7 @@ import type {
   ResumeData,
   Section,
 } from "@/types/resume";
+import { EditableFallback, EditableSectionTitle } from "./components";
 
 const CREAM = "#fdf6e3";
 const BROWN = "#451a03";
@@ -230,7 +231,7 @@ function AtelierSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {section.title}
+        <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
       </h2>
       <AtelierBody section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -304,14 +305,14 @@ function AtelierExperience({
                   fontWeight: 500,
                 }}
               >
-                {it.role}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
                   <span
                     className="italic"
                     style={{ color: TERRA, fontWeight: 400 }}
                   >
                     {" at "}
-                    {it.company}
+                    <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
                 )}
               </h3>
@@ -338,7 +339,7 @@ function AtelierExperience({
                   fontFamily: "var(--font-fraunces, 'Fraunces'), serif",
                 }}
               >
-                {it.location}
+                <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
             )}
             <AtelierBullets
@@ -451,7 +452,7 @@ function AtelierFallback({
               {label}
               {it.proficiency && (
                 <span style={{ color: `${BROWN}66` }}>
-                  {" "}— {it.proficiency}
+                  {" "}— <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.proficiency`} value={it.proficiency} placeholder="Proficiency" />
                 </span>
               )}
             </span>

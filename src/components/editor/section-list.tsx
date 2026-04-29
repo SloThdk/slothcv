@@ -37,6 +37,7 @@ import {
   EyeOff,
   GripVertical,
   Plus,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -90,6 +91,15 @@ export function SectionList() {
   const addSection = useEditorStore((s) => s.addSection);
   const removeSection = useEditorStore((s) => s.removeSection);
   const toggleVisible = useEditorStore((s) => s.toggleSectionVisible);
+  // Active template — Blank intentionally renders no personal block + no
+  // sections (it's a design-from-scratch canvas). Showing the Personal
+  // form and the section list while on Blank misled users into typing
+  // into fields that produced nothing in the preview. We branch here and
+  // render a callout pointing to the Add tab instead. Underlying data
+  // stays in the store, so swapping to any other template restores the
+  // sidebar exactly as the user left it.
+  const template = useEditorStore((s) => s.data.meta.template);
+  const isBlank = template === "blank";
   const { t } = useLanguage();
   const confirm = useConfirm();
 
@@ -147,6 +157,40 @@ export function SectionList() {
     const newIndex = sections.findIndex((s) => s.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
     setSections(arrayMove(sections, oldIndex, newIndex));
+  }
+
+  // Blank template has no concept of "Personal info" or "Sections" — it's
+  // a free-form canvas the user populates via the Add tab. Render an
+  // explanatory callout instead of the form fields that won't surface
+  // anywhere in the preview. Existing data is preserved (swap back to any
+  // other template to recover it).
+  if (isBlank) {
+    return (
+      <div ref={listRef} className="space-y-3">
+        <div className="rounded-lg border border-dashed border-strong bg-surface p-4">
+          <div className="flex items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-hover text-fg ring-1 ring-border">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-fg">
+                {t("sections.blankTitle")}
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
+                {t("sections.blankBody")}
+              </p>
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-surface-hover px-2 py-1 text-[11px] font-medium text-fg">
+                <Plus className="h-3 w-3" aria-hidden="true" />
+                {t("sections.blankCta")}
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="px-1 text-[11px] leading-relaxed text-subtle">
+          {t("sections.blankPreserveHint")}
+        </p>
+      </div>
+    );
   }
 
   return (

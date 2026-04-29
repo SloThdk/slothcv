@@ -144,22 +144,19 @@ function DashboardInner() {
     }
   }
 
-  async function onCreate() {
-    setBusy(true);
-    try {
-      const id = await createResume();
-      router.push(`/editor?id=${id}`);
-    } catch (e) {
-      if (e instanceof CvLimitReachedError) {
-        toast.error(e.message);
-      } else {
-        toast.error(
-          e instanceof Error ? e.message : t("dashboard.toastCreateFailed"),
-        );
-      }
-    } finally {
-      setBusy(false);
+  // "+ New CV" no longer creates a row directly — it navigates to /new
+  // (the template-picker page) so the user has to deliberately commit
+  // to a template before any DB row is created. This stops the
+  // "browse templates → leave with phantom Untitled CV" flow that ate
+  // 10-CV-cap slots without the user noticing. The cap check stays
+  // here so we don't even bother sending them to /new when they're
+  // already maxed out.
+  function onNewCv() {
+    if (atLimit) {
+      toast.error(t("dashboard.limitTitle", { n: MAX_CVS_PER_USER }));
+      return;
     }
+    router.push("/new");
   }
 
   /**
@@ -337,8 +334,8 @@ function DashboardInner() {
           )}
           <Button
             type="button"
-            onClick={onCreate}
-            disabled={busy || atLimit}
+            onClick={onNewCv}
+            disabled={atLimit}
             title={
               atLimit
                 ? t("dashboard.limitTitle", { n: MAX_CVS_PER_USER })
@@ -346,11 +343,7 @@ function DashboardInner() {
             }
           >
             <Plus className="h-4 w-4" />
-            {busy
-              ? t("dashboard.creating")
-              : atLimit
-                ? t("dashboard.limitReached")
-                : t("dashboard.newCv")}
+            {atLimit ? t("dashboard.limitReached") : t("dashboard.newCv")}
           </Button>
         </div>
       </div>
@@ -427,9 +420,9 @@ function DashboardInner() {
             <p className="mt-1 text-sm text-muted">
               {t("dashboard.empty.body")}
             </p>
-            <Button type="button" onClick={onCreate} className="mt-6" disabled={busy}>
+            <Button type="button" onClick={onNewCv} className="mt-6">
               <Plus className="h-4 w-4" />
-              {busy ? t("dashboard.creating") : t("dashboard.newCv")}
+              {t("dashboard.newCv")}
             </Button>
           </div>
         )}

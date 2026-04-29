@@ -85,6 +85,27 @@ export const TRANSLATIONS = {
   "templates.use": { en: "Use →", da: "Brug →" },
   "templates.openDashboard": { en: "Open dashboard", da: "Åbn oversigten" },
 
+  // ─── /new — template-picker landing for "+ New CV" ────────────────
+  // Shown when a signed-in user clicks "+ New CV" from the dashboard.
+  // Lets them browse the full gallery before any DB row is created;
+  // only clicking "Use this template" actually creates the CV.
+  "new.title": {
+    en: "Choose a template",
+    da: "Vælg en skabelon",
+  },
+  "new.subtitle": {
+    en: "Pick a layout to start your CV. You can switch templates anytime in the editor without losing your content.",
+    da: "Vælg et layout til at starte dit CV. Du kan altid skifte skabelon i editoren uden at miste dit indhold.",
+  },
+  "new.use": { en: "Use this template", da: "Brug denne skabelon" },
+  "new.creating": { en: "Creating your CV…", da: "Opretter dit CV…" },
+  "new.cancel": { en: "Cancel", da: "Annullér" },
+  "new.backToDashboard": { en: "Back to dashboard", da: "Tilbage til oversigten" },
+  "new.toastFailed": {
+    en: "Couldn't create your CV. Please try again.",
+    da: "Kunne ikke oprette dit CV. Prøv igen.",
+  },
+
   // ─── Login ────────────────────────────────────────────────────────
   "login.title": { en: "Sign in to SlothCV", da: "Log ind på SlothCV" },
   "login.subtitle": {

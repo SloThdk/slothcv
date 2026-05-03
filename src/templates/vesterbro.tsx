@@ -89,7 +89,7 @@ export function VesterbroTemplate({ data, fixedSize, skipOverlay }: Props) {
       {/* Centered photo + name + role */}
       <header
         data-section-id="personal"
-        className="mb-6 flex flex-col items-center cursor-pointer rounded-md p-1 -m-1 transition-colors hover:bg-neutral-100/60"
+        className="mb-6 flex flex-col items-center cursor-pointer rounded-md p-1 -m-1 transition-colors"
       >
         {design.photo.enabled && personal.photoUrl && (
           <div
@@ -113,7 +113,7 @@ export function VesterbroTemplate({ data, fixedSize, skipOverlay }: Props) {
         )}
         <h1
           data-element-id="personal.name"
-          className="mt-4 block w-fit cursor-text text-[2.1em] font-bold leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="mt-4 block w-fit cursor-text text-[2.1em] font-bold leading-[1.05] tracking-tight"
           style={elementStyle(data, "personal.name")}
         >
           {personal.fullName || "Your name"}
@@ -121,7 +121,7 @@ export function VesterbroTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[0.9em] font-semibold uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[0.9em] font-semibold uppercase tracking-[0.22em]"
             style={{
               color: design.accentColor,
               ...elementStyle(data, "personal.headline"),
@@ -168,7 +168,7 @@ function BadgeSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <div className="mb-2 flex items-center gap-2">
         <span

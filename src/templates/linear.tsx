@@ -87,7 +87,7 @@ export function LinearTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.5em] leading-[1.05] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.5em] leading-[1.05]"
               style={{
                 color: design.textColor,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -101,7 +101,7 @@ export function LinearTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -164,7 +164,7 @@ function LinearContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-3 text-[0.85em]"
@@ -217,11 +217,11 @@ function LinearSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-900/[0.03] hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-3 inline-block cursor-text pb-0.5 text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+        className="mb-3 inline-block cursor-text pb-0.5 text-[0.85em] uppercase"
         style={{
           color: design.textColor,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -254,7 +254,7 @@ function LinearBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5]"
           style={{
             color: design.textColor,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -309,7 +309,7 @@ function LinearExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -404,7 +404,7 @@ function LinearProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -518,7 +518,7 @@ function LinearEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <div>
@@ -603,7 +603,7 @@ function LinearSkills({
                 <span
                   key={s.id}
                   data-element-id={id}
-                  className="cursor-grab rounded px-2 py-0.5 text-[0.82em] transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+                  className="cursor-grab rounded px-2 py-0.5 text-[0.82em]"
                   style={{
                     background: `${INDIGO}10`,
                     border: `1px solid ${INDIGO}33`,
@@ -640,7 +640,7 @@ function LinearCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -685,7 +685,7 @@ function LinearFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: design.textColor, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -738,7 +738,7 @@ function LinearBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

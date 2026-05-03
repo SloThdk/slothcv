@@ -88,7 +88,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text leading-[0.95] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="block w-fit cursor-text leading-[0.95]"
               style={{
                 color: OFF_WHITE,
                 fontFamily:
@@ -105,7 +105,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-3 block w-fit cursor-text text-[0.9em] uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+                className="mt-3 block w-fit cursor-text text-[0.9em] uppercase"
                 style={{
                   color: PURPLE,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -172,7 +172,7 @@ function ObsidianContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-4 text-[0.85em]"
@@ -228,13 +228,13 @@ function ObsidianSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.03] hover:ring-2 hover:ring-white/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Long thin head — way more vertical breathing room than other
           templates. Reads as "I have nothing to prove." */}
       <h2
         data-element-id={titleId}
-        className="mb-5 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="mb-5 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: PURPLE,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -266,7 +266,7 @@ function ObsidianBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-white/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
           style={{
             color: OFF_WHITE,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -316,7 +316,7 @@ function ObsidianExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -392,7 +392,7 @@ function ObsidianProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -478,7 +478,7 @@ function ObsidianEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <div>
@@ -565,7 +565,7 @@ function ObsidianSkills({
                   )}
                   <span
                     data-element-id={id}
-                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+                    className="cursor-grab rounded-sm"
                     style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
                   >
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
@@ -597,7 +597,7 @@ function ObsidianCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -647,7 +647,7 @@ function ObsidianFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-white/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -701,7 +701,7 @@ function ObsidianBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={{ color: OFF_WHITE, ...elementStyle(data, id) }}
           >
             {glyph && (

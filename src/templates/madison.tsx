@@ -89,7 +89,7 @@ export function MadisonTemplate({ data, fixedSize, skipOverlay }: Props) {
       >
         <h1
           data-element-id="personal.name"
-          className="mx-auto block w-fit cursor-text text-[3em] leading-[1] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="mx-auto block w-fit cursor-text text-[3em] leading-[1] tracking-tight"
           style={{
             color: NAVY,
             fontFamily:
@@ -103,7 +103,7 @@ export function MadisonTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mx-auto mt-1.5 block w-fit cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mx-auto mt-1.5 block w-fit cursor-text text-[0.78em] uppercase"
             style={{
               color: GOLD,
               fontFamily:
@@ -254,7 +254,7 @@ function KV({
           href={href.startsWith("http") ? href : `https://${href}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="cursor-text rounded-sm underline-offset-2 transition-shadow hover:underline hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm underline-offset-2 hover:underline"
           style={elementStyle(data, id)}
         >
           {value}
@@ -262,7 +262,7 @@ function KV({
       ) : (
         <span
           data-element-id={id}
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={elementStyle(data, id)}
         >
           {value}
@@ -305,11 +305,11 @@ function MadisonLeftSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-amber-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[0.82em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1 inline-block cursor-text text-[0.82em] uppercase"
         style={{
           color: NAVY,
           fontFamily:
@@ -379,7 +379,7 @@ function MadisonEducation({
           <div
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm text-[0.85em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm text-[0.85em]"
             style={{
               color: NAVY,
               fontFamily:
@@ -421,7 +421,7 @@ function MadisonCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={{
               color: NAVY,
               fontFamily:
@@ -457,7 +457,7 @@ function MadisonLanguages({
           <div
             key={l.id}
             data-element-id={id}
-            className="flex cursor-grab justify-between gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab justify-between gap-2 rounded-sm"
             style={{
               color: NAVY,
               fontFamily:
@@ -516,7 +516,7 @@ function MadisonSkills({
               <div
                 key={s.id}
                 data-element-id={id}
-                className="flex cursor-grab items-center gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+                className="flex cursor-grab items-center gap-2 rounded-sm"
                 style={{
                   color: NAVY,
                   fontFamily:
@@ -565,7 +565,7 @@ function MadisonGenericList({
             <li
               key={it.id}
               data-element-id={id}
-              className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="cursor-grab rounded-sm"
               style={elementStyle(data, id)}
             >
               {it.name ?? it.text ?? ""}
@@ -594,11 +594,11 @@ function MadisonRightSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-amber-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[1em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1 inline-block cursor-text text-[1em] uppercase"
         style={{
           color: NAVY,
           fontFamily:
@@ -632,7 +632,7 @@ function MadisonRightBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: NAVY,
             fontFamily:
@@ -676,7 +676,7 @@ function MadisonExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -726,7 +726,7 @@ function MadisonExperience({
             {headline && (
               <div
                 data-element-id={`section.${section.id}.bullet.${headline.id}`}
-                className="mt-1.5 flex cursor-text gap-2 rounded-sm border-l-2 pl-2 transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+                className="mt-1.5 flex cursor-text gap-2 rounded-sm border-l-2 pl-2"
                 style={{
                   borderColor: GOLD,
                   color: GOLD,
@@ -763,7 +763,7 @@ function MadisonExperience({
                     <li
                       key={b.id}
                       data-element-id={bid}
-                      className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+                      className="flex cursor-text gap-2 rounded-sm"
                       style={elementStyle(data, bid)}
                     >
                       <span
@@ -800,7 +800,7 @@ function MadisonRightFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: NAVY,
           fontFamily:
@@ -831,7 +831,7 @@ function MadisonRightFallback({
             <li
               key={it.id}
               data-element-id={id}
-              className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="flex cursor-grab gap-2 rounded-sm"
               style={elementStyle(data, id)}
             >
               <span style={{ color: GOLD }} aria-hidden>

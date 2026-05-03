@@ -76,7 +76,7 @@ export function AtelierTemplate({ data, fixedSize, skipOverlay }: Props) {
           <BrushStroke />
           <h1
             data-element-id="personal.name"
-            className="relative mx-auto block w-fit cursor-text text-[3em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="relative mx-auto block w-fit cursor-text text-[3em] leading-[1.05] tracking-tight"
             style={{
               color: BROWN,
               fontFamily:
@@ -91,7 +91,7 @@ export function AtelierTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="relative mx-auto mt-2 block w-fit cursor-text text-[0.82em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="relative mx-auto mt-2 block w-fit cursor-text text-[0.82em] uppercase"
               style={{
                 color: TERRA,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -167,7 +167,7 @@ function AtelierContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="relative mt-3 text-[0.85em]"
@@ -219,11 +219,11 @@ function AtelierSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-amber-100/30 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-3 inline-block cursor-text text-[1.4em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-3 inline-block cursor-text text-[1.4em] italic"
         style={{
           color: TERRA,
           fontFamily: "var(--font-fraunces, 'Fraunces'), serif",
@@ -254,7 +254,7 @@ function AtelierBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.98em] leading-[1.65] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.98em] leading-[1.65]"
           style={{
             color: BROWN,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -293,7 +293,7 @@ function AtelierExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -379,7 +379,7 @@ function AtelierBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span
@@ -409,7 +409,7 @@ function AtelierFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: BROWN,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -440,7 +440,7 @@ function AtelierFallback({
             <span
               key={it.id}
               data-element-id={id}
-              className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="cursor-grab rounded-sm"
               style={{
                 color: BROWN,
                 fontFamily:

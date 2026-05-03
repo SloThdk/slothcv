@@ -87,7 +87,7 @@ export function StudioTemplate({ data, fixedSize, skipOverlay }: Props) {
           </div>
           <h1
             data-element-id="personal.name"
-            className="block w-fit cursor-text text-[5em] leading-[0.9] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="block w-fit cursor-text text-[5em] leading-[0.9] tracking-tight"
             style={{
               color: INK,
               fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -101,7 +101,7 @@ export function StudioTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="block w-fit cursor-text text-[0.95em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[0.95em] uppercase"
               style={{
                 color: INK,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -226,7 +226,7 @@ function StudioContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="text-[0.78em] uppercase"
@@ -284,7 +284,7 @@ function StudioSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-200/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Magazine sub-head: tight to body, ALL-CAPS tracked, with a small
           black square ahead of it — gives every section a "department" tag. */}
@@ -296,7 +296,7 @@ function StudioSection({
         />
         <h2
           data-element-id={titleId}
-          className="inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+          className="inline-block cursor-text text-[0.78em] uppercase"
           style={{
             color: INK,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -329,7 +329,7 @@ function StudioBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: INK,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -367,7 +367,7 @@ function StudioExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div
@@ -447,7 +447,7 @@ function StudioBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span className="select-none" aria-hidden>
@@ -473,7 +473,7 @@ function StudioFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -510,7 +510,7 @@ function StudioFallback({
             <li
               key={it.id}
               data-element-id={id}
-              className="flex cursor-grab items-baseline justify-between gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="flex cursor-grab items-baseline justify-between gap-2 rounded-sm"
               style={elementStyle(data, id)}
             >
               <span className="font-medium">{label}</span>

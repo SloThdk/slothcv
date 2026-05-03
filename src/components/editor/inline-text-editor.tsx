@@ -117,6 +117,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useEditorStore } from "@/lib/store/editor";
 import { elementTextLens } from "@/lib/element-text-lens";
 
@@ -487,10 +488,15 @@ export function InlineTextEditor() {
       const r = el.getBoundingClientRect();
       const intrinsicW = el.offsetWidth || r.width || 1;
       const visualScale = r.width / intrinsicW || 1;
-      // Stable key encodes everything that matters for re-render. Skip
-      // setState when nothing changed so React doesn't churn at 60 fps
-      // when the source is genuinely still.
-      const key = `${Math.round(r.left * 100) / 100}|${Math.round(r.top * 100) / 100}|${Math.round(r.width * 100) / 100}|${Math.round(r.height * 100) / 100}|${visualScale.toFixed(3)}`;
+      // Stable key encodes the rect to a 0.5 px granularity — the actual
+      // device-pixel paint rounding threshold across Chromium / Firefox /
+      // Safari at common DPRs (1x, 1.25x, 1.5x, 2x). The previous 0.01 px
+      // quantization let sub-pixel rect deltas through every frame, which
+      // re-rendered the overlay's CSS-grid replica + contentEditable on
+      // every micro-shift and produced the visible 1-2 px "jump" the user
+      // perceives as bouncing. Anything under 0.5 px would not paint
+      // differently anyway, so suppressing it costs zero visual fidelity.
+      const key = `${Math.round(r.left * 2) / 2}|${Math.round(r.top * 2) / 2}|${Math.round(r.width * 2) / 2}|${Math.round(r.height * 2) / 2}|${visualScale.toFixed(3)}`;
       if (key !== lastKey) {
         lastKey = key;
         setOverlay((prev) =>
@@ -715,6 +721,11 @@ export function InlineTextEditor() {
   }
 
   if (!editingElementId || !overlay || !lens) return null;
+  // SSR / pre-mount guard for the portal. `document` is undefined during
+  // server-render; the editor route is `"use client"` but defensive in
+  // case any future static-export path hydrates this tree. Without the
+  // guard, `createPortal(jsx, document.body)` would throw at build time.
+  if (typeof document === "undefined") return null;
   const sc = overlay.visualScale;
   const fontSizePx = overlay.font.fontSize * sc;
   const lh = overlay.font.lineHeight;
@@ -767,13 +778,44 @@ export function InlineTextEditor() {
     overflowWrap: isPoint ? "normal" : "break-word",
   };
 
-  return (
+  // Render the entire overlay through a React Portal targeting
+  // `document.body`. This is the load-bearing fix for the
+  // "text-bounces-out-of-its-container" symptom Philip reported: the
+  // editor route renders the preview canvas inside a `transform: scale()`
+  // wrapper (the zoom layer at preview.tsx:1278). Per CSS Positioned
+  // Layout Module Level 3 §6.3, ANY ancestor with a non-`none` `transform`
+  // / `filter` / `perspective` / `will-change` / `backdrop-filter` becomes
+  // the containing block for descendants with `position: fixed`. So
+  // before this portal, our `position: fixed; left: rect.left` was NOT
+  // viewport-relative — it was relative to the post-transform padding
+  // box of the zoom wrapper, which already had `getBoundingClientRect()`
+  // reading the post-transform rect. The two scaled coordinate systems
+  // multiplied, producing a 1-3 px ghost-shift on edit-start, paired
+  // with the user-reported "the text element bounces out of its
+  // container".
+  //
+  // Portaling to `document.body` re-roots the overlay outside every
+  // transformed ancestor. `position: fixed` then resolves correctly
+  // against the viewport (its true definition under Position 3), and
+  // the `getBoundingClientRect()` reads we already do are exactly the
+  // viewport coords we want to lay the overlay at. Zero coordinate-system
+  // mismatch, zero shift on edit-start.
+  //
+  // Excalidraw uses the same pattern (textWysiwyg renders to body, not
+  // inside the canvas wrapper) — see github.com/excalidraw/excalidraw
+  // issues #2737 and #4098 for the canonical writeup.
+  const overlayJsx = (
     <>
       {/* Wrapper carries the focus ring + position. Inside it, the
           replica div and the textarea share grid cell 1/1 — the
           replica's natural height drives the row, the textarea
           stretches to fill via grid's default `align-self:stretch`. */}
       <div
+        // data-slothcv-inline-editor lets the drag handler in
+        // preview.tsx detect "click was inside the inline editor" via
+        // closest() so a stray mousedown that bubbles up to body
+        // doesn't start a phantom drag of nothing.
+        data-slothcv-inline-editor="true"
         style={{
           position: "fixed",
           left: overlay.rect.left,
@@ -792,23 +834,37 @@ export function InlineTextEditor() {
           // don't pin a min-height that would overstuff a tiny field.
           minHeight: isPoint ? undefined : overlay.rect.height,
           display: "grid",
-          // Photoshop's edit indicator is a thin DASHED bounding box,
-          // not a solid framed surface. We match: transparent fill,
-          // 1px dashed outline in the brand-blue caret colour. Drawn
-          // INSIDE the box (negative offset) so the visual frame never
-          // extends past the source element's natural rect — without
-          // the negative offset, a 1 px dashed line straddling the box
-          // edge reads as the editor "extending out of its container".
-          // The editor's content still lays out at the exact same
-          // coordinates as the source's content — no chrome-driven drift.
+          // Photoshop's edit indicator is a thin solid bounding box
+          // drawn INSIDE the source's natural rect. We deliberately do
+          // NOT use `outline: 1px dashed` any more — Chromium paints
+          // outlines in a separate paint layer that does NOT snap to
+          // device pixels at fractional DPR (1.25x / 1.5x), so a dashed
+          // 1 px outline shimmered sub-pixel on every rAF rect-sync
+          // tick. The user perceived the shimmer as the box "vibrating"
+          // or "bouncing" the moment edit started.
+          //
+          // The replacement is a 1 px blue inset box-shadow plus a
+          // 1 px white inset halo INSIDE the blue. Inset shadows snap
+          // to the rendered border-box pixel grid (CSS Backgrounds &
+          // Borders Level 3 §3.2 paint-area rules), so they never
+          // ghost-paint the way an outline does. The white halo gives
+          // the ring contrast on every possible template background
+          // without the visual chunk of a 4 px outer halo. Same trick
+          // Figma uses on its inline-edit indicator.
           background: "transparent",
-          outline: "1px dashed rgb(37 99 235 / 0.55)",
-          outlineOffset: "-1px",
+          boxShadow:
+            "inset 0 0 0 1px rgb(37 99 235 / 0.55), inset 0 0 0 2px rgb(255 255 255 / 0.65)",
           borderRadius: overlay.font.borderRadius,
-          // Layout containment: sizing changes inside the wrapper
-          // don't trigger ancestor reflows. Cheap perf insurance for
-          // typing-heavy editing in a heavily-styled template tree.
-          contain: "layout style",
+          // Layout + paint + style containment scopes any sizing /
+          // paint change to inside this wrapper — typing one keystroke
+          // never invalidates the surrounding template tree. `contain:
+          // content` is the named shorthand for layout + paint + style.
+          contain: "content",
+          // View-transition-name lets Chromium cross-fade any residual
+          // rect change (e.g. scroll mid-edit) over ~200 ms instead of
+          // teleporting. Browsers without the API ignore the property —
+          // graceful no-op fallback. (View Transitions Level 2 spec.)
+          viewTransitionName: "slothcv-inline-editor",
           zIndex: 10000,
         }}
       >
@@ -880,6 +936,11 @@ export function InlineTextEditor() {
       </div>
     </>
   );
+  // Portal target is `document.body` — see the long comment above the
+  // overlayJsx assignment for why. SSR safety: the `typeof document`
+  // guard at the top of the render function bails out before we get
+  // here on the server, so `document.body` is always defined.
+  return createPortal(overlayJsx, document.body);
 }
 
 /**

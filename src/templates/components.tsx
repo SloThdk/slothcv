@@ -65,10 +65,17 @@ const eid = {
     `section.${sectionId}.item.${itemId}`,
 };
 
-// Common Tailwind classes for any draggable element. Kept as a constant so
-// every instrumented wrapper renders the same hover/grab affordance.
-const dragClass =
-  "cursor-grab transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-2 rounded-sm";
+// Common Tailwind classes for any draggable element. Hover affordance
+// has moved to the centralized `<SelectionOverlay>` (single SVG ring
+// drawn over the leafmost hovered element) — see
+// `components/editor/selection-overlay.tsx`. Per-element `hover:ring-2
+// hover:ring-neutral-900/15 transition-shadow` was producing a paint
+// storm on cursor move (Tailwind ring is implemented via box-shadow,
+// which lives on the paint pass, not the compositor) AND nesting rings
+// on every element-on-element :has() match. Dropping the per-element
+// classes was the single biggest "feels rough/heavy" win — tldraw 4.4
+// reported 25× speedup from the same migration.
+const dragClass = "cursor-grab rounded-sm";
 
 /**
  * EditableSectionTitle — drop-in wrapper that templates can put around
@@ -111,7 +118,7 @@ export function EditableSectionTitle({
   return (
     <span
       data-element-id={id}
-      className={`cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""}`}
+      className={`cursor-text rounded-sm ${className ?? ""}`}
       style={elementStyle(data, id)}
     >
       {children}
@@ -169,7 +176,7 @@ export function EditableFallback({
     <Tag
       data-element-id={fieldId}
       data-placeholder={isEmpty ? "true" : undefined}
-      className={`${inline ? "" : "block"} cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""} ${isEmpty ? PLACEHOLDER_CLASS : ""}`}
+      className={`${inline ? "" : "block"} cursor-text rounded-sm ${className ?? ""} ${isEmpty ? PLACEHOLDER_CLASS : ""}`}
       style={elementStyle(data, fieldId)}
     >
       {isEmpty ? placeholder : value}
@@ -201,7 +208,7 @@ function Editable({
   return (
     <Tag
       data-element-id={fieldId}
-      className={`${inline ? "" : "block"} cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""}`}
+      className={`${inline ? "" : "block"} cursor-text rounded-sm ${className ?? ""}`}
       style={elementStyle(data, fieldId)}
     >
       {children}
@@ -240,7 +247,7 @@ function EditableDate({
   return (
     <span
       data-element-id={fieldId}
-      className={`cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-blue-400/40 hover:ring-offset-1 ${className ?? ""}`}
+      className={`cursor-text rounded-sm ${className ?? ""}`}
       style={elementStyle(data, fieldId)}
       title={hint}
     >

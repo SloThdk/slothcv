@@ -85,7 +85,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
             compete with the colored section tiles below. */}
         <header
           data-section-id="personal"
-          className="group relative mb-3 cursor-pointer rounded-xl p-4 transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="group relative mb-3 cursor-pointer rounded-xl p-4"
           style={{
             background: "#f8fafc",
             borderTop: `4px solid ${design.accentColor}`,
@@ -95,7 +95,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
             <div className="flex-1">
               <h1
                 data-element-id="personal.name"
-                className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
                 style={{
                   color: design.textColor,
                   fontFamily:
@@ -109,7 +109,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
               {personal.headline && (
                 <p
                   data-element-id="personal.headline"
-                  className="mt-1 block w-fit cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                  className="mt-1 block w-fit cursor-text text-[1em]"
                   style={{
                     color: design.accentColor,
                     fontFamily:
@@ -157,7 +157,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
 function MosaicContact({ data }: { data: ResumeData }) {
   const { personal, design } = data;
   const grab =
-    "cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-1";
+    "cursor-text rounded-sm";
   return (
     <div
       className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82em]"
@@ -228,11 +228,11 @@ function MosaicTile({
         borderTop: `4px solid ${palette.border}`,
         ...positionStyle(section),
       }}
-      className="group relative cursor-pointer break-inside-avoid rounded-xl p-4 transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-xl p-4"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: palette.border,
           fontFamily: "var(--font-outfit, 'Outfit'), sans-serif",

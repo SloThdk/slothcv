@@ -86,7 +86,7 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.2em] uppercase leading-[1.05] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="block w-fit cursor-text text-[2.2em] uppercase leading-[1.05]"
               style={{
                 color: TEXT_PRIMARY,
                 fontFamily: MONO,
@@ -100,7 +100,7 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-2 block w-fit cursor-text text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+                className="mt-2 block w-fit cursor-text text-[0.85em] uppercase"
                 style={{
                   color: BLUE,
                   fontFamily: MONO,
@@ -168,7 +168,7 @@ function CarbonContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-3 grid grid-cols-2 gap-x-6 gap-y-0.5 text-[0.78em]"
@@ -219,11 +219,11 @@ function CarbonSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-sm p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-white/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-sm p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-3 inline-block cursor-text pb-0.5 text-[0.82em] uppercase transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="mb-3 inline-block cursor-text pb-0.5 text-[0.82em] uppercase"
         style={{
           color: TEXT_PRIMARY,
           fontFamily: MONO,
@@ -256,7 +256,7 @@ function CarbonBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.88em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-white/15"
+          className="cursor-text whitespace-pre-wrap text-[0.88em] leading-[1.55]"
           style={{
             color: TEXT_PRIMARY,
             fontFamily: MONO,
@@ -321,7 +321,7 @@ function CarbonExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <GridRow
@@ -378,7 +378,7 @@ function CarbonProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <GridRow
@@ -451,7 +451,7 @@ function CarbonEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <GridRow
@@ -513,7 +513,7 @@ function CarbonSkills({
                   {i > 0 && <span style={{ color: TEXT_TERTIARY }}> | </span>}
                   <span
                     data-element-id={id}
-                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+                    className="cursor-grab rounded-sm"
                     style={elementStyle(data, id)}
                   >
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
@@ -548,7 +548,7 @@ function CarbonCerts({
           <article
             key={c.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <GridRow date={c.date || "—"}>
@@ -581,7 +581,7 @@ function CarbonFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.88em] transition-shadow hover:ring-2 hover:ring-white/15"
+        className="cursor-text whitespace-pre-wrap text-[0.88em]"
         style={{
           color: TEXT_PRIMARY,
           fontFamily: MONO,
@@ -643,7 +643,7 @@ function CarbonBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

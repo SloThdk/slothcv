@@ -144,7 +144,7 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
           >
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text leading-[1.0] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text leading-[1.0]"
               style={{
                 color: TEXT_BODY,
                 fontFamily: SANS,
@@ -159,7 +159,7 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[0.95em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[0.95em] uppercase"
                 style={{
                   color: `${TEXT_BODY}aa`,
                   fontFamily: MONO,
@@ -221,7 +221,7 @@ function SidebarContact({ data }: { data: ResumeData }) {
   // and value — drags as one unit. Inner anchor/span no longer carries
   // its own elementStyle (avoids double-translate).
   const grab =
-    "flex w-full gap-2 cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent";
+    "flex w-full gap-2 cursor-text rounded-sm";
   // The "Contact" label is the only fixed string in this template — it
   // doesn't correspond to a section.title (it labels the personal-info
   // contact list). We give it a stable `design.contactLabel` element-id
@@ -234,7 +234,7 @@ function SidebarContact({ data }: { data: ResumeData }) {
       <SidebarHeader>
         <span
           data-element-id={labelId}
-          className="inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+          className="inline-block cursor-text rounded-sm"
           style={elementStyle(data, labelId)}
         >
           Contact
@@ -316,11 +316,11 @@ function GraphiteSidebarSection({
     <div
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-white/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="mb-2 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: TEXT_SIDEBAR,
           fontFamily: SERIF,
@@ -402,7 +402,7 @@ function SidebarSkills({
                   )}
                   <span
                     data-element-id={id}
-                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+                    className="cursor-grab rounded-sm"
                     style={elementStyle(data, id)}
                   >
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
@@ -433,7 +433,7 @@ function SidebarLanguages({
           <div
             key={l.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+            className="flex cursor-grab items-baseline justify-between rounded-sm"
             style={{ color: TEXT_SIDEBAR, ...elementStyle(data, id) }}
           >
             <span style={{ fontFamily: SANS }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.name`} value={l.name} placeholder="Name" /></span>
@@ -466,7 +466,7 @@ function SidebarCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+            className="cursor-grab rounded-sm"
             style={{ color: TEXT_SIDEBAR, ...elementStyle(data, id) }}
           >
             <div style={{ fontFamily: SANS, fontWeight: 500 }}><EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" /></div>
@@ -499,7 +499,7 @@ function SidebarHobbies({
   return (
     <p
       data-element-id={id}
-      className="cursor-text rounded-sm text-[0.85em] transition-shadow hover:ring-2 hover:ring-white/20"
+      className="cursor-text rounded-sm text-[0.85em]"
       style={{
         color: TEXT_SIDEBAR,
         fontFamily: SANS,
@@ -524,7 +524,7 @@ function SidebarFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.85em] transition-shadow hover:ring-2 hover:ring-white/20"
+        className="cursor-text whitespace-pre-wrap text-[0.85em]"
         style={{
           color: TEXT_SIDEBAR,
           fontFamily: SANS,
@@ -554,11 +554,11 @@ function GraphiteMainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-900/[0.03] hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+        className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: TEXT_BODY,
           fontFamily: SANS,
@@ -594,7 +594,7 @@ function BodySectionContent({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.55]"
           style={{
             color: TEXT_BODY,
             fontFamily: SANS,
@@ -634,7 +634,7 @@ function BodyExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -708,7 +708,7 @@ function BodyProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -796,7 +796,7 @@ function BodyEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <div>
@@ -850,7 +850,7 @@ function BodyFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: TEXT_BODY, fontFamily: SANS, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -904,7 +904,7 @@ function BodyBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

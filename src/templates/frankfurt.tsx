@@ -103,7 +103,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div data-section-id="personal" className="cursor-pointer">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[1.6em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="block w-fit cursor-text text-[1.6em] leading-[1.05] tracking-tight"
               style={{
                 color: SIDEBAR_TEXT,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -116,7 +116,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+                className="mt-1 block w-fit cursor-text text-[0.78em] uppercase"
                 style={{
                   color: SIDEBAR_MUTED,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -151,7 +151,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
 function FrankfurtContact({ data }: { data: ResumeData }) {
   const { personal } = data;
   const grab =
-    "block w-fit cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-1 hover:ring-offset-transparent";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div className="mt-3 space-y-0.5 text-[0.78em] break-words">
       {personal.email && (
@@ -217,11 +217,11 @@ function FrankfurtSidebarSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.06] hover:ring-2 hover:ring-white/20"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-1 hover:ring-offset-transparent"
+        className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: SIDEBAR_TEXT,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -265,11 +265,11 @@ function FrankfurtMainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-200/40 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1.5 inline-block cursor-text text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1.5 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: BLACK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",

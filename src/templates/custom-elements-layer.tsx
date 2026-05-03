@@ -253,31 +253,40 @@ function CustomElementNode({
   // dragging CSS in globals.css disables the hover ring on every
   // element except the one being dragged so passing the cursor over
   // siblings doesn't paint the page in hover noise.
+  // Selection ring: a precise three-layer paint that reads cleanly on
+  // every template background — the inner white halo guarantees contrast
+  // on dark/painted bgs without the visual chunk of an outer halo. Used
+  // ONLY for selected state. Hover state is now drawn by the centralized
+  // `<SelectionOverlay>` (see components/editor/selection-overlay.tsx),
+  // which handles every editable element on the canvas with one delegated
+  // pointermove + one SVG rect — drops the per-element paint storm that
+  // made cursor moves feel rough/heavy.
   const selectedRingStyle: React.CSSProperties = selected
     ? {
-        outline: "2px solid #2563eb",
-        outlineOffset: "2px",
-        boxShadow: "0 0 0 4px rgba(255,255,255,0.6)",
+        // 1 px white inset halo + 2 px solid blue ring + soft outer
+        // glow. shape-rendering equivalent: outline + box-shadow snap
+        // to the device-pixel grid in every modern browser.
+        boxShadow:
+          "0 0 0 1px rgba(255, 255, 255, 0.95), 0 0 0 3px rgb(37 99 235), 0 4px 12px rgba(37, 99, 235, 0.18)",
       }
     : {};
-  const ringClass = selected
-    ? ""
-    : "outline outline-1 outline-transparent hover:outline-blue-400/60 hover:outline-offset-2";
+  // Idle/hover state class — empty. The previous `outline outline-1
+  // outline-transparent hover:outline-blue-400/60 hover:outline-offset-2`
+  // would double-paint with SelectionOverlay's hover ring.
+  const ringClass = "";
 
   return (
     <div
       ref={wrapperRef}
       data-element-id={`custom.${el.id}`}
-      // duration-75 (was duration-100) — Photoshop-grade selection
-      // feels instant. The 100 ms easing on outline / box-shadow used
-      // to add a perceptible settle on every hover/select state change
-      // and stacked visually as the cursor passed across overlapping
-      // elements during a drag (each ring spent 100 ms fading out of
-      // its hover state, even with pointer-events disabled). The
-      // body.slothcv-dragging / -resizing rule in globals.css ALSO
-      // hard-disables transitions during a drag — this duration-75 is
-      // the steady-state value for hover/select transitions.
-      className={`group ${editing ? "cursor-text" : "cursor-grab"} transition-[outline-color,box-shadow] duration-75 ${ringClass}`}
+      // No transition on the selection ring — selection is a direct-
+      // manipulation primitive, not a hover state. Animating it adds
+      // perceptible lag to every click. (Emil Kowalski's "Great
+      // Animations" rule of thumb: don't animate frequent state
+      // changes that the user initiates directly.) The hover ring
+      // (now in SelectionOverlay) DOES animate at 80 ms ease-out —
+      // hover is passive feedback, animation reads as polish.
+      className={`group ${editing ? "cursor-text" : "cursor-grab"} ${ringClass}`}
       style={{ ...wrap, ...selectedRingStyle }}
       onDoubleClick={(e) => {
         // Text elements: double-click enters inline edit mode. Other

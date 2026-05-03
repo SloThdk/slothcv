@@ -114,4 +114,4 @@ Configure auth providers in the Supabase dashboard:
 2. PDF export (likely `react-pdf` or server-side Chromium).
 3. Real template gallery with one-click "Use this template".
 4. Auto-save (debounced) instead of manual Save button.
-5. Custom domain `cv.slothstudioco.com` via Cloudflare DNS + Worker route.
+5. Custom domain `cv.philipsloth.com` via Cloudflare DNS + Worker route.

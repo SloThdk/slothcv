@@ -32,7 +32,7 @@ export function ScratchTemplate({ data, fixedSize, skipOverlay }: Props) {
   const Header = (
     <header
       data-section-id="personal"
-      className="mb-4 cursor-pointer rounded-md p-1 -m-1 transition-colors hover:bg-neutral-100/60"
+      className="mb-4 cursor-pointer rounded-md p-1 -m-1 transition-colors"
     >
       {/* Each draggable element below carries `data-element-id` so the
           preview's drag handler can move JUST that element via the
@@ -42,7 +42,7 @@ export function ScratchTemplate({ data, fixedSize, skipOverlay }: Props) {
       <h1
         data-element-id="personal.name"
         style={elementStyle(data, "personal.name")}
-        className="block w-fit cursor-text text-[1.8em] font-semibold leading-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+        className="block w-fit cursor-text text-[1.8em] font-semibold leading-tight"
       >
         {personal.fullName || "Your name"}
       </h1>
@@ -53,7 +53,7 @@ export function ScratchTemplate({ data, fixedSize, skipOverlay }: Props) {
             color: design.accentColor,
             ...elementStyle(data, "personal.headline"),
           }}
-          className="mt-0.5 block w-fit cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="mt-0.5 block w-fit cursor-text text-[1em]"
         >
           {personal.headline}
         </p>
@@ -67,7 +67,7 @@ export function ScratchTemplate({ data, fixedSize, skipOverlay }: Props) {
       key={s.id}
       data-section-id={s.id}
       style={positionStyle(s)}
-      className="group relative mb-4 cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative mb-4 cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <SectionHeader text={s.title} design={resolveDesign(design, s)} sectionId={s.id} data={data} />
       <SectionBody section={s} design={resolveDesign(design, s)} data={data} />
@@ -153,7 +153,7 @@ export function ContactLine({ data }: { data: ResumeData }) {
     personal.links.length > 0;
   if (!has) return null;
   const grab =
-    "block w-fit cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-2 rounded-sm";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.85em] text-neutral-600">
       {personal.email && (

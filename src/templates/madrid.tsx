@@ -51,7 +51,7 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
           {design.photo.enabled && personal.photoUrl && (
             <div
               data-element-id="personal.photo"
-              className={`-mb-10 cursor-grab overflow-hidden transition-shadow hover:ring-2 hover:ring-white/60 hover:ring-offset-2 hover:ring-offset-transparent ${
+              className={`-mb-10 cursor-grab overflow-hidden ${
                 design.photo.shape === "square"
                   ? "h-24 w-24 rounded-md"
                   : design.photo.shape === "rounded"
@@ -78,7 +78,7 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.4em] font-extrabold leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-white/60 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="block w-fit cursor-text text-[2.4em] font-extrabold leading-[1.05] tracking-tight"
               style={elementStyle(data, "personal.name")}
             >
               {personal.fullName || "Your name"}
@@ -86,7 +86,7 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.18em] opacity-90 transition-shadow hover:ring-2 hover:ring-white/60 hover:ring-offset-2 hover:ring-offset-transparent"
+                className="mt-1 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.18em] opacity-90"
                 style={elementStyle(data, "personal.headline")}
               >
                 {personal.headline}
@@ -131,7 +131,7 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
               key={s.id}
               data-section-id={s.id}
               style={positionStyle(s)}
-              className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+              className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
             >
               <h2
                 className="mb-2 inline-block rounded-md px-3 py-1 text-[0.82em] font-bold uppercase tracking-[0.2em]"
@@ -168,7 +168,7 @@ function Chip({
   href?: string;
 }) {
   const baseClass =
-    "inline-block cursor-text rounded-full px-3 py-0.5 transition-shadow hover:ring-2 hover:ring-white/60 hover:ring-offset-2 hover:ring-offset-transparent";
+    "inline-block cursor-text rounded-full px-3 py-0.5";
   const baseStyle = {
     background: "rgba(255,255,255,0.16)",
     border: "1px solid rgba(255,255,255,0.45)",

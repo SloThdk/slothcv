@@ -98,7 +98,7 @@ export function MarinaTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.7em] font-extrabold leading-[1.0] tracking-[0.02em] uppercase transition-shadow hover:ring-2 hover:ring-white/40 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.7em] font-extrabold leading-[1.0] tracking-[0.02em] uppercase"
               style={{ color: "#ffffff", ...elementStyle(data, "personal.name") }}
             >
               {personal.fullName || "Your name"}
@@ -106,7 +106,7 @@ export function MarinaTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-2 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/40 hover:ring-offset-2"
+                className="mt-2 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.22em]"
                 style={{
                   color: "rgba(255,255,255,0.85)",
                   ...elementStyle(data, "personal.headline"),
@@ -241,7 +241,7 @@ function RailSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-200/40 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <RailHeading title={section.title} accent={d.accentColor} sectionId={section.id} data={data} />
       <SectionBody section={section} design={d} data={data} />
@@ -268,7 +268,7 @@ function Detail({
       </span>
       <span
         data-element-id={id}
-        className="block break-words cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-1"
+        className="block break-words cursor-text rounded-sm"
         style={elementStyle(data, id)}
       >
         {value}

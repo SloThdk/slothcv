@@ -31,6 +31,40 @@
 
 @custom-variant dark (&:is([data-theme="dark"] *), &:is(.dark *));
 
+/*
+ * MOTION TOKENS — single source of truth for every transition timing
+ * and easing curve in the editor + chrome. The two-band system
+ * matches Material 3 / Linear / Vercel-Sonner conventions:
+ *
+ *   - FAST (60-100 ms, ease-out): hover, focus, micro-feedback. Below
+ *     Nielsen's 100 ms "feels instant" threshold so the user never
+ *     waits, but the transition still registers as polished motion
+ *     instead of a hard pop.
+ *   - NORMAL (200-300 ms, decelerate): panel slide, modal open, view
+ *     transitions. Long enough to be noticed; the decelerate curve
+ *     makes the panel feel like it "settles" into place rather than
+ *     "stops dead".
+ *
+ * Easing: `--ease-out` is Material's standard-decelerate, used for
+ * most interaction feedback. `--ease-decelerate` is the harder
+ * smooth-out curve from the Vaul / Sonner author (Emil Kowalski) —
+ * panel slides specifically. `--ease-spring` adds a subtle overshoot
+ * for commit feedback (e.g. drag-end where a slight bounce reads as
+ * "the element landed").
+ *
+ * Usage in component CSS / style props: prefer `var(--motion-fast)`
+ * over hardcoded 100 ms so a future global feel-change is one edit.
+ */
+:root {
+  --motion-instant: 0ms;
+  --motion-fast: 100ms;
+  --motion-normal: 200ms;
+  --motion-slow: 300ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 :root,
 [data-theme="light"] {
   --color-bg: #fafaf9;
@@ -108,6 +142,43 @@ body {
   transition-property: background-color, color;
   transition-duration: 180ms;
   transition-timing-function: ease-out;
+}
+
+/*
+ * PREVIEW STAGE — declarative pointer/scroll behaviour.
+ *
+ *   - `touch-action: none` tells the browser the canvas owns every
+ *     pointer gesture inside it. Without this, the first 30-100 ms
+ *     of a touch / trackpad drag are spent by the browser deciding
+ *     "is this scroll or is this drag?" — the user perceives that
+ *     decision-window as the editor "feeling laggy on first input".
+ *     Pointer Events Level 3 spec — declarative beats every JS
+ *     `preventDefault()` workaround for both perf and clarity.
+ *   - `overscroll-behavior: contain` stops scroll events bubbling out
+ *     of the preview pane to the document body (no rubber-band lag,
+ *     no accidental browser navigation on horizontal swipe back).
+ *   - `scrollbar-gutter: stable` reserves the scrollbar's width even
+ *     when content fits — eliminates the layout shift that happens
+ *     when a CV grows past one page mid-edit.
+ */
+.preview-stage {
+  /* Drag tools own the gesture; the browser doesn't get a vote. */
+  touch-action: none;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* The page sheet itself is a self-contained rendering island. `contain:
+ * layout paint` means a paint or layout change inside the sheet (any
+ * element move, hover ring, text edit) cannot invalidate the surrounding
+ * editor chrome. The combination is cheap on modern compositors and
+ * unlocks per-frame compositing for drag without main-thread rerender.
+ *
+ * Avoid `contain: strict` here — it would also impose a `size`
+ * containment that breaks the dynamic page-fit calculation Preview
+ * does via ResizeObserver. `layout paint` is the safe sweet spot. */
+[data-pdf-page-content="true"] {
+  contain: layout paint;
 }
 
 /*

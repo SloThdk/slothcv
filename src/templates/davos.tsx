@@ -77,7 +77,7 @@ export function DavosTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.2em] leading-[1] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.2em] leading-[1] tracking-tight"
               style={{
                 color: INK,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -91,7 +91,7 @@ export function DavosTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1.5 block w-fit cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1.5 block w-fit cursor-text text-[0.78em] uppercase"
                 style={{
                   color: `${INK}88`,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -126,7 +126,7 @@ function DavosContactStack({ data }: { data: ResumeData }) {
       {personal.email && (
         <div
           data-element-id="personal.email"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={{ color: INK, ...elementStyle(data, "personal.email") }}
         >
           {personal.email}
@@ -135,7 +135,7 @@ function DavosContactStack({ data }: { data: ResumeData }) {
       {personal.phone && (
         <div
           data-element-id="personal.phone"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={{ color: INK, ...elementStyle(data, "personal.phone") }}
         >
           {personal.phone}
@@ -144,7 +144,7 @@ function DavosContactStack({ data }: { data: ResumeData }) {
       {personal.location && (
         <div
           data-element-id="personal.location"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={{
             color: `${INK}cc`,
             ...elementStyle(data, "personal.location"),
@@ -162,7 +162,7 @@ function DavosContactStack({ data }: { data: ResumeData }) {
             href={l.url.startsWith("http") ? l.url : `https://${l.url}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="block cursor-text rounded-sm underline-offset-2 transition-shadow hover:underline hover:ring-2 hover:ring-neutral-900/20"
+            className="block cursor-text rounded-sm underline-offset-2 hover:underline"
             style={{ color: INK, ...elementStyle(data, id) }}
           >
             {l.label || l.url}
@@ -187,12 +187,12 @@ function DavosSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-200/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* All-caps tracked title — the ONLY emphasis Davos allows. */}
       <h2
         data-element-id={titleId}
-        className="mb-3 inline-block cursor-text text-[0.7em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-3 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -224,7 +224,7 @@ function DavosBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.95em] leading-[1.6]"
           style={{
             color: INK,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -263,7 +263,7 @@ function DavosExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -346,7 +346,7 @@ function DavosBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             {/* Em-dash, not a glyph — quietest possible bullet. */}
@@ -377,7 +377,7 @@ function DavosFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -416,7 +416,7 @@ function DavosFallback({
             <li
               key={it.id}
               data-element-id={id}
-              className="flex cursor-grab justify-between gap-3 rounded-sm border-b transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="flex cursor-grab justify-between gap-3 rounded-sm border-b"
               style={{
                 borderColor: RULE,
                 paddingBottom: "0.25em",

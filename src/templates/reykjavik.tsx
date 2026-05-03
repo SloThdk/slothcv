@@ -55,11 +55,11 @@ export function ReykjavikTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
-        className="mb-6 cursor-pointer rounded-md p-1 -m-1 transition-colors hover:bg-neutral-100/60"
+        className="mb-6 cursor-pointer rounded-md p-1 -m-1 transition-colors"
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[2em] font-semibold leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="block w-fit cursor-text text-[2em] font-semibold leading-[1.05] tracking-tight"
           style={{
             fontFamily: `'Source Serif 4', 'Lora', serif`,
             ...elementStyle(data, "personal.name"),
@@ -70,7 +70,7 @@ export function ReykjavikTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[1.05em] italic text-neutral-700 transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[1.05em] italic text-neutral-700"
             style={elementStyle(data, "personal.headline")}
           >
             {personal.headline}
@@ -121,7 +121,7 @@ function Block({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className={`group relative cursor-pointer rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15 ${compact ? "mb-5 break-inside-avoid" : "break-inside-avoid"}`}
+      className={`group relative cursor-pointer rounded-md p-1 -m-1 ${compact ? "mb-5 break-inside-avoid" : "break-inside-avoid"}`}
     >
       <div
         className="mb-1 h-px w-12"

@@ -102,7 +102,7 @@ export function ScrubsTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
               style={{
                 color: INK,
                 fontFamily:
@@ -116,7 +116,7 @@ export function ScrubsTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-0.5 block w-fit cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-0.5 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: CYAN,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -154,7 +154,7 @@ function ScrubsContact({ data }: { data: ResumeData }) {
       {personal.email && (
         <div
           data-element-id="personal.email"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={elementStyle(data, "personal.email")}
         >
           {personal.email}
@@ -163,7 +163,7 @@ function ScrubsContact({ data }: { data: ResumeData }) {
       {personal.phone && (
         <div
           data-element-id="personal.phone"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={elementStyle(data, "personal.phone")}
         >
           {personal.phone}
@@ -172,7 +172,7 @@ function ScrubsContact({ data }: { data: ResumeData }) {
       {personal.location && (
         <div
           data-element-id="personal.location"
-          className="cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="cursor-text rounded-sm"
           style={{
             color: `${INK}99`,
             ...elementStyle(data, "personal.location"),
@@ -190,7 +190,7 @@ function ScrubsContact({ data }: { data: ResumeData }) {
             href={l.url.startsWith("http") ? l.url : `https://${l.url}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="block cursor-text rounded-sm underline-offset-2 transition-shadow hover:underline hover:ring-2 hover:ring-neutral-900/20"
+            className="block cursor-text rounded-sm underline-offset-2 hover:underline"
             style={{ color: CYAN, ...elementStyle(data, id) }}
           >
             {l.label || l.url}
@@ -215,7 +215,7 @@ function ScrubsSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-cyan-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <div className="mb-2 flex items-center gap-2">
         {/* Caduceus-flavored unicode glyph trio. Quiet, but reads "medical
@@ -229,7 +229,7 @@ function ScrubsSection({
         </span>
         <h2
           data-element-id={titleId}
-          className="inline-block cursor-text text-[0.95em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+          className="inline-block cursor-text text-[0.95em] uppercase"
           style={{
             color: CYAN,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -267,7 +267,7 @@ function ScrubsBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: INK,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -321,7 +321,7 @@ function ScrubsExperience({
           <div
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -394,7 +394,7 @@ function ScrubsEducation({
           <div
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -468,7 +468,7 @@ function ScrubsCertCards({
           <div
             key={c.id}
             data-element-id={id}
-            className="cursor-grab rounded-md p-2.5 text-[0.85em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-md p-2.5 text-[0.85em]"
             style={{
               border: `1px solid ${CYAN}55`,
               background: `${CYAN}05`,
@@ -541,7 +541,7 @@ function ScrubsPublications({
           <li
             key={p.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm"
             style={{
               color: INK,
               fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -608,7 +608,7 @@ function ScrubsBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span
@@ -638,7 +638,7 @@ function ScrubsFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -675,7 +675,7 @@ function ScrubsFallback({
             <li
               key={it.id}
               data-element-id={id}
-              className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="flex cursor-grab gap-2 rounded-sm"
               style={elementStyle(data, id)}
             >
               <span

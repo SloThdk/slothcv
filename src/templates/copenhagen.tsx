@@ -47,7 +47,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.6em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.6em] leading-[1.05] tracking-tight"
               style={{
                 color: design.textColor,
                 fontFamily: "var(--font-onest, 'Onest'), Inter, sans-serif",
@@ -60,7 +60,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-2 block w-fit cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-2 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
                   fontFamily: "var(--font-onest, 'Onest'), sans-serif",
@@ -103,11 +103,11 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
               key={s.id}
               data-section-id={s.id}
               style={positionStyle(s)}
-              className="group relative cursor-pointer rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/50 hover:ring-2 hover:ring-neutral-900/10"
+              className="group relative cursor-pointer rounded-md p-1 -m-1"
             >
               <h2
                 data-element-id={titleId}
-                className="mb-2 inline-block cursor-text text-[0.95em] lowercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mb-2 inline-block cursor-text text-[0.95em] lowercase"
                 style={{
                   color: design.textColor,
                   fontFamily: "var(--font-onest, 'Onest'), sans-serif",
@@ -138,7 +138,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
 function ContactStack({ data }: { data: ResumeData }) {
   const { personal, design } = data;
   const grab =
-    "block w-fit cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div
       className="mt-4 space-y-0.5 text-[0.85em]"

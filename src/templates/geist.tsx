@@ -64,7 +64,7 @@ export function GeistTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.4em] leading-[1.0] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.4em] leading-[1.0]"
               style={{
                 color: design.textColor,
                 fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
@@ -78,7 +78,7 @@ export function GeistTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[0.88em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[0.88em]"
                 style={{
                   color: `${design.textColor}88`,
                   fontFamily:
@@ -149,7 +149,7 @@ function GeistContact({ data }: { data: ResumeData }) {
   // broken. Don't re-apply elementStyle on the inner anchor / span:
   // that would double-translate the offset.
   const grab =
-    "inline-flex items-baseline gap-1 cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "inline-flex items-baseline gap-1 cursor-text rounded-sm";
   return (
     <div
       className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.82em]"
@@ -212,11 +212,11 @@ function GeistSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-900/[0.03] hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-3 inline-block cursor-text text-[0.78em] lowercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+        className="mb-3 inline-block cursor-text text-[0.78em] lowercase"
         style={{
           color: design.textColor,
           fontFamily:
@@ -250,7 +250,7 @@ function GeistBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5]"
           style={{
             color: design.textColor,
             fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
@@ -294,7 +294,7 @@ function GeistExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="grid grid-cols-[1fr_auto] items-baseline gap-3">
@@ -390,7 +390,7 @@ function GeistProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="grid grid-cols-[1fr_auto] items-baseline gap-3">
@@ -497,7 +497,7 @@ function GeistEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <div>
@@ -582,7 +582,7 @@ function GeistSkills({
                 <span
                   key={s.id}
                   data-element-id={id}
-                  className="cursor-grab rounded-md px-2 py-0.5 text-[0.82em] transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+                  className="cursor-grab rounded-md px-2 py-0.5 text-[0.82em]"
                   style={{
                     background: `${design.textColor}06`,
                     border: `1px solid ${design.textColor}14`,
@@ -621,7 +621,7 @@ function GeistCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -666,7 +666,7 @@ function GeistFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: design.textColor, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -719,7 +719,7 @@ function GeistBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

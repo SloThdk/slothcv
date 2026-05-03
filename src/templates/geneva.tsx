@@ -78,7 +78,7 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[2.5em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="block w-fit cursor-text text-[2.5em] leading-[1.05] tracking-tight"
           style={{
             color: NAVY,
             fontFamily:
@@ -92,7 +92,7 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[0.92em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[0.92em] uppercase"
             style={{
               color: `${design.textColor}99`,
               fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -159,7 +159,7 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
 function GenevaContact({ data }: { data: ResumeData }) {
   const { personal, design } = data;
   const grab =
-    "block w-fit cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-1";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div>
       <h3
@@ -305,11 +305,11 @@ function GenevaMainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[0.85em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: NAVY,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -348,11 +348,11 @@ function GenevaSidebarSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/70 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-1"
+        className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: NAVY,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",

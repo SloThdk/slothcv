@@ -45,7 +45,7 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[2.2em] uppercase leading-[1.1] transition-shadow hover:ring-2 hover:ring-black/40 hover:ring-offset-2"
+          className="block w-fit cursor-text text-[2.2em] uppercase leading-[1.1]"
           style={{
             color: "#000",
             fontFamily: "var(--font-public-sans, 'Public Sans'), Inter, sans-serif",
@@ -59,7 +59,7 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[0.92em] uppercase transition-shadow hover:ring-2 hover:ring-black/40 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[0.92em] uppercase"
             style={{
               color: "#000",
               fontFamily: "var(--font-public-sans, 'Public Sans'), sans-serif",
@@ -83,11 +83,11 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
               key={s.id}
               data-section-id={s.id}
               style={positionStyle(s)}
-              className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-black/20"
+              className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
             >
               <h2
                 data-element-id={titleId}
-                className="mb-1.5 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-black/30 hover:ring-offset-2"
+                className="mb-1.5 inline-block cursor-text text-[0.78em] uppercase"
                 style={{
                   color: "#000",
                   fontFamily: "var(--font-public-sans, 'Public Sans'), sans-serif",
@@ -126,7 +126,7 @@ function ContactPipe({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-black/30 hover:ring-offset-2 rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <p className="mt-2 text-[0.85em]" style={{ color: "#000" }}>
       {items.map((p, i) => (

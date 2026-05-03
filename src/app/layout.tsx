@@ -15,6 +15,7 @@ import { ALL_FONT_VARIABLE_CLASSES } from "@/lib/fonts/registry";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
+import { BackToTop } from "@/components/back-to-top";
 import { RouteTransition } from "@/components/motion/route-transition";
 import "./globals.css";
 
@@ -75,6 +76,11 @@ export default function RootLayout({
                   </main>
                   <SiteFooter />
                   <CookieBanner />
+                  {/* Back-to-top floating button. Hidden by default;
+                      appears only after scrolling past the threshold,
+                      so short pages (login, account, editor — where
+                      window scroll is 0) never see it. */}
+                  <BackToTop />
                   <Toaster richColors position="top-center" />
                 </PromptProvider>
               </ConfirmProvider>

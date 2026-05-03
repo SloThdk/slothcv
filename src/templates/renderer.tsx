@@ -133,6 +133,13 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateComponentProps>> = {
   aarhus: lazyTemplate(() => import("./aarhus"), "AarhusTemplate"),
   roskilde: lazyTemplate(() => import("./roskilde"), "RoskildeTemplate"),
   odense: lazyTemplate(() => import("./odense"), "OdenseTemplate"),
+  // Industri-udvidelse: ufaglærte / faglærte / sundhed.
+  vejle: lazyTemplate(() => import("./vejle"), "VejleTemplate"),
+  aalborg: lazyTemplate(() => import("./aalborg"), "AalborgTemplate"),
+  frederiksberg: lazyTemplate(
+    () => import("./frederiksberg"),
+    "FrederiksbergTemplate",
+  ),
 };
 
 interface RendererProps {

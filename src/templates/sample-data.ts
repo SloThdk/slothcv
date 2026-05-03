@@ -188,17 +188,28 @@ export function sampleResumeData(template: TemplateId): ResumeData {
     case "marina":
       return overrideTemplate(madridPersona(), template);
     // ── Danish CV pool (2026-05) ─────────────────────────────────────
-    // All three Danish templates share a single Danish persona (Mette
-    // Jensen, marketing/comms, København). The layouts differ between
-    // the three templates so the gallery still reads as visually
-    // distinct, but the CONTENT is consistently Danish — section names,
-    // company names, education entries, hobbies, the lot. This signals
-    // "these templates are for Danish CVs" without spending three
-    // persona-content slots on near-duplicate data.
+    // First trio — formel/tech/kreativ — shares Mette Jensen
+    // (marketing/comms, København). One persona across three templates
+    // because the visual layouts differ enough that gallery thumbnails
+    // still read as distinct, and Mette's content fits all three
+    // industry pitches.
     case "aarhus":
     case "roskilde":
     case "odense":
       return overrideTemplate(danishPersona(), template);
+    // ── Industri-udvidelse ─────────────────────────────────────────
+    // Each new template gets its own industry-specific Danish persona
+    // because the CONTENT differs meaningfully — Kasper's lager-CV
+    // doesn't translate to Lars' el-CV doesn't translate to Anne's
+    // sygepleje-CV. Dropping all three on Mette would lose the "this
+    // template is for X industry" signal that makes the gallery
+    // useful at first glance.
+    case "vejle":
+      return overrideTemplate(danishHourlyPersona(), template);
+    case "aalborg":
+      return overrideTemplate(danishTradePersona(), template);
+    case "frederiksberg":
+      return overrideTemplate(danishCarePersona(), template);
   }
 }
 
@@ -463,6 +474,376 @@ function danishPersona(): ResumeData {
           { name: "Tysk", proficiency: "B1", level: 2 },
         ]),
         title: "Sprog",
+      },
+    ],
+  };
+}
+
+/**
+ * Kasper Larsen — ufaglært dansk persona for Vejle templatet.
+ *
+ * Dækker hourly / service-job markedet: lager, butik, kantine,
+ * rengøring, transport. CV'et er bevidst kort (1-side fokus), bullet-
+ * orienteret snarere end narrativt, og fremhæver kørekort + sproglige
+ * kompetencer (vigtige signaler for danske arbejdsgivere i denne
+ * sektor — især for ny-tilflyttere). Faglig profil holdes på 1-2 sætninger.
+ *
+ * Hobbies inkluderet — danske rekrutterer i hourly-segmentet bruger
+ * "Fritidsinteresser" som personality-signal lige så meget som
+ * faglige bidder.
+ */
+function danishHourlyPersona(): ResumeData {
+  const shell = buildShell("vejle", {
+    accentColor: "#D97706",
+    layout: "single",
+    headerStyle: "titlecase",
+    photo: { enabled: true, shape: "square", position: "top-left" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Kasper Larsen",
+      headline: "Lagerassistent · Søger fast stilling",
+      email: "kasper@example.com",
+      phone: "+45 30 12 45 67",
+      location: "Vejle, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "kl1",
+          label: "Kørekort B + Truckcertifikat",
+          url: "https://example.com/kasper-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Pålidelig og fysisk stærk lagerassistent med 4 års erfaring fra detail- og engroslager. Møder altid til tiden, arbejder selvstændigt og i team, og har erfaring med truckkørsel og scanner-systemer. Søger fast stilling i Vejle-området.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Lagerassistent",
+            company: "Bilka Vejle",
+            location: "Vejle",
+            start: "2023-06",
+            end: "",
+            current: true,
+            bullets: [
+              "Modtager og kontrollerer ca. 40 paller dagligt; ingen reklamationer på min vagt i 18 måneder.",
+              "Kører gaffeltruck (B-certifikat) og betjener håndscanner.",
+              "Oplærer nye sæsonmedarbejdere i lagerprocedurer og sikkerhed.",
+            ],
+          },
+          {
+            role: "Butiksmedhjælper",
+            company: "Føtex Vejle Nord",
+            location: "Vejle",
+            start: "2020-02",
+            end: "2023-05",
+            current: false,
+            bullets: [
+              "Påfyldte varer, holdt orden i frugt- og grøntafdelingen, betjente kunder i kasse.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Vejle Tekniske Skole",
+          degree: "Grundforløb",
+          field: "Transport og logistik",
+          location: "Vejle",
+          start: "2019",
+          end: "2020",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Truckkørsel (B-certifikat)",
+            "Håndscanner (SAP / WMS)",
+            "Pakke- og forsendelsesrutiner",
+            "Kundebetjening",
+            "Fysisk arbejde",
+          ],
+          "Praktiske",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "B1", level: 3 },
+        ]),
+        title: "Sprog",
+      },
+      {
+        ...hobbies([
+          "Fodbold (Vejle Boldklub støttemedlem)",
+          "Cykelferier i Sønderjylland",
+          "Frivillig brandmand i Bredsten",
+        ]),
+        title: "Fritidsinteresser",
+      },
+    ],
+  };
+}
+
+/**
+ * Lars Andersen — faglært dansk persona for Aalborg templatet.
+ *
+ * Industriel-elektriker med svendebrev. Det danske faglærte CV har
+ * to bærende elementer ud over erhvervserfaringen: SVENDEBREV
+ * (uddannelse + dato) og CERTIFICERINGER (autorisationer, AT-kurser,
+ * sikkerhedsbeviser). Aalborg-templatet er bygget rundt om begge —
+ * en sidebar dedikeret til certifikater og kørekort-kategorier.
+ *
+ * Kørekort B + C er surfaceret som en "link" på personal — nemmest
+ * måde at få det med uden schema-ændring. Brugeren kan slette og
+ * tilføje selv.
+ */
+function danishTradePersona(): ResumeData {
+  const shell = buildShell("aalborg", {
+    accentColor: "#334155",
+    layout: "sidebar-right",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "square", position: "top-right" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Lars Andersen",
+      headline: "Industri-elektriker · Svendebrev 2018",
+      email: "lars@example.com",
+      phone: "+45 22 84 19 33",
+      location: "Aalborg, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "la1",
+          label: "Kørekort B + C",
+          url: "https://example.com/lars-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren industri-elektriker med 7 års praksis i levnedsmiddel- og energisektoren. Stærk i fejlfinding på PLC-styringer, frekvensomformere og industriel automation. Højt sikkerhedsfokus, vant til at arbejde under produktion uden driftstop.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Industri-elektriker",
+            company: "Arla Foods, Aalborg Mejeri",
+            location: "Aalborg",
+            start: "2021-04",
+            end: "",
+            current: true,
+            bullets: [
+              "Vagtplan på 24/7 servicehold; halverede gennemsnitlig fejlfindingstid via systematisk loggning.",
+              "Ombyggede pakkelinje 3 til ny PLC (Siemens S7-1500) uden produktionsstop.",
+              "Underviser nye lærlinge i el-sikkerhedsregler og lockout-tagout.",
+            ],
+          },
+          {
+            role: "Servicetekniker",
+            company: "El-Centrum Nordjylland",
+            location: "Aalborg",
+            start: "2018-08",
+            end: "2021-03",
+            current: false,
+            bullets: [
+              "Servicebesøg hos industri- og landbrugskunder. CVR-tilkald i hele Region Nordjylland.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Tech College Aalborg",
+          degree: "Svendebrev",
+          field: "Industri-elektriker",
+          location: "Aalborg",
+          start: "2014",
+          end: "2018",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...certifications([
+          { name: "El-autorisation (delautorisation drift)", issuer: "Sikkerhedsstyrelsen", date: "2019-03" },
+          { name: "AT-kursus: Arbejde med spænding under 1000V", issuer: "Arbejdstilsynet", date: "2020-09" },
+          { name: "Førstehjælp (12 t)", issuer: "Røde Kors", date: "2024-06" },
+          { name: "Stillads §17 / op til 9m", issuer: "BAR", date: "2022-04" },
+        ]),
+        title: "Certificeringer",
+      },
+      {
+        ...skills(
+          [
+            "PLC: Siemens S7, Beckhoff",
+            "SCADA: WinCC, Citect",
+            "Frekvensomformere (Danfoss, ABB)",
+            "Hydraulik og pneumatik",
+            "Lockout-tagout",
+            "Termografering",
+          ],
+          "Tekniske",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "B2", level: 3 },
+        ]),
+        title: "Sprog",
+      },
+    ],
+  };
+}
+
+/**
+ * Anne Sørensen — sundhedsfaglig dansk persona for Frederiksberg
+ * templatet.
+ *
+ * Sygeplejerske med autorisation og specialpraksis indenfor akut og
+ * intensiv. Det centrale i et dansk sundheds-CV er AUTORISATION
+ * (Styrelsen for Patientsikkerhed-nummer + dato), klinisk specifik
+ * erfaring, og efteruddannelse. Templatet placerer autorisationer
+ * + sprog i sidebar og narrative erhvervserfaring i hovedkolonnen.
+ *
+ * Hobbies inkluderet — sundhedsroller værdsætter "well-rounded"
+ * medarbejdere, hobbier signalerer self-care og bæredygtighed.
+ */
+function danishCarePersona(): ResumeData {
+  const shell = buildShell("frederiksberg", {
+    accentColor: "#0D9488",
+    layout: "sidebar-left",
+    headerStyle: "titlecase",
+    photo: { enabled: true, shape: "circle", position: "sidebar" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Anne Sørensen",
+      headline: "Sygeplejerske · Autorisation 2017",
+      email: "anne@example.com",
+      phone: "+45 26 71 03 22",
+      location: "Frederiksberg, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "as1",
+          label: "Autorisation: 0DTGN",
+          url: "https://example.com/anne-cv",
+        },
+        {
+          id: "as2",
+          label: "Kørekort B",
+          url: "https://example.com/anne-koreekort",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren sygeplejerske med 7 års klinisk praksis indenfor akutmodtagelse og intensiv. Stærk i triage, akut respons og tværfagligt samarbejde. Vant til travle vagter og høj patientstrømning. Søger stilling med plads til specialisering.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Sygeplejerske, Akutmodtagelsen",
+            company: "Frederiksberg Hospital",
+            location: "Frederiksberg",
+            start: "2022-09",
+            end: "",
+            current: true,
+            bullets: [
+              "Triage og akut respons på medicinske og kirurgiske patienter; ca. 40 patienter per vagt.",
+              "Kontaktperson for praktikanter fra Metropol; mentorerede 6 SOSU-elever på rotation.",
+              "Med i arbejdsgruppen for nyt elektronisk triagesystem (Manchester).",
+            ],
+          },
+          {
+            role: "Sygeplejerske, Intensiv",
+            company: "Rigshospitalet",
+            location: "København",
+            start: "2017-08",
+            end: "2022-08",
+            current: false,
+            bullets: [
+              "Pleje af kritisk syge patienter på 8-sengs intensivafsnit.",
+              "Respiratorbehandling, sedation, hæmodynamisk monitorering.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Professionshøjskolen Metropol",
+          degree: "Professionsbachelor",
+          field: "Sygepleje",
+          location: "København",
+          start: "2013",
+          end: "2017",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...certifications([
+          { name: "Autorisation som sygeplejerske", issuer: "Styrelsen for Patientsikkerhed", date: "2017-07" },
+          { name: "Specialuddannelse i intensiv sygepleje", issuer: "Region Hovedstaden", date: "2020-05" },
+          { name: "Avanceret livreddende førstehjælp (ALS)", issuer: "Dansk Råd for Genoplivning", date: "2024-03" },
+          { name: "Triage-instruktør (Manchester)", issuer: "Frederiksberg Hospital", date: "2023-11" },
+        ]),
+        title: "Autorisationer & efteruddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Akut triage (Manchester-system)",
+            "Respiratorbehandling",
+            "Hæmodynamisk monitorering",
+            "Tværfagligt samarbejde",
+            "Klinisk vejledning",
+            "Sundhedsplatformen (Epic)",
+          ],
+          "Kliniske",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "C1", level: 4 },
+          { name: "Svensk", proficiency: "B2", level: 3 },
+        ]),
+        title: "Sprog",
+      },
+      {
+        ...hobbies([
+          "Løb (halv-marathon under 2 timer)",
+          "Frivillig hos Falck (førstehjælp ved events)",
+          "Læser krimi og lægefaglig nonfiction",
+        ]),
+        title: "Fritidsinteresser",
       },
     ],
   };
@@ -1276,6 +1657,30 @@ function languages(
       name: l.name,
       proficiency: l.proficiency,
       level: l.level,
+      visible: true,
+    })),
+  };
+}
+
+/**
+ * Hobbies helper — used by Danish personas where "Fritidsinteresser"
+ * is a culturally-expected section (signals integration & personality).
+ * Each item is a comma-separated single line; the lightest possible
+ * representation matching the schema in `types/resume.ts`.
+ *
+ * Existing English personas didn't include hobbies because the Anglo
+ * CV norm avoids them (reads as filler), so this helper was added late.
+ * Available to any persona that wants it.
+ */
+function hobbies(items: string[]): Section {
+  return {
+    id: "sec-hob",
+    type: "hobbies",
+    title: "Hobbies",
+    visible: true,
+    items: items.map((text, i) => ({
+      id: `hob-${i}`,
+      text,
       visible: true,
     })),
   };

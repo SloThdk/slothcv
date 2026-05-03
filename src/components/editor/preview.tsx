@@ -1035,12 +1035,20 @@ export function Preview() {
           nudgeTargetRef.current = null;
         }
         if (drag.kind === "background") {
-          // Click on empty paper deselects custom elements only.
-          // The editor page listens for selection changes and restores
-          // whatever tab the user was on BEFORE they selected — no
-          // surprise jump to Design tab. (Earlier behavior auto-opened
-          // Design here, which kicked users out of their current
-          // workflow every time they clicked off a shape.)
+          // Click on empty paper:
+          //   1. Deselects any custom element (existing behaviour).
+          //   2. Jumps to Design tab and scrolls the Page-background
+          //      preset row into view, highlighted briefly. Philip's
+          //      UX call (2026-05-03): the page bg is the most-edited
+          //      design field, so a click on the canvas is the
+          //      fast-path to change it without navigating menus.
+          // The editor page listens for `slothcv:open-design-tab` to
+          // switch the active tab; design-tab.tsx listens to scroll +
+          // highlight. We dispatch BEFORE clearing selection so the
+          // editor page's deselect-restore effect (which would
+          // otherwise restore the prior tab) is bypassed by the
+          // listener's explicit nav-clear.
+          window.dispatchEvent(new CustomEvent("slothcv:open-design-tab"));
           selectElement(null);
         } else if (drag.kind === "custom") {
           // Selection already set on mousedown; nothing else to do —

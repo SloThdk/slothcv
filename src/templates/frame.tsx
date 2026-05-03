@@ -81,8 +81,52 @@ export function TemplateFrame({
     style.minHeight = "100%";
   }
 
+  // Hover affordance on the page sheet — a subtle inset outline that
+  // appears only when the user mouses over the live editor page so they
+  // know the empty background area is clickable (it routes them to the
+  // Design tab + Page-bg picker, see preview.tsx). Without this the
+  // page-bg click target was discoverable only by accident — every
+  // OTHER element in the editor has a visible hover state, the page
+  // itself was the one that didn't.
+  //
+  // Implementation notes:
+  //   - Inset outline (`outline-offset: -8px`) means the ring renders
+  //     INSIDE the page edge, not around it — keeps it from overlapping
+  //     the panel chrome / scrollbar.
+  //   - Color uses `color-mix` against the active accent at 30% opacity
+  //     so it's visible on every template palette (light / dark / tinted)
+  //     without ever shouting. Falls back to a soft slate tint on the
+  //     ~0.5% of browsers that don't support color-mix yet.
+  //   - Skipped on thumbnails (skipOverlay=true) — those mount inside
+  //     gallery cards which already own their own hover state, and a
+  //     second outline would conflict with the card's ring.
+  //   - Inline <style> co-locates the rule with the consumer so
+  //     globals.css stays uncluttered. Same pattern as the bg-flash
+  //     keyframe on DesignTab.
+  const hoverable = !skipOverlay;
   return (
-    <div className="relative overflow-hidden break-words" style={style}>
+    <div
+      className={`relative overflow-hidden break-words ${hoverable ? "slothcv-page-hover" : ""}`}
+      style={style}
+    >
+      {hoverable && (
+        <style>{`
+          .slothcv-page-hover {
+            outline: 1px solid transparent;
+            outline-offset: -8px;
+            transition: outline-color 140ms ease-out;
+          }
+          .slothcv-page-hover:hover {
+            outline-color: color-mix(in srgb, var(--color-accent, #2563eb) 30%, transparent);
+          }
+          /* Suppress while a drag is active — the dragging cursor + the
+             dragged element's ring already communicate state, and the
+             page-edge outline becomes visual noise. */
+          body.slothcv-dragging .slothcv-page-hover:hover {
+            outline-color: transparent;
+          }
+        `}</style>
+      )}
       {children}
       <Watermark design={design} data={data} />
       {!skipOverlay && <ToolshelfOverlay data={data} />}

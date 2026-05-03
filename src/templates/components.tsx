@@ -379,8 +379,21 @@ export function ExperienceBody({
   const { t } = useLanguage();
   if (section.items.length === 0)
     return <Placeholder text="No experience yet." />;
+  // Body-level drag wrapper. Lets the user move the WHOLE list of
+  // experience items as one block (without the section title).
+  // Item-level data-element-ids inside still win on direct hits, so
+  // dragging a specific role / company still moves only that item.
+  // Empty space within the wrapper (gaps between items, end-of-body
+  // padding) drags the body block. Pattern repeated across every
+  // multi-item Body in this file — see CertificationsBody / AwardsBody
+  // / etc. below for the same wrapper.
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-3">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-3`}
+      style={elementStyle(data, bodyId)}
+    >
       {section.items
         .filter((i) => i.visible)
         .map((it) => {
@@ -456,8 +469,13 @@ export function EducationBody({
   const { t } = useLanguage();
   if (section.items.length === 0)
     return <Placeholder text="No education yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-3">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-3`}
+      style={elementStyle(data, bodyId)}
+    >
       {section.items
         .filter((i) => i.visible)
         .map((it) => {
@@ -553,8 +571,13 @@ export function SkillsBody({
     groups.set(key, arr);
   }
 
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-2.5">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-2.5`}
+      style={elementStyle(data, bodyId)}
+    >
       {[...groups.entries()].map(([group, list]) => {
         // Group label gets its own element-id so the user can double-click
         // "TECH" / "Soft skills" / etc. and inline-edit it. Editing
@@ -708,8 +731,13 @@ export function LanguagesBody({
 }: SectionProps<LanguagesSection>) {
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No languages yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-1.5">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-1.5`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((l) => {
         const id = eid.item(section.id, l.id);
         return (
@@ -781,8 +809,13 @@ export function ProjectsBody({
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No projects yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-3">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-3`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((it) => {
         const id = eid.item(section.id, it.id);
         return (
@@ -867,8 +900,13 @@ export function CertificationsBody({
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
     return <Placeholder text="No certifications yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-1.5">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-1.5`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((c) => {
         const id = eid.item(section.id, c.id);
         return (
@@ -951,8 +989,13 @@ export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No awards yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-2">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-2`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((a) => {
         const id = eid.item(section.id, a.id);
         return (
@@ -1014,8 +1057,13 @@ export function PublicationsBody({
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No publications yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-2 text-[0.95em]">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-2 text-[0.95em]`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((p) => {
         const id = eid.item(section.id, p.id);
         return (
@@ -1091,8 +1139,13 @@ export function VolunteerBody({
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
     return <Placeholder text="No volunteer experience yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-3">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-3`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((it) => {
         const id = eid.item(section.id, it.id);
         return (
@@ -1157,8 +1210,13 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No talks yet." />;
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-1.5 text-[0.95em]">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-1.5 text-[0.95em]`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((talk) => {
         const id = eid.item(section.id, talk.id);
         return (
@@ -1258,8 +1316,17 @@ export function ReferencesBody({
   }
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return <Placeholder text="No references yet." />;
+  // Note: this is the MULTI-item branch. The onRequest branch above
+  // already has its own body-id on the single <p>; both paths share
+  // the same `section.<sid>.body` slot in elementOverrides so toggling
+  // onRequest on/off keeps any saved drag offset in place.
+  const bodyId = `section.${section.id}.body`;
   return (
-    <div className="space-y-2">
+    <div
+      data-element-id={bodyId}
+      className={`${dragClass} space-y-2`}
+      style={elementStyle(data, bodyId)}
+    >
       {items.map((r) => {
         const id = eid.item(section.id, r.id);
         return (

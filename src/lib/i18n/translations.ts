@@ -101,6 +101,14 @@ export const TRANSLATIONS = {
   },
   "templates.filter.daBadge": { en: "DK", da: "DK" },
 
+  // ─── Back-to-top button ────────────────────────────────────────────
+  // Floating bottom-right button that appears after scrolling and
+  // smooth-scrolls back to the top. Surfaces on every page where the
+  // window scroll is non-trivial (landing, /new, /privacy, /terms).
+  // Hidden on editor + signup/login because window.scrollY is 0
+  // there (the panes scroll, the page doesn't).
+  "common.backToTop": { en: "Back to top", da: "Tilbage til toppen" },
+
   // ─── /new — template-picker landing for "+ New CV" ────────────────
   // Shown when a signed-in user clicks "+ New CV" from the dashboard.
   // Lets them browse the full gallery before any DB row is created;

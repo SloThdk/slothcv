@@ -24,6 +24,13 @@ export interface TemplateMeta {
   thumbGradient: string;
   /** Hint colors for the SVG mock thumbnail. */
   swatch: { primary: string; bg: string };
+  /** Language pool for the gallery filter. `"da"` marks templates whose
+   *  section names + personal-info block follow Danish CV conventions
+   *  (Erhvervserfaring / Uddannelse / Sprog / Kørekort / etc.). Absence
+   *  of the field means English-pool — keeps the existing 47 entries
+   *  untouched. The filter UI surfaces this as "Alle / English / Dansk
+   *  CV" pill-tabs above the gallery. */
+  language?: "en" | "da";
 }
 
 export const TEMPLATES: TemplateMeta[] = [
@@ -373,6 +380,40 @@ export const TEMPLATES: TemplateMeta[] = [
       "Dark teal header with photo + soft radial highlight, tinted-gray sidebar carrying contact + skills, white narrative column.",
     thumbGradient: "from-teal-900 to-cyan-100",
     swatch: { primary: "#0f766e", bg: "#ffffff" },
+  },
+  // ── Danish CV pool ─────────────────────────────────────────────────
+  // Three templates following Danish hiring conventions per Scout's
+  // research (research/danish-cv-templates.md). Section names render
+  // in Danish, the personal-info block carries Fødselsdato / Civilstatus
+  // / Nationalitet / Kørekort surfaces via Personal section labels,
+  // photo policy spans the active norm split (ON / OFF / toggleable),
+  // and the gallery filter surfaces these as "Dansk CV" pills.
+  {
+    id: "aarhus",
+    name: "Aarhus",
+    blurb:
+      "Klassisk dansk CV. Sidebjælke med foto, fuld personalia-blok, navy + creme. Til offentlig sektor, finans, jura, SMV.",
+    thumbGradient: "from-slate-50 to-blue-50",
+    swatch: { primary: "#1F3A5F", bg: "#F4F1EC" },
+    language: "da",
+  },
+  {
+    id: "roskilde",
+    name: "Roskilde",
+    blurb:
+      "Moderne minimal dansk CV. Enkelt-spalte, ingen foto, ATS-venlig. Til tech, startup, store internationale arbejdsgivere i København.",
+    thumbGradient: "from-neutral-50 to-stone-100",
+    swatch: { primary: "#0A0A0A", bg: "#FFFFFF" },
+    language: "da",
+  },
+  {
+    id: "odense",
+    name: "Odense",
+    blurb:
+      "Skandinavisk hybrid. Header-bånd med valgfrit foto + 60/40 to-spalte. Salviegrøn accent på cremepapir. Til marketing, kommunikation, kreative roller.",
+    thumbGradient: "from-stone-50 to-emerald-50",
+    swatch: { primary: "#7C9082", bg: "#FAFAF7" },
+    language: "da",
   },
 ];
 

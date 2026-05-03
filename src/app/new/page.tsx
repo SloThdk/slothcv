@@ -36,9 +36,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -46,6 +46,12 @@ import { AuthGate } from "@/components/auth-gate";
 import { Button } from "@/components/ui/button";
 import { TEMPLATES, TEMPLATES_BY_ID } from "@/templates/registry";
 import { TemplatePreview } from "@/components/editor/template-preview";
+import {
+  DkBadge,
+  TemplateFilterTabs,
+  filterTemplates,
+  type TemplateRegion,
+} from "@/components/templates/template-filter";
 import {
   createResume,
   listResumes,
@@ -56,9 +62,61 @@ import { translateError } from "@/lib/translatable-error";
 import { EASE, staggerContainer, staggerItem } from "@/lib/motion";
 import type { TemplateId } from "@/types/resume";
 
+/** Pull the initial region from `?lang=` so a fresh visit / refresh
+ *  remembers what the user picked last time. Anything outside the
+ *  three valid values falls back to "all" so we don't end up with a
+ *  ghost selection. Pure helper — exported only for testing. */
+function regionFromSearch(value: string | null): TemplateRegion {
+  if (value === "da" || value === "en") return value;
+  return "all";
+}
+
 function NewCvPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
+
+  // Filter region — synced to `?lang=da|en` so the choice survives a
+  // refresh / back-button. Initialised from the URL on mount; updates
+  // push a `router.replace` so the URL stays the source of truth and
+  // the user can bookmark / share `/new?lang=da` to land directly on
+  // the Danish pool.
+  const [region, setRegion] = useState<TemplateRegion>(() =>
+    regionFromSearch(searchParams.get("lang")),
+  );
+  // Keep state in sync if the URL changes externally (e.g. back/forward
+  // navigation). Without this, hitting Back after switching pills
+  // would update the URL but leave the pill out of sync.
+  useEffect(() => {
+    const next = regionFromSearch(searchParams.get("lang"));
+    setRegion(next);
+    // searchParams identity changes per render in Next 15+; only react
+    // to the actual query value via the get() output.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("lang")]);
+
+  // Counts shown in the pills — `Alle (50)`, `English (47)`, `Dansk CV (3)`.
+  // Memoised on the static TEMPLATES list so we only walk it once.
+  const counts = useMemo(() => {
+    const da = TEMPLATES.filter((tpl) => tpl.language === "da").length;
+    return { all: TEMPLATES.length, da, en: TEMPLATES.length - da };
+  }, []);
+  const visibleTemplates = useMemo(
+    () => filterTemplates(TEMPLATES, region),
+    [region],
+  );
+
+  function onRegionChange(next: TemplateRegion) {
+    setRegion(next);
+    // Push the new region into the URL — `?lang=da` for Danish, drop
+    // the param entirely for "all" so the canonical URL stays clean.
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "all") params.delete("lang");
+    else params.set("lang", next);
+    const qs = params.toString();
+    router.replace(qs ? `/new?${qs}` : "/new");
+  }
+
   // The id of the template currently being created. Truthy = a card
   // has been clicked, async createResume() is in flight; we render a
   // full-screen "Creating your <name>…" splash and lock the gallery
@@ -169,6 +227,27 @@ function NewCvPage() {
         </div>
       )}
 
+      {/* Region filter — Alle / English / Dansk CV. Above the gallery
+          so users see the option before scrolling, sticky on the page
+          flow (no fixed positioning — that would fight mobile). */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <TemplateFilterTabs
+          active={region}
+          onChange={onRegionChange}
+          counts={counts}
+        />
+      </div>
+
+      {/* Empty-filter fallback — if a future version of the registry
+          drops the Danish pool to zero this becomes visible; today
+          there's always at least one template per filter so this
+          path is dormant. Cheaper than handling it inside the grid. */}
+      {visibleTemplates.length === 0 && (
+        <p className="mt-12 text-center text-sm text-muted">
+          {t("templates.filter.empty")}
+        </p>
+      )}
+
       {/* Gallery cascade — same stagger shape as the landing page so
           there's a single "this is how SlothCV reveals options"
           motion language. 30 ms per card means ~30 templates finish
@@ -183,7 +262,7 @@ function NewCvPage() {
         // thumbnail without horizontal overflow on mobile.
         className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
       >
-        {TEMPLATES.map((tpl) => (
+        {visibleTemplates.map((tpl) => (
           <motion.div
             key={tpl.id}
             variants={staggerItem}
@@ -209,8 +288,9 @@ function NewCvPage() {
                   : "cursor-pointer hover:border-[color:var(--color-border-strong)] hover:shadow-lg"
               }`}
             >
-              <div className="pointer-events-none border-b border-[color:var(--color-border)]">
+              <div className="pointer-events-none relative border-b border-[color:var(--color-border)]">
                 <TemplatePreview id={tpl.id} />
+                {tpl.language === "da" && <DkBadge />}
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-baseline justify-between gap-3">
@@ -256,9 +336,16 @@ function NewCvPage() {
 }
 
 export default function NewCvPageWrapper() {
+  // useSearchParams() in NewCvPage needs a Suspense boundary in static
+  // export builds — Next.js fails the build otherwise with "missing
+  // suspense boundary with useSearchParams". The fallback is just an
+  // empty fragment because AuthGate already shows its own gating UI
+  // until auth resolves; rendering a spinner here would double-flash.
   return (
     <AuthGate>
-      <NewCvPage />
+      <Suspense fallback={null}>
+        <NewCvPage />
+      </Suspense>
     </AuthGate>
   );
 }

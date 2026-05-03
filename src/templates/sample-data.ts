@@ -187,6 +187,18 @@ export function sampleResumeData(template: TemplateId): ResumeData {
       return overrideTemplate(berlinPersona(), template);
     case "marina":
       return overrideTemplate(madridPersona(), template);
+    // ── Danish CV pool (2026-05) ─────────────────────────────────────
+    // All three Danish templates share a single Danish persona (Mette
+    // Jensen, marketing/comms, København). The layouts differ between
+    // the three templates so the gallery still reads as visually
+    // distinct, but the CONTENT is consistently Danish — section names,
+    // company names, education entries, hobbies, the lot. This signals
+    // "these templates are for Danish CVs" without spending three
+    // persona-content slots on near-duplicate data.
+    case "aarhus":
+    case "roskilde":
+    case "odense":
+      return overrideTemplate(danishPersona(), template);
   }
 }
 
@@ -325,6 +337,137 @@ function cambridgePersona(): ResumeData {
  * minimal ResumeData (empty personal, zero sections) means the canvas
  * truly starts blank.
  */
+/**
+ * Mette Jensen — Danish persona used by all three Danish-shaped templates
+ * (aarhus, roskilde, odense).
+ *
+ * Why one shared Danish persona instead of three: the gallery's job is to
+ * communicate "this template is for Danish CVs" with content readable at
+ * a glance. Three different Danish personas would just dilute that
+ * signal — the layouts already differ enough between aarhus's classic
+ * sidebar, roskilde's ATS-clean single column, and odense's editorial
+ * header band. Sharing the persona keeps Danish content tight and
+ * coherent across the trio.
+ *
+ * Section labels follow Ase's canonical Danish-CV order from
+ * research/danish-cv-templates.md:
+ *   1. Faglig profil   (summary)
+ *   2. Erhvervserfaring (experience, reverse chronological)
+ *   3. Uddannelse       (education)
+ *   4. Kompetencer      (skills)
+ *   5. Sprog            (languages — CEFR levels A1–C2)
+ *
+ * Photo policy lives on each template's design defaults, not here.
+ * roskilde overrides to photo-off so its ATS-clean look stands; aarhus
+ * keeps photo-on (classic Danish CV); odense ships photo-on but
+ * prominently toggleable per Scout's brief.
+ *
+ * Demo-link safety: every URL points at example.com (RFC 2606); label
+ * suffix `-cv` keeps vanity slugs from ever resolving to a real Mette
+ * Jensen. Same contract as every other persona in this file.
+ */
+function danishPersona(): ResumeData {
+  const shell = buildShell("aarhus", {
+    accentColor: "#1F3A5F",
+    layout: "sidebar-left",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "circle", position: "sidebar" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Mette Jensen",
+      headline: "Senior Marketingansvarlig",
+      email: "mette@example.com",
+      phone: "+45 22 11 33 44",
+      location: "København, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "dk1",
+          label: "linkedin.com/in/mette-cv",
+          url: "https://example.com/in/mette-cv",
+        },
+        {
+          id: "dk2",
+          label: "mette-cv.example",
+          url: "https://example.com/mette-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren marketing- og kommunikationsspecialist med 8 års baggrund i SaaS, detail og offentlig sektor. Driver kampagner end-to-end — fra indsigt og strategi til eksekvering og målbare resultater på tværs af DK, SE og NO.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Senior Marketingansvarlig",
+            company: "Nordlys A/S",
+            location: "København",
+            start: "2023-03",
+            end: "",
+            current: true,
+            bullets: [
+              "Ledede den nordiske kampagneportefølje og øgede MQL-volumen +34% år over år.",
+              "Etablerede content-program på tværs af DK/SE/NO med faste leveranceaftaler hver kvartal.",
+            ],
+          },
+          {
+            role: "Marketingkoordinator",
+            company: "Holm & Bertelsen",
+            location: "Aarhus",
+            start: "2020-01",
+            end: "2023-02",
+            current: false,
+            bullets: [
+              "Lancerede selvbetjent onboarding-flow og reducerede salgsindgreb med 41%.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Aarhus Universitet",
+          degree: "Cand.merc.",
+          field: "Marketing & Brand Management",
+          location: "Aarhus",
+          start: "2015",
+          end: "2017",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Kampagnestrategi",
+            "Content marketing",
+            "SEO",
+            "Google Analytics",
+            "HubSpot",
+            "B2B-positionering",
+          ],
+          "Faglige",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "C1", level: 4 },
+          { name: "Tysk", proficiency: "B1", level: 2 },
+        ]),
+        title: "Sprog",
+      },
+    ],
+  };
+}
+
 function blankPersona(): ResumeData {
   return {
     meta: { template: "blank", language: "en", version: 1 },

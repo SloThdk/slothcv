@@ -179,6 +179,21 @@ function ContactInline({ data }: { data: ResumeData }) {
       </span>,
     );
   }
+  // Kørekort er valgfrit i hospitality-segmentet, men hvis brugeren
+  // har udfyldt det i formularen surfacer vi det her så data ikke
+  // tabes når feltet er sat på et dansk template.
+  if (personal.koreekort) {
+    items.push(
+      <span
+        key="koreekort"
+        data-element-id="personal.koreekort"
+        className="cursor-text"
+        style={elementStyle(data, "personal.koreekort")}
+      >
+        Kørekort: {personal.koreekort}
+      </span>,
+    );
+  }
   for (const l of personal.links) {
     items.push(
       <a

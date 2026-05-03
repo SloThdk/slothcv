@@ -143,6 +143,18 @@ export function FrederiksbergTemplate({
                   {personal.location}
                 </div>
               )}
+              {/* Kørekort — kun renderet hvis udfyldt. Sundheds-CVer
+                  inkluderer ofte B-kørekort fordi mange roller kræver
+                  hjemmebesøg / vagtkørsel. */}
+              {personal.koreekort && (
+                <div
+                  data-element-id="personal.koreekort"
+                  className="cursor-grab"
+                  style={elementStyle(data, "personal.koreekort")}
+                >
+                  Kørekort: {personal.koreekort}
+                </div>
+              )}
               {personal.links.map((l) => (
                 <a
                   key={l.id}

@@ -173,6 +173,21 @@ function ContactInline({ data }: { data: ResumeData }) {
       </span>,
     );
   }
+  // Kørekort (dansk CV-norm) — fremhæves med "Kørekort:" prefix.
+  // Vejle's persona er typisk i hourly/service-segmentet hvor B +
+  // truck-certifikat åbner mange døre. Kun renderet hvis udfyldt.
+  if (personal.koreekort) {
+    items.push(
+      <span
+        key="koreekort"
+        data-element-id="personal.koreekort"
+        className="cursor-text"
+        style={elementStyle(data, "personal.koreekort")}
+      >
+        Kørekort: {personal.koreekort}
+      </span>,
+    );
+  }
   for (const l of personal.links) {
     items.push(
       <a

@@ -436,6 +436,21 @@ export interface PersonalInfo {
   /** Optional avatar URL. Templates respect `design.photo.enabled`. */
   photoUrl?: string;
   links: PersonalLink[];
+  /**
+   * Driving licence categories — Danish CV norm. Free-text so users can
+   * write whatever combination of categories they have ("B", "B + C",
+   * "B, C, CE, ADR", "Forerkort B"). Aabenraa template parses + renders
+   * each category as a yellow road-sign badge. Other Danish templates
+   * (Aarhus, Vejle, Aalborg, Frederiksberg) render it as a labelled
+   * line in the contact block. English templates ignore the field
+   * entirely.
+   *
+   * Optional — empty / undefined means "user hasn't filled it in" and
+   * the field is hidden from rendering. Always-on field (vs a links-
+   * array workaround) so the editor can validate, render consistently,
+   * and the data isn't tied to a fake `https://example.com` URL.
+   */
+  koreekort?: string;
 }
 
 // ---------- Design ----------

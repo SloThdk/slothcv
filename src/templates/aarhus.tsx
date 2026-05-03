@@ -134,6 +134,15 @@ export function AarhusTemplate({ data, fixedSize, skipOverlay }: Props) {
                 data={data}
               />
             )}
+            {personal.koreekort && (
+              <Detail
+                label="Kørekort"
+                value={personal.koreekort}
+                accent={design.accentColor}
+                id="personal.koreekort"
+                data={data}
+              />
+            )}
             {personal.links.map((l) => (
               <Detail
                 key={l.id}

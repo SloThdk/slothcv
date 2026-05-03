@@ -142,6 +142,28 @@ export function PersonalForm() {
           placeholder={t("personal.locationPlaceholder")}
         />
       </div>
+      {/* Kørekort — dansk CV-felt. Vist altid i formularen (også på
+          engelske templates) men kun renderet i preview når feltet er
+          fyldt UD og det aktive template er en dansk template (de
+          engelske templates ignorerer feltet). Holder formularen
+          enkel — ingen template-betinget vise/skjule logik der ville
+          forvirre brugeren der lige har valgt en dansk template. */}
+      <div>
+        <Label htmlFor="p-koreekort">{t("personal.koreekort")}</Label>
+        <Input
+          id="p-koreekort"
+          value={personal.koreekort ?? ""}
+          onChange={(e) =>
+            setPersonal({
+              koreekort: e.target.value.trim() ? e.target.value : undefined,
+            })
+          }
+          placeholder={t("personal.koreekortPlaceholder")}
+        />
+        <p className="mt-1 text-[11px] text-subtle">
+          {t("personal.koreekortHint")}
+        </p>
+      </div>
       {/* Photo block — hidden entirely on templates that don't render
           photos by design (Helsinki / Cambridge / Boston / classical
           academic layouts). Showing the upload UI + a "this template

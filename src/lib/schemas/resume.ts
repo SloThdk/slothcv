@@ -173,6 +173,11 @@ const personalInfoSchema = z.object({
   location: z.string().max(120),
   photoUrl: z.string().max(2048).optional(),
   links: z.array(personalLinkSchema).max(20),
+  // Optional Danish-CV field (driving licence categories). 60 chars
+  // covers the longest reasonable input ("B + C + CE + ADR + EU-direktiv 5").
+  // Older saved CVs without this field validate fine — Zod treats
+  // missing optional fields as undefined.
+  koreekort: z.string().max(60).optional(),
 });
 
 // --- Sections ---

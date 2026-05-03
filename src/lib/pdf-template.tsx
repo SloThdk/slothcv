@@ -73,9 +73,32 @@ const SIDEBAR_TYPES = new Set([
   "references",
 ]);
 
-const SIDEBAR_TEMPLATES = new Set(["berlin"]);
-const TWO_COL_TEMPLATES = new Set(["tokyo"]);
-const FULL_HEADER_TEMPLATES = new Set(["madrid"]);
+// PDF-eksport bruger 4 layout-buckets — single (default), sidebar, two-
+// column, og full-header. DOM-templates med matchende layout-struktur
+// skal mappes ind her så PDF'en mirror'er editorens visuelle hierarki.
+// Templates uden eksplicit mapping falder til SingleLayout — de virker
+// som CV men er fladere end DOM-versionen.
+const SIDEBAR_TEMPLATES = new Set([
+  "berlin",
+  // Danske sidebar-templates (2026-05): Aarhus (klassisk sidebar 32%),
+  // Frederiksberg (tintet teal sidebar 32%), Aabenraa (sort sidebar
+  // med kørekort-badges).
+  "aarhus",
+  "frederiksberg",
+  "aabenraa",
+]);
+const TWO_COL_TEMPLATES = new Set([
+  "tokyo",
+  // Danske 60/40-templates: Odense (cremepapir + sage accent),
+  // Silkeborg (detailhandel hvid + navy med blok-kort i højre).
+  "odense",
+  "silkeborg",
+]);
+const FULL_HEADER_TEMPLATES = new Set([
+  "madrid",
+  // Aalborg har slate header-bånd der trækker sig fuld bredde.
+  "aalborg",
+]);
 
 // ---------- Override helpers ----------
 //

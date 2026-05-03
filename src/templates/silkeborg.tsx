@@ -204,6 +204,20 @@ function ContactRow({ data }: { data: ResumeData }) {
       </span>,
     );
   }
+  // Kørekort (dansk CV-norm) — relevant i detail/byggemarked hvor B
+  // ofte kræves til varetransport ved leverancer eller kampagne-flyt.
+  if (personal.koreekort) {
+    items.push(
+      <span
+        key="koreekort"
+        data-element-id="personal.koreekort"
+        className="cursor-text"
+        style={elementStyle(data, "personal.koreekort")}
+      >
+        Kørekort: {personal.koreekort}
+      </span>,
+    );
+  }
   for (const l of personal.links) {
     items.push(
       <a

@@ -740,6 +740,19 @@ export const TRANSLATIONS = {
   "personal.phone": { en: "Phone", da: "Telefon" },
   "personal.phonePlaceholder": { en: "+45 12 34 56 78", da: "+45 12 34 56 78" },
   "personal.location": { en: "Location", da: "Sted" },
+  // Kørekort er en dansk CV-konvention. Feltet er valgfrit og kun
+  // synligt på danske templates (Aabenraa rendrer kategorier som
+  // visuelle badges; resten viser det som linje i kontaktblokken).
+  // På engelske templates ignoreres det helt.
+  "personal.koreekort": { en: "Driving licence", da: "Kørekort" },
+  "personal.koreekortPlaceholder": {
+    en: "B + C + CE",
+    da: "B + C + CE",
+  },
+  "personal.koreekortHint": {
+    en: "Listed as Danish CV norm — leave empty to hide.",
+    da: "Vises på danske templates. Lad være tomt for at skjule.",
+  },
   "personal.locationPlaceholder": {
     en: "Copenhagen, Denmark",
     da: "København, Danmark",
@@ -1038,6 +1051,7 @@ export const TRANSLATIONS = {
     en: "Delete this {kind}?",
     da: "Slet dette {kind}?",
   },
+  "inspector.closeAria": { en: "Close inspector", da: "Luk inspektør" },
   "inspector.deletePromptDesc": {
     en: "The element will be removed from the canvas. Other elements stay where they are.",
     da: "Elementet fjernes fra lærredet. Andre elementer bliver hvor de er.",

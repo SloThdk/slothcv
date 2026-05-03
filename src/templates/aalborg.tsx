@@ -213,6 +213,20 @@ function BandContact({ data }: { data: ResumeData }) {
       </span>,
     );
   }
+  // Kørekort (dansk CV-norm) — kritisk for håndværkere med servicebil
+  // / firmakøretøj. Inline i header-båndet.
+  if (personal.koreekort) {
+    items.push(
+      <span
+        key="koreekort"
+        data-element-id="personal.koreekort"
+        className="cursor-text"
+        style={elementStyle(data, "personal.koreekort")}
+      >
+        Kørekort: {personal.koreekort}
+      </span>,
+    );
+  }
   for (const l of personal.links) {
     items.push(
       <a

@@ -83,14 +83,18 @@ export function AabenraaTemplate({ data, fixedSize, skipOverlay }: Props) {
   const main = visible.filter((s) => !SIDEBAR_TYPES.has(s.type));
   const sidebarPct = Math.round(design.sidebarWidth * 100);
 
-  // Udled kørekort-badges fra personal.links — det er sådan personaer
-  // typisk surfacer kategorier i den eksisterende schema. Filtrerer
-  // efter labels der starter med "Kørekort" eller "ADR".
-  const koreekortBadges = personal.links.filter(
-    (l) =>
-      /^k(ø|o)rekort\b/i.test(l.label || "") ||
-      /^adr\b/i.test(l.label || ""),
-  );
+  // Udled kørekort-kategorier fra det dedikerede `personal.koreekort`-
+  // felt (PersonalInfo.koreekort, tilføjet 2026-05-04). Splitter på
+  // typiske separatorer (+ , /) så "B + C + CE" → ["B", "C", "CE"].
+  // Hver kategori bliver til sit eget gule badge nedenfor. Tom /
+  // undefined værdi → ingen badges renderes.
+  const koreekortRaw = personal.koreekort?.trim() ?? "";
+  const koreekortCodes = koreekortRaw
+    ? koreekortRaw
+        .split(/[+,/]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
 
   return (
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
@@ -132,41 +136,31 @@ export function AabenraaTemplate({ data, fixedSize, skipOverlay }: Props) {
           )}
 
           {/* Kørekort badges — visuelt fremtrædende, vejskilt-gul.
-              Fås kun frem hvis brugeren har tagget kørekort i sit
-              personal.links (kanonisk pattern: label="Kørekort B + C"). */}
-          {koreekortBadges.length > 0 && (
-            <div className="mb-5">
+              Læser direkte fra `personal.koreekort` (dedikeret felt
+              tilføjet 2026-05-04). Hele blokken er én drag-target via
+              `personal.koreekort` element-id; recruiter scanner CV'et
+              for "har personen CE? ADR?" på 3 sekunder, så badges er
+              templatets vigtigste visuelle element. */}
+          {koreekortCodes.length > 0 && (
+            <div
+              className="mb-5"
+              data-element-id="personal.koreekort"
+              style={elementStyle(data, "personal.koreekort")}
+            >
               <SidebarHeading title="Kørekort" />
               <div className="flex flex-wrap gap-1.5">
-                {koreekortBadges.map((badge) => {
-                  // Splitter "Kørekort B + C + CE" → ["B", "C", "CE"]
-                  // for at rendere hver kategori som sit eget kort.
-                  const labelText = (badge.label || "").replace(
-                    /^k(ø|o)rekort\s*/i,
-                    "",
-                  );
-                  const codes = labelText
-                    .split(/[+,/]+/)
-                    .map((s) => s.trim())
-                    .filter(Boolean);
-                  // Hvis splittet ikke kunne dele op (fx ren "ADR-bevis"),
-                  // render hele label som enkelt badge.
-                  const all = codes.length > 0 ? codes : [badge.label || ""];
-                  return all.map((code, i) => (
-                    <span
-                      key={`${badge.id}-${i}`}
-                      data-element-id={`personal.links.${badge.id}`}
-                      className="cursor-grab inline-flex items-center justify-center rounded-sm px-2 py-1 text-[0.78em] font-bold uppercase tracking-wider"
-                      style={{
-                        background: ROAD_YELLOW,
-                        color: "#0A0A0A",
-                        ...elementStyle(data, `personal.links.${badge.id}`),
-                      }}
-                    >
-                      {code}
-                    </span>
-                  ));
-                })}
+                {koreekortCodes.map((code, i) => (
+                  <span
+                    key={`${code}-${i}`}
+                    className="cursor-grab inline-flex items-center justify-center rounded-sm px-2 py-1 text-[0.78em] font-bold uppercase tracking-wider"
+                    style={{
+                      background: ROAD_YELLOW,
+                      color: "#0A0A0A",
+                    }}
+                  >
+                    {code}
+                  </span>
+                ))}
               </div>
             </div>
           )}

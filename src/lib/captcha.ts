@@ -5,7 +5,7 @@
  * rejects it (single-use already consumed elsewhere, expired right at the
  * 5-minute boundary, Cloudflare clock skew), we want to transparently
  * fetch a fresh one and retry — not bounce the user back to the form
- * with "We couldn't verify you're human".
+ * with "I couldn't verify you're human".
  *
  * Pattern:
  *   1. Component owns a ref `captchaResolveRef`.

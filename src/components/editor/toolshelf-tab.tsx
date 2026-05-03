@@ -49,6 +49,7 @@ import {
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { uploadCustomElementImage } from "@/lib/profile";
+import { translateError } from "@/lib/translatable-error";
 import {
   SOCIAL_ICONS,
   SOCIAL_ICONS_BY_NAME,
@@ -1108,6 +1109,7 @@ function IconControls({ element }: { element: IconElement }) {
 }
 
 function ImageControls({ element }: { element: ImageElement }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateCustomElement);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -1125,11 +1127,11 @@ function ImageControls({ element }: { element: ImageElement }) {
       const persistent = await uploadCustomElementImage(file);
       update(element.id, { url: persistent });
       URL.revokeObjectURL(localUrl);
-      toast.success("Image uploaded.");
+      toast.success(t("editor.toast.imageUploaded"));
     } catch (e) {
       URL.revokeObjectURL(localUrl);
       update(element.id, { url: "" });
-      toast.error(e instanceof Error ? e.message : "Image upload failed.");
+      toast.error(translateError(e, t, "editor.toast.imageUploadFailed"));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

@@ -42,8 +42,8 @@ export default function PrivacyPage(): JSX.Element {
 
         <p className="mt-8 text-base text-[color:var(--color-text-muted)] sm:text-lg">
           {isDa
-            ? "SlothCV er bygget til at lave CV'er — intet andet. Ingen analytics, ingen tracking-pixels, ingen reklame-netværk, ingen tredjeparts-fingerprinting. Det vi gemmer er det du selv lægger ind, og det vi har brug for at holde dig logget ind. Her er præcist hvad det betyder."
-            : "SlothCV is built to make CVs — nothing else. No analytics, no tracking pixels, no advertising networks, no third-party fingerprinting. What we store is what you put in, plus what we need to keep you signed in. Here is exactly what that means."}
+            ? "SlothCV er bygget til at lave CV'er — intet andet. Ingen analytics, ingen tracking-pixels, ingen reklame-netværk, ingen tredjeparts-fingerprinting. Det jeg gemmer er det du selv lægger ind, og det jeg har brug for at holde dig logget ind. Her er præcist hvad det betyder."
+            : "SlothCV is built to make CVs — nothing else. No analytics, no tracking pixels, no advertising networks, no third-party fingerprinting. What I store is what you put in, plus what I need to keep you signed in. Here is exactly what that means."}
         </p>
 
         <Section title={isDa ? "Hvem står bag" : "Who is behind this"}>
@@ -60,12 +60,12 @@ export default function PrivacyPage(): JSX.Element {
           </p>
         </Section>
 
-        <Section title={isDa ? "Hvad vi gemmer" : "What we store"}>
+        <Section title={isDa ? "Hvad jeg gemmer" : "What I store"}>
           <ul className="space-y-3">
             <Item label={isDa ? "Din e-mail" : "Your email address"}>
               {isDa
-                ? "Bruges til at logge ind via magic-link og som unik konto-identifikator. Hvis du logger ind med Google, modtager vi e-mailen og navnet fra din Google-konto."
-                : "Used to sign in via magic link and as your unique account identifier. If you sign in with Google, we receive the email address and name from your Google account."}
+                ? "Bruges til at logge ind via magic-link og som unik konto-identifikator. Hvis du logger ind med Google, modtager jeg e-mailen og navnet fra din Google-konto."
+                : "Used to sign in via magic link and as your unique account identifier. If you sign in with Google, I receive the email address and name from your Google account."}
             </Item>
             <Item label={isDa ? "Visningsnavn og avatar (valgfrit)" : "Display name and avatar (optional)"}>
               {isDa
@@ -74,18 +74,18 @@ export default function PrivacyPage(): JSX.Element {
             </Item>
             <Item label={isDa ? "Dit CV-indhold" : "Your CV content"}>
               {isDa
-                ? "Alt du skriver eller uploader i editoren — navn, kontakt, erhvervserfaring, uddannelse, kompetencer, eventuelle profilbilleder eller egne billeder. Det er dit CV, og vi gemmer det så det er der næste gang du logger ind."
-                : "Everything you type or upload in the editor — name, contact details, work history, education, skills, any profile photo or custom images. It is your CV; we store it so it is there next time you sign in."}
+                ? "Alt du skriver eller uploader i editoren — navn, kontakt, erhvervserfaring, uddannelse, kompetencer, eventuelle profilbilleder eller egne billeder. Det er dit CV, og jeg gemmer det så det er der næste gang du logger ind."
+                : "Everything you type or upload in the editor — name, contact details, work history, education, skills, any profile photo or custom images. It is your CV; I store it so it is there next time you sign in."}
             </Item>
             <Item label={isDa ? "Tekniske logs" : "Technical logs"}>
               {isDa
-                ? "Vores hosting-udbydere (Supabase, Cloudflare) holder kortvarige drifts-logs (IP-adresse, request-tidspunkt, fejl-spor) til at beskytte mod misbrug og diagnosticere fejl. Vi gennemgår dem ikke for at profilere dig."
-                : "Our hosting providers (Supabase, Cloudflare) keep short-lived operational logs (IP address, request timestamp, error trace) to protect against abuse and diagnose problems. We do not review them to profile you."}
+                ? "Mine hosting-udbydere (Supabase, Cloudflare) holder kortvarige drifts-logs (IP-adresse, request-tidspunkt, fejl-spor) til at beskytte mod misbrug og diagnosticere fejl. Jeg gennemgår dem ikke for at profilere dig."
+                : "My hosting providers (Supabase, Cloudflare) keep short-lived operational logs (IP address, request timestamp, error trace) to protect against abuse and diagnose problems. I do not review them to profile you."}
             </Item>
           </ul>
         </Section>
 
-        <Section title={isDa ? "Hvad vi IKKE gemmer" : "What we do NOT store"}>
+        <Section title={isDa ? "Hvad jeg IKKE gemmer" : "What I do NOT store"}>
           <ul className="space-y-2 text-[color:var(--color-text-muted)]">
             <li>
               {isDa
@@ -113,8 +113,8 @@ export default function PrivacyPage(): JSX.Element {
         <Section title={isDa ? "Cookies og lokalt lager" : "Cookies and local storage"}>
           <p className="mb-3">
             {isDa
-              ? "Vi bruger to slags lokal opbevaring i din browser. Begge er strikt nødvendige for at sitet virker, og ingen af dem bruges til tracking."
-              : "We use two kinds of local storage in your browser. Both are strictly necessary for the site to work, and neither is used for tracking."}
+              ? "Jeg bruger to slags lokal opbevaring i din browser. Begge er strikt nødvendige for at sitet virker, og ingen af dem bruges til tracking."
+              : "I use two kinds of local storage in your browser. Both are strictly necessary for the site to work, and neither is used for tracking."}
           </p>
           <ul className="space-y-3">
             <Item label={isDa ? "Auth-session-cookies (Supabase)" : "Auth session cookies (Supabase)"}>
@@ -138,7 +138,7 @@ export default function PrivacyPage(): JSX.Element {
           </p>
         </Section>
 
-        <Section title={isDa ? "Tredjeparter vi bruger" : "Third parties we use"}>
+        <Section title={isDa ? "Tredjeparter jeg bruger" : "Third parties I use"}>
           <ul className="space-y-3">
             <Item label="Supabase">
               {isDa
@@ -152,8 +152,8 @@ export default function PrivacyPage(): JSX.Element {
             </Item>
             <Item label="Google (kun ved Google-login / only if you sign in with Google)">
               {isDa
-                ? "Hvis du klikker 'Fortsæt med Google', sendes du til Google for at godkende. Google deler din e-mail og dit navn med SlothCV. Vi anmoder ikke om kontakter, kalender eller andet."
-                : "If you click 'Continue with Google', you are redirected to Google to authenticate. Google shares your email and name with SlothCV. We do not request contacts, calendar, or anything else."}
+                ? "Hvis du klikker 'Fortsæt med Google', sendes du til Google for at godkende. Google deler din e-mail og dit navn med SlothCV. Jeg anmoder ikke om kontakter, kalender eller andet."
+                : "If you click 'Continue with Google', you are redirected to Google to authenticate. Google shares your email and name with SlothCV. I do not request contacts, calendar, or anything else."}
             </Item>
             <Item label="Resend">
               {isDa
@@ -163,11 +163,11 @@ export default function PrivacyPage(): JSX.Element {
           </ul>
         </Section>
 
-        <Section title={isDa ? "Hvor længe vi gemmer det" : "How long we keep it"}>
+        <Section title={isDa ? "Hvor længe jeg gemmer det" : "How long I keep it"}>
           <p>
             {isDa
-              ? "Vi gemmer dine data så længe din konto er aktiv. Sletter du din konto via /account, fjernes alt — auth-rækken, profil-rækken, alle CV'er, versionshistorik og uploadede billeder — permanent og uden mulighed for at fortryde. Drifts-logs hos Supabase og Cloudflare slettes automatisk efter deres standard-retentions-perioder (typisk 30 dage)."
-              : "We keep your data for as long as your account is active. If you delete your account via /account, everything is removed — the auth row, the profile row, all CVs, version history, and uploaded images — permanently and irrecoverably. Operational logs at Supabase and Cloudflare are deleted automatically after their default retention windows (typically 30 days)."}
+              ? "Jeg gemmer dine data så længe din konto er aktiv. Sletter du din konto via /account, fjernes alt — auth-rækken, profil-rækken, alle CV'er, versionshistorik og uploadede billeder — permanent og uden mulighed for at fortryde. Drifts-logs hos Supabase og Cloudflare slettes automatisk efter deres standard-retentions-perioder (typisk 30 dage)."
+              : "I keep your data for as long as your account is active. If you delete your account via /account, everything is removed — the auth row, the profile row, all CVs, version history, and uploaded images — permanently and irrecoverably. Operational logs at Supabase and Cloudflare are deleted automatically after their default retention windows (typically 30 days)."}
           </p>
         </Section>
 
@@ -204,7 +204,7 @@ export default function PrivacyPage(): JSX.Element {
             </li>
           </ul>
           <p className="mt-3 text-sm text-[color:var(--color-text-muted)]">
-            {isDa ? "Mener du at vi har behandlet dine data forkert, kan du klage til Datatilsynet på " : "If you believe we have mishandled your data, you may complain to the Danish Data Protection Authority (Datatilsynet) at "}
+            {isDa ? "Mener du at jeg har behandlet dine data forkert, kan du klage til Datatilsynet på " : "If you believe I have mishandled your data, you may complain to the Danish Data Protection Authority (Datatilsynet) at "}
             <a className="underline underline-offset-4" href="https://datatilsynet.dk" target="_blank" rel="noopener noreferrer">
               datatilsynet.dk
             </a>

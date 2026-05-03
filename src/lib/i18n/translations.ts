@@ -116,7 +116,7 @@ export const TRANSLATIONS = {
   "login.emailPlaceholder": { en: "you@example.com", da: "dig@eksempel.dk" },
   "login.sendLink": { en: "Send link", da: "Send link" },
   "login.sending": { en: "Sending…", da: "Sender…" },
-  "login.linkSentTo": { en: "We sent a sign-in link to", da: "Vi sendte et login-link til" },
+  "login.linkSentTo": { en: "I sent a sign-in link to", da: "Jeg sendte et login-link til" },
   "login.linkSentBody": {
     en: "Open it on this device to continue.",
     da: "Åbn det på denne enhed for at fortsætte.",
@@ -125,8 +125,8 @@ export const TRANSLATIONS = {
   "login.googleConnecting": { en: "Connecting…", da: "Forbinder…" },
   "login.or": { en: "or", da: "eller" },
   "login.errExpiredLink": {
-    en: "That sign-in link expired. Try again — we'll send a fresh one.",
-    da: "Login-linket udløb. Prøv igen — vi sender et nyt.",
+    en: "That sign-in link expired. Try again — I'll send a fresh one.",
+    da: "Login-linket udløb. Prøv igen — jeg sender et nyt.",
   },
   "login.errExchangeGeneric": {
     en: "Sign-in didn't complete. Try again — request a fresh link if needed.",
@@ -233,24 +233,24 @@ export const TRANSLATIONS = {
     da: "Den login-metode er aktuelt deaktiveret. Prøv en anden mulighed.",
   },
   "auth.errCaptchaFailed": {
-    en: "We couldn't verify you're human. Reload the page and try again.",
-    da: "Vi kunne ikke bekræfte at du er et menneske. Genindlæs siden og prøv igen.",
+    en: "I couldn't verify you're human. Reload the page and try again.",
+    da: "Jeg kunne ikke bekræfte at du er et menneske. Genindlæs siden og prøv igen.",
   },
   "auth.errUserBanned": {
     en: "This account has been suspended. Contact support if you believe this is a mistake.",
     da: "Denne konto er suspenderet. Kontakt support hvis du mener, det er en fejl.",
   },
   "auth.errEmailNotConfirmed": {
-    en: "Your email isn't confirmed yet. Click the link in the email we sent you.",
-    da: "Din e-mail er ikke bekræftet endnu. Klik på linket i e-mailen vi sendte dig.",
+    en: "Your email isn't confirmed yet. Click the link in the email I sent you.",
+    da: "Din e-mail er ikke bekræftet endnu. Klik på linket i e-mailen jeg sendte dig.",
   },
   "auth.errFlowExpired": {
     en: "Your sign-in attempt expired. Start over from the sign-in page.",
     da: "Dit login-forsøg udløb. Start forfra fra login-siden.",
   },
   "auth.errFlowMissing": {
-    en: "We lost track of your sign-in attempt — likely cookies or storage was cleared. Try again.",
-    da: "Vi mistede sporet af dit login-forsøg — sandsynligvis blev cookies eller lager ryddet. Prøv igen.",
+    en: "I lost track of your sign-in attempt — likely cookies or storage was cleared. Try again.",
+    da: "Jeg mistede sporet af dit login-forsøg — sandsynligvis blev cookies eller lager ryddet. Prøv igen.",
   },
   "auth.errOAuthCorrupted": {
     en: "The Google sign-in response was malformed. Try again.",
@@ -265,8 +265,8 @@ export const TRANSLATIONS = {
     da: "Forespørgslen tog for lang tid. Tjek din internetforbindelse og prøv igen.",
   },
   "auth.errUnexpected": {
-    en: "Something went wrong on our end. Try again — if it keeps happening, let us know.",
-    da: "Der gik noget galt hos os. Prøv igen — hvis det fortsætter, så sig til.",
+    en: "Something went wrong on my end. Try again — if it keeps happening, let me know.",
+    da: "Der gik noget galt hos mig. Prøv igen — hvis det fortsætter, så sig til.",
   },
 
   // ─── Signup ───────────────────────────────────────────────────────
@@ -320,8 +320,8 @@ export const TRANSLATIONS = {
     da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" på login-siden.",
   },
   "signup.existingAccountBodyMagic": {
-    en: "You created this account with a magic link. Go to the sign-in page and we'll send you a fresh one.",
-    da: "Du oprettede kontoen med et magisk link. Gå til login-siden, så sender vi et nyt.",
+    en: "You created this account with a magic link. Go to the sign-in page and I'll send you a fresh one.",
+    da: "Du oprettede kontoen med et magisk link. Gå til login-siden, så sender jeg et nyt.",
   },
   "signup.existingAccountBodyBoth": {
     en: "You can sign in either with Google or with a magic link to this email.",
@@ -498,8 +498,8 @@ export const TRANSLATIONS = {
   "dashboard.preparingTemplate": { en: "Preparing your", da: "Forbereder dit" },
   "dashboard.preparingSuffix": { en: "CV…", da: "CV…" },
   "dashboard.preparingHint": {
-    en: "Just a moment — we're setting things up.",
-    da: "Et øjeblik — vi gør tingene klar.",
+    en: "Just a moment — I'm setting things up.",
+    da: "Et øjeblik — jeg gør tingene klar.",
   },
 
   // ─── Editor (top-level) ───────────────────────────────────────────
@@ -826,8 +826,8 @@ export const TRANSLATIONS = {
 
   // ─── Cookie banner ────────────────────────────────────────────────
   "cookies.message": {
-    en: "We use essential cookies to keep you signed in, plus your browser's local storage to remember your theme and language. No tracking, no analytics.",
-    da: "Vi bruger essentielle cookies til at holde dig logget ind, samt din browsers lokale lager til at huske dit tema og sprog. Ingen tracking, ingen analytics.",
+    en: "I use essential cookies to keep you signed in, plus your browser's local storage to remember your theme and language. No tracking, no analytics.",
+    da: "Jeg bruger essentielle cookies til at holde dig logget ind, samt din browsers lokale lager til at huske dit tema og sprog. Ingen tracking, ingen analytics.",
   },
   "cookies.learnMore": { en: "Learn more", da: "Læs mere" },
   "cookies.dismiss": { en: "Got it", da: "Forstået" },
@@ -1005,6 +1005,139 @@ export const TRANSLATIONS = {
   "common.paste": { en: "Paste", da: "Indsæt" },
   "common.cut": { en: "Cut", da: "Klip" },
   "common.loading": { en: "Loading…", da: "Indlæser…" },
+
+  // ─── Editor toasts (canvas-side) ──────────────────────────────────
+  // Surfaced by the personal-photo upload (preview.tsx) and the custom-
+  // element image upload (toolshelf-tab.tsx). Hardcoded English versions
+  // shipped by accident in earlier phases — these keys are the i18n fix.
+  "editor.toast.photoReplaced": {
+    en: "Photo replaced.",
+    da: "Foto erstattet.",
+  },
+  "editor.toast.photoUploadFailed": {
+    en: "Photo upload failed.",
+    da: "Upload af foto mislykkedes.",
+  },
+  "editor.toast.imageUploaded": {
+    en: "Image uploaded.",
+    da: "Billede uploadet.",
+  },
+  "editor.toast.imageUploadFailed": {
+    en: "Image upload failed.",
+    da: "Upload af billede mislykkedes.",
+  },
+  "editor.toolshelf.imageSection": { en: "Image", da: "Billede" },
+
+  // ─── Template swap toasts (templates-tab.tsx) ─────────────────────
+  // Picking a new template triggers an instant swap with an Undo +
+  // optional "Save as variant" affordance. All copy goes through these
+  // keys so DA users see DA text in the toast chain.
+  "templates.swap.intro": {
+    en: "Pick a template. Your content stays — only the layout changes. Cmd/Ctrl-Z to undo a swap.",
+    da: "Vælg en skabelon. Dit indhold bliver — kun layoutet ændrer sig. Cmd/Ctrl-Z for at fortryde et skift.",
+  },
+  "templates.swap.switched": {
+    en: "Switched to {name}.",
+    da: "Skiftede til {name}.",
+  },
+  "templates.swap.shapesCleared": {
+    en: "Your shapes and overrides from the {name} layout were cleared (positions don't carry across layouts).",
+    da: "Dine figurer og overrides fra {name}-layoutet blev ryddet (positioner følger ikke med på tværs af layouts).",
+  },
+  "templates.swap.undo": { en: "Undo", da: "Fortryd" },
+  "templates.swap.reverted": {
+    en: "Reverted to {name}.",
+    da: "Skiftede tilbage til {name}.",
+  },
+  "templates.swap.saveAsVariant": {
+    en: "Save as variant",
+    da: "Gem som variant",
+  },
+  "templates.swap.cantSaveBeforeLoad": {
+    en: "Can't save a variant before the CV is loaded.",
+    da: "Kan ikke gemme en variant før CV'et er hentet.",
+  },
+  "templates.swap.savingVariant": {
+    en: "Saving {name} version as a variant…",
+    da: "Gemmer {name}-versionen som en variant…",
+  },
+  "templates.swap.savedVariant": {
+    en: "Saved {name} version as a variant on your dashboard.",
+    da: "Gemte {name}-versionen som en variant på din oversigt.",
+  },
+  "templates.swap.saveFailedReason": {
+    en: "Couldn't save variant: {reason}",
+    da: "Kunne ikke gemme variant: {reason}",
+  },
+  "templates.swap.saveFailed": {
+    en: "Couldn't save variant. Free up space on your dashboard and try again.",
+    da: "Kunne ikke gemme variant. Frigør plads på din oversigt og prøv igen.",
+  },
+
+  // ─── Library-thrown errors ────────────────────────────────────────
+  // Thrown by lib/profile.ts and lib/resumes.ts via TranslatableError
+  // so the toast shown to the user is always in their chosen language
+  // instead of the hardcoded English Error.message we used to leak.
+  "errors.cvLimitReached": {
+    en: "You can have at most {n} CVs per account.",
+    da: "Du kan have højst {n} CV'er per konto.",
+  },
+  "errors.notSignedIn": {
+    en: "Not signed in.",
+    da: "Ikke logget ind.",
+  },
+  "errors.photoMustBeImage": {
+    en: "Photo must be an image file.",
+    da: "Foto skal være en billedfil.",
+  },
+  "errors.photoTooLarge": {
+    en: "Photo must be 2 MB or smaller.",
+    da: "Foto må højst være 2 MB.",
+  },
+  "errors.avatarMustBeImage": {
+    en: "Avatar must be an image file.",
+    da: "Avatar skal være en billedfil.",
+  },
+  "errors.avatarTooLarge": {
+    en: "Avatar must be 2 MB or smaller.",
+    da: "Avatar må højst være 2 MB.",
+  },
+  "errors.imageMustBeImage": {
+    en: "Image must be an image file.",
+    da: "Billede skal være en billedfil.",
+  },
+  "errors.imageTooLarge": {
+    en: "Image must be 5 MB or smaller.",
+    da: "Billede må højst være 5 MB.",
+  },
+  "errors.couldNotCreateCv": {
+    en: "Could not create CV.",
+    da: "Kunne ikke oprette CV.",
+  },
+  "errors.cvNotFound": {
+    en: "CV not found.",
+    da: "CV ikke fundet.",
+  },
+  "errors.couldNotCreateVariant": {
+    en: "Could not create variant.",
+    da: "Kunne ikke oprette variant.",
+  },
+  "errors.variantLabelEmpty": {
+    en: "Variant label can't be empty.",
+    da: "Variant-label må ikke være tom.",
+  },
+  "errors.titleEmpty": {
+    en: "Title can't be empty.",
+    da: "Titel må ikke være tom.",
+  },
+  "errors.passwordTooShort": {
+    en: "Password must be at least 8 characters.",
+    da: "Adgangskoden skal være mindst 8 tegn.",
+  },
+  "errors.pdfPageNotFound": {
+    en: "PDF export: page content not found. Open the editor preview first.",
+    da: "PDF-eksport: sideindhold ikke fundet. Åbn editor-forhåndsvisningen først.",
+  },
 } as const satisfies Record<string, Entry>;
 
 export type TranslationKey = keyof typeof TRANSLATIONS;

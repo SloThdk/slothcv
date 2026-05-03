@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import {
   deleteMyAccount,
   getMyProfile,
@@ -90,7 +91,7 @@ function AccountInner() {
       setProfile({ ...profile, display_name: trimmed || null });
       toast.success(t("account.toastNameSaved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("account.toastSaveFailed"));
+      toast.error(translateError(e, t, "account.toastSaveFailed"));
     } finally {
       setSavingName(false);
     }
@@ -103,7 +104,7 @@ function AccountInner() {
       setProfile((p) => (p ? { ...p, avatar_url: url } : p));
       toast.success(t("account.toastAvatarSaved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("account.toastUploadFailed"));
+      toast.error(translateError(e, t, "account.toastUploadFailed"));
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -118,7 +119,7 @@ function AccountInner() {
       setProfile((p) => (p ? { ...p, avatar_url: null } : p));
       toast.success(t("account.toastAvatarRemoved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("account.toastRemoveFailed"));
+      toast.error(translateError(e, t, "account.toastRemoveFailed"));
     } finally {
       setUploadingAvatar(false);
     }
@@ -136,7 +137,7 @@ function AccountInner() {
       toast.success(t("account.toastAccountDeleted"));
       router.replace("/");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("account.toastDeleteFailed"));
+      toast.error(translateError(e, t, "account.toastDeleteFailed"));
       setDeleting(false);
     }
   }

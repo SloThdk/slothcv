@@ -54,21 +54,21 @@ export default function TermsPage(): JSX.Element {
         <Section title={isDa ? "Din konto" : "Your account"}>
           <p>
             {isDa
-              ? "Du opretter en konto med din e-mailadresse (magic-link) eller via Google. Du er ansvarlig for at holde adgangen til den tilknyttede e-mail eller Google-konto sikker — vi kan ikke gendanne adgang hvis den mistes. Én person, én konto. Del den ikke med andre."
-              : "You sign in with your email address (magic link) or via Google. You are responsible for keeping access to the linked email or Google account secure — we cannot recover access if it is lost. One person, one account. Do not share it."}
+              ? "Du opretter en konto med din e-mailadresse (magic-link) eller via Google. Du er ansvarlig for at holde adgangen til den tilknyttede e-mail eller Google-konto sikker — jeg kan ikke gendanne adgang hvis den mistes. Én person, én konto. Del den ikke med andre."
+              : "You sign in with your email address (magic link) or via Google. You are responsible for keeping access to the linked email or Google account secure — I cannot recover access if it is lost. One person, one account. Do not share it."}
           </p>
         </Section>
 
         <Section title={isDa ? "Dit indhold" : "Your content"}>
           <p>
             {isDa
-              ? "Indholdet du lægger ind — tekst, billeder, CV-data — tilhører dig. Vi gemmer det udelukkende for at vise det i editoren, eksportere det til PDF og holde det tilgængeligt næste gang du logger ind. Vi sælger det ikke, viser det ikke til andre brugere og bruger det ikke til at træne modeller eller på anden måde profitere af det."
-              : "The content you put in — text, images, CV data — belongs to you. We store it solely to display it in the editor, export it to PDF, and keep it available the next time you sign in. We do not sell it, expose it to other users, or use it to train models or otherwise profit from it."}
+              ? "Indholdet du lægger ind — tekst, billeder, CV-data — tilhører dig. Jeg gemmer det udelukkende for at vise det i editoren, eksportere det til PDF og holde det tilgængeligt næste gang du logger ind. Jeg sælger det ikke, viser det ikke til andre brugere og bruger det ikke til at træne modeller eller på anden måde profitere af det."
+              : "The content you put in — text, images, CV data — belongs to you. I store it solely to display it in the editor, export it to PDF, and keep it available the next time you sign in. I do not sell it, expose it to other users, or use it to train models or otherwise profit from it."}
           </p>
           <p className="mt-3">
             {isDa
-              ? "Ved at uploade indhold giver du os den tekniske licens, der skal til for at hoste, vise og eksportere det til dig — ikke andet. Licensen ophører øjeblikkeligt når du sletter indholdet eller kontoen."
-              : "By uploading content you grant us the technical license needed to host, display, and export it back to you — nothing more. That license ends the moment you delete the content or the account."}
+              ? "Ved at uploade indhold giver du mig den tekniske licens, der skal til for at hoste, vise og eksportere det til dig — ikke andet. Licensen ophører øjeblikkeligt når du sletter indholdet eller kontoen."
+              : "By uploading content you grant me the technical license needed to host, display, and export it back to you — nothing more. That license ends the moment you delete the content or the account."}
           </p>
         </Section>
 
@@ -83,16 +83,16 @@ export default function TermsPage(): JSX.Element {
           </ul>
           <p className="mt-3">
             {isDa
-              ? "Vi kan suspendere eller slette en konto der overtræder ovenstående uden forudgående varsel."
-              : "We may suspend or remove any account that violates the above without prior notice."}
+              ? "Jeg kan suspendere eller slette en konto der overtræder ovenstående uden forudgående varsel."
+              : "I may suspend or remove any account that violates the above without prior notice."}
           </p>
         </Section>
 
         <Section title={isDa ? "Tilgængelighed" : "Availability"}>
           <p>
             {isDa
-              ? "SlothCV leveres 'som det er'. Vi tilstræber at sitet er oppe og kører, men der er ingen garanteret oppetid, og funktioner kan ændre sig. Planlagt vedligehold flagges hvor det giver mening."
-              : "SlothCV is provided 'as is'. We aim to keep it running smoothly, but there is no guaranteed uptime and features may change. Planned maintenance is flagged where it makes sense."}
+              ? "SlothCV leveres 'som det er'. Jeg tilstræber at sitet er oppe og kører, men der er ingen garanteret oppetid, og funktioner kan ændre sig. Planlagt vedligehold flagges hvor det giver mening."
+              : "SlothCV is provided 'as is'. I aim to keep it running smoothly, but there is no guaranteed uptime and features may change. Planned maintenance is flagged where it makes sense."}
           </p>
         </Section>
 
@@ -111,16 +111,16 @@ export default function TermsPage(): JSX.Element {
               : "You can delete your account at any time via "}
             <Link href="/account" className="underline underline-offset-4">/account</Link>
             {isDa
-              ? ". Det fjerner alt — auth-data, profil, CV'er, versionshistorik og uploadede billeder — permanent og uden mulighed for at fortryde. Vi kan opsige eller suspendere konti der overtræder vilkårene; uden grov misbrug giver vi en advarsel først."
-              : ". This removes everything — auth data, profile, CVs, version history, and uploaded images — permanently and irrecoverably. We may terminate or suspend accounts that violate these terms; absent serious abuse, we will warn first."}
+              ? ". Det fjerner alt — auth-data, profil, CV'er, versionshistorik og uploadede billeder — permanent og uden mulighed for at fortryde. Jeg kan opsige eller suspendere konti der overtræder vilkårene; uden grov misbrug giver jeg en advarsel først."
+              : ". This removes everything — auth data, profile, CVs, version history, and uploaded images — permanently and irrecoverably. I may terminate or suspend accounts that violate these terms; absent serious abuse, I will warn first."}
           </p>
         </Section>
 
         <Section title={isDa ? "Ændringer i vilkår" : "Changes to these terms"}>
           <p>
             {isDa
-              ? "Vi kan opdatere disse vilkår. Den seneste version ligger altid på "
-              : "We may update these terms. The latest version is always at "}
+              ? "Jeg kan opdatere disse vilkår. Den seneste version ligger altid på "
+              : "I may update these terms. The latest version is always at "}
             <Link href="/terms" className="underline underline-offset-4">SlothCV.com/terms</Link>
             {isDa
               ? " med ny dato øverst. Materielle ændringer flagges via en banner. Fortsat brug af sitet efter en ændring betyder accept af de nye vilkår."

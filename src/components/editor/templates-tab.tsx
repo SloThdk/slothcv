@@ -44,6 +44,8 @@ import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { TEMPLATES, TEMPLATES_BY_ID } from "@/templates/registry";
 import { duplicateAsVariant } from "@/lib/resumes";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import { TemplatePreview } from "./template-preview";
 import { staggerContainer, staggerItem } from "@/lib/motion";
 
@@ -53,6 +55,7 @@ import { staggerContainer, staggerItem } from "@/lib/motion";
 const SWAP_TOAST_ID = "template-swap";
 
 export function TemplatesTab() {
+  const { t } = useLanguage();
   const current = useEditorStore((s) => s.data.meta.template);
   const setTemplate = useEditorStore((s) => s.setTemplate);
   const resumeId = useEditorStore((s) => s.resumeId);
@@ -100,21 +103,21 @@ export function TemplatesTab() {
     // the only mental model that's true is "everything is always
     // saved, undo to revert". Saying "unsaved changes will be lost"
     // would be a lie.
-    toast(`Switched to ${newTplName}.`, {
+    toast(t("templates.swap.switched", { name: newTplName }), {
       id: SWAP_TOAST_ID,
       duration: 8000, // 8s — long enough to read, short enough to not nag.
       description: hasDecoration
-        ? `Your shapes and overrides from the ${oldTplName} layout were cleared (positions don't carry across layouts).`
+        ? t("templates.swap.shapesCleared", { name: oldTplName })
         : undefined,
       action: {
-        label: "Undo",
+        label: t("templates.swap.undo"),
         onClick: () => {
           // Editor store's undo() rolls back one history step. It
           // restores `data` (which includes template + customElements
           // + overrides), so a single click reverses everything the
           // swap touched.
           useEditorStore.getState().undo();
-          toast.success(`Reverted to ${oldTplName}.`, {
+          toast.success(t("templates.swap.reverted", { name: oldTplName }), {
             id: SWAP_TOAST_ID,
             duration: 3000,
           });
@@ -127,12 +130,10 @@ export function TemplatesTab() {
       // worth preserving.
       cancel: hasDecoration
         ? {
-            label: "Save as variant",
+            label: t("templates.swap.saveAsVariant"),
             onClick: () => {
               if (!resumeId) {
-                toast.error(
-                  "Can't save a variant before the CV is loaded.",
-                );
+                toast.error(t("templates.swap.cantSaveBeforeLoad"));
                 return;
               }
               const stamp = new Date().toLocaleDateString();
@@ -140,23 +141,39 @@ export function TemplatesTab() {
               // Async fire-and-forget. The toast itself is the
               // progress indicator — show "saving" then resolve to
               // success / error in place.
-              toast.loading(`Saving ${oldTplName} version as a variant…`, {
-                id: SWAP_TOAST_ID,
-              });
+              toast.loading(
+                t("templates.swap.savingVariant", { name: oldTplName }),
+                { id: SWAP_TOAST_ID },
+              );
               duplicateAsVariant(resumeId, label, { snapshot: preSwapData })
                 .then(() => {
                   toast.success(
-                    `Saved ${oldTplName} version as a variant on your dashboard.`,
+                    t("templates.swap.savedVariant", { name: oldTplName }),
                     { id: SWAP_TOAST_ID, duration: 4000 },
                   );
                 })
                 .catch((e: unknown) => {
-                  toast.error(
-                    e instanceof Error
-                      ? `Couldn't save variant: ${e.message}`
-                      : "Couldn't save variant. Free up space on your dashboard and try again.",
-                    { id: SWAP_TOAST_ID, duration: 6000 },
+                  // Use the i18n-aware reason mapping. translateError
+                  // resolves TranslatableError keys; plain Errors
+                  // surface their message verbatim (typical Supabase
+                  // path). Fall back to the generic save-failed copy
+                  // when there's no message at all.
+                  const reason = translateError(
+                    e,
+                    t,
+                    "templates.swap.saveFailed",
                   );
+                  // If translateError returned the fallback, use the
+                  // longer copy as-is. Otherwise prepend the localised
+                  // "Couldn't save variant: " prefix.
+                  const message =
+                    reason === t("templates.swap.saveFailed")
+                      ? reason
+                      : t("templates.swap.saveFailedReason", { reason });
+                  toast.error(message, {
+                    id: SWAP_TOAST_ID,
+                    duration: 6000,
+                  });
                 });
             },
           }
@@ -166,10 +183,7 @@ export function TemplatesTab() {
 
   return (
     <div>
-      <p className="mb-3 text-xs text-muted">
-        Pick a template. Your content stays — only the layout changes.
-        Cmd/Ctrl-Z to undo a swap.
-      </p>
+      <p className="mb-3 text-xs text-muted">{t("templates.swap.intro")}</p>
       {/* Stagger entrance — when the user opens the Templates tab the
           cards cascade in 30ms apart. Quick enough that 50 templates
           finish in well under a second; just enough to feel alive. */}

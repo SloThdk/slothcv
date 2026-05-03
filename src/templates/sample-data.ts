@@ -210,6 +210,12 @@ export function sampleResumeData(template: TemplateId): ResumeData {
       return overrideTemplate(danishTradePersona(), template);
     case "frederiksberg":
       return overrideTemplate(danishCarePersona(), template);
+    case "helsingor":
+      return overrideTemplate(danishHospitalityPersona(), template);
+    case "silkeborg":
+      return overrideTemplate(danishRetailPersona(), template);
+    case "aabenraa":
+      return overrideTemplate(danishTransportPersona(), template);
   }
 }
 
@@ -844,6 +850,362 @@ function danishCarePersona(): ResumeData {
           "Læser krimi og lægefaglig nonfiction",
         ]),
         title: "Fritidsinteresser",
+      },
+    ],
+  };
+}
+
+/**
+ * Sofie Pedersen — café/hospitality persona for Helsingør templatet.
+ *
+ * Specialty-coffee barista i København. Hospitality-CV'er fokuserer
+ * på service-kompetencer, allergi-håndtering, kasse + POS-systemer,
+ * og sproglige kompetencer (især vigtigt i turistområder). Persona
+ * dækker også tjener / kok / hotel-receptionist segmentet — fælles
+ * registre er service-orientering, holdarbejde, og pålidelighed.
+ */
+function danishHospitalityPersona(): ResumeData {
+  const shell = buildShell("helsingor", {
+    accentColor: "#B45309",
+    layout: "single",
+    headerStyle: "titlecase",
+    titleFont: "Lora",
+    bodyFont: "Inter",
+    photo: { enabled: true, shape: "circle", position: "top-left" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Sofie Pedersen",
+      headline: "Barista · Specialty Coffee",
+      email: "sofie@example.com",
+      phone: "+45 28 14 56 78",
+      location: "København K, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "sp1",
+          label: "Hygiejnebevis (1)",
+          url: "https://example.com/sofie-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren barista med 5 års praksis i specialty-coffee miljøer i København. Stærk i espresso-håndtering, latte-art og kundedialog på dansk + engelsk. Trives i højt-tempo-miljø og tager ansvar for daglig drift, varebestilling og oplæring af nye kolleger.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Barista og skiftleder",
+            company: "La Cabra Coffee, Pilestræde",
+            location: "København",
+            start: "2023-08",
+            end: "",
+            current: true,
+            bullets: [
+              "Daglig drift af to-gruppes La Marzocco; vedligeholder kalibrering og dosering henover dagen.",
+              "Ansvar for åbnings- og lukke-rutiner samt POS-afstemning (Lightspeed).",
+              "Oplærte 4 nye baristaer i Q-grader-kurset og virksomhedens espresso-standard.",
+            ],
+          },
+          {
+            role: "Barista",
+            company: "The Coffee Collective, Godthåbsvej",
+            location: "Frederiksberg",
+            start: "2020-04",
+            end: "2023-07",
+            current: false,
+            bullets: [
+              "Espresso, brygmetoder (V60, AeroPress, Chemex) og kundeoplevelse i et specialty-miljø.",
+              "Bestilte mælk, kaffebønner og forbrugsstoffer ugentligt.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Copenhagen Hospitality College",
+          degree: "Servicebevis",
+          field: "Café- og restaurationsservice",
+          location: "København",
+          start: "2018",
+          end: "2019",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Espresso-kalibrering",
+            "Latte-art (frihånds + etched)",
+            "POS / kassesystemer (Lightspeed, iZettle)",
+            "Allergi-håndtering (gluten, laktose, nødder)",
+            "Mælkedampning",
+            "Holdarbejde og oplæring",
+          ],
+          "Service",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "C1", level: 4 },
+          { name: "Italiensk", proficiency: "A2", level: 2 },
+        ]),
+        title: "Sprog",
+      },
+      {
+        ...hobbies([
+          "Hjemmebrygning og pour-over på fridage",
+          "Løb (Copenhagen Marathon 2024)",
+          "Frivillig på Distortion-festivalen",
+        ]),
+        title: "Fritidsinteresser",
+      },
+    ],
+  };
+}
+
+/**
+ * Mads Christensen — detailhandels-persona for Silkeborg templatet.
+ *
+ * Salgsassistent i Bauhaus byggemarked, mid-level senior med
+ * varekendskab, kundeservice, kasse + lager-rutiner. Persona dækker
+ * også Jysk / Føtex / Bilka / Magasin / Salling segmentet — fælles
+ * register er holdarbejde, kasseoperation, varekendskab + KPI-
+ * driven salg.
+ */
+function danishRetailPersona(): ResumeData {
+  const shell = buildShell("silkeborg", {
+    accentColor: "#1E40AF",
+    layout: "single",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "square", position: "top-right" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Mads Christensen",
+      headline: "Salgsassistent · Byggemarked",
+      email: "mads@example.com",
+      phone: "+45 30 27 49 15",
+      location: "Silkeborg, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "mc1",
+          label: "Kørekort B",
+          url: "https://example.com/mads-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren salgsassistent med 6 års praksis fra byggemarked og isenkram. Stærk i kundedialog, varekendskab indenfor el / vvs / træ-værktøj samt kasse + lager-rutiner. Tager naturligt ansvar for daglig drift, vagtplan og oplæring af nye kolleger.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Salgsassistent og afdelingsansvarlig",
+            company: "Bauhaus Silkeborg",
+            location: "Silkeborg",
+            start: "2022-04",
+            end: "",
+            current: true,
+            bullets: [
+              "Ansvarlig for el-afdelingen: vagtplan for 5 medarbejdere, varebestilling og kampagner.",
+              "Kundeservice-NPS for afdelingen lå konsekvent over kæde-gennemsnit (+11 point i 2024).",
+              "Oplærte 3 nye sæsonmedarbejdere i kasse, lagersystem (SAP) og varekendskab.",
+            ],
+          },
+          {
+            role: "Salgsmedhjælper",
+            company: "Jysk Silkeborg",
+            location: "Silkeborg",
+            start: "2019-09",
+            end: "2022-03",
+            current: false,
+            bullets: [
+              "Kasse, varepåfyldning, kundebetjening i sengetøjs- og møbelafdelingen.",
+              "Tog ekstravagter ved kampagne-uger og inventering.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Silkeborg Handelsskole",
+          degree: "EUD-grundforløb",
+          field: "Detailhandel og kundeservice",
+          location: "Silkeborg",
+          start: "2017",
+          end: "2019",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Kundeservice og rådgivning",
+            "Varekendskab (el, vvs, træ-værktøj)",
+            "Kassebetjening og afstemning",
+            "Lagersystem (SAP, Logia)",
+            "Vagtplanlægning",
+            "Kampagne-eksekvering",
+          ],
+          "Detailhandel",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "B2", level: 3 },
+          { name: "Tysk", proficiency: "A2", level: 2 },
+        ]),
+        title: "Sprog",
+      },
+      {
+        ...hobbies([
+          "Mountainbike (Silkeborg MTB Klub)",
+          "Hjemmebryg (øl-klub Aros)",
+          "Fodbold-træner U10 (Silkeborg IF)",
+        ]),
+        title: "Fritidsinteresser",
+      },
+    ],
+  };
+}
+
+/**
+ * Ole Jensen — transport- og chauffør-persona for Aabenraa templatet.
+ *
+ * Lastbilchauffør med kategorier B + C + CE + ADR (farligt gods).
+ * Det centrale i et dansk transport-CV er KØREKORT-KATEGORIER
+ * (visuelt fremhævet) og GYLDIGE EFTERUDDANNELSESBEVISER (EU-
+ * pakke 5 / chaufføruddannelse). Persona dækker også varevognschauffør,
+ * busschauffør, kurer og taxa — alle reguleret af samme bekendtgørelse.
+ */
+function danishTransportPersona(): ResumeData {
+  const shell = buildShell("aabenraa", {
+    accentColor: "#1A1A1A",
+    layout: "sidebar-left",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "square", position: "sidebar" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Ole Jensen",
+      headline: "Lastbilchauffør · CE + ADR",
+      email: "ole@example.com",
+      phone: "+45 22 78 31 04",
+      location: "Aabenraa, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "oj1",
+          label: "Kørekort B + C + CE",
+          url: "https://example.com/ole-cv",
+        },
+        {
+          id: "oj2",
+          label: "ADR-bevis (klasse 1-9)",
+          url: "https://example.com/ole-adr",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren lastbilchauffør med 12 års praksis indenfor international fragt og farligt gods (ADR). Stærk i ruteplanlægning, kunde-kommunikation og overholdelse af køre- og hviletidsregler. Punktlig, ansvarsfuld og vant til EU-trafik (DK / DE / NL / PL).",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Lastbilchauffør (CE + ADR)",
+            company: "Frode Laursen, Aabenraa",
+            location: "Aabenraa",
+            start: "2019-02",
+            end: "",
+            current: true,
+            bullets: [
+              "Distribuerer ADR-mærket gods (klasse 3 brandbart + klasse 9) til industri-kunder i DK + DE + NL.",
+              "Vedligeholder Tachograph-data og overholder EU-direktiv 561/2006 uden anmærkninger i 5 år.",
+              "Oplærte 2 nye chauffører i ADR-procedurer og lastsikring.",
+            ],
+          },
+          {
+            role: "Lastbilchauffør (C)",
+            company: "DSV Solutions",
+            location: "Padborg",
+            start: "2013-06",
+            end: "2019-01",
+            current: false,
+            bullets: [
+              "National distribution + udvalgte EU-ruter til Tyskland og Holland.",
+              "Vagtplan inkl. weekender og helligdage; dækkede sygevagter for kolleger.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "EUC Syd, Aabenraa",
+          degree: "Chaufføruddannelse",
+          field: "Godstransport (kategori C + CE)",
+          location: "Aabenraa",
+          start: "2011",
+          end: "2013",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...certifications([
+          { name: "ADR-bevis (klasse 1-9, tank)", issuer: "Beredskabsstyrelsen", date: "2023-09" },
+          { name: "EU-direktiv 5 / Chaufføruddannelse", issuer: "AMU Syd", date: "2024-02" },
+          { name: "Førstehjælp + brandbekæmpelse", issuer: "Røde Kors", date: "2024-06" },
+          { name: "Lastsikring §17", issuer: "AMU", date: "2022-11" },
+        ]),
+        title: "Certifikater",
+      },
+      {
+        ...skills(
+          [
+            "Køre- og hviletidsregler (EU 561/2006)",
+            "Tachograph (analog + digital)",
+            "Lastsikring og fragtpapirer",
+            "ADR-procedurer (klasse 1-9)",
+            "Ruteplanlægning",
+            "Kundebetjening og levering",
+          ],
+          "Tekniske",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Tysk", proficiency: "B2", level: 3 },
+          { name: "Engelsk", proficiency: "B1", level: 3 },
+        ]),
+        title: "Sprog",
       },
     ],
   };

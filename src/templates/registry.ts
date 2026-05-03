@@ -443,6 +443,34 @@ export const TEMPLATES: TemplateMeta[] = [
     swatch: { primary: "#0D9488", bg: "#F0FDFA" },
     language: "da",
   },
+  // ── Service / detailhandel / transport-udvidelse (2026-05-04) ────
+  {
+    id: "helsingor",
+    name: "Helsingør",
+    blurb:
+      "Café- og hospitality-CV. Cremepapir med terracotta accent, varm serif-tone, foto i cirkel. Til barista, kok, tjener, hotel- og restaurantmedarbejder.",
+    thumbGradient: "from-orange-50 to-amber-100",
+    swatch: { primary: "#B45309", bg: "#FBF8F3" },
+    language: "da",
+  },
+  {
+    id: "silkeborg",
+    name: "Silkeborg",
+    blurb:
+      "Detailhandels-CV. Hvid baggrund med navy accent, header-bånd med foto, KPI-fliser med år-i-detail og kompetencer. Til Bauhaus, Jysk, Føtex, Bilka, salgsassistent, kasseoperatør.",
+    thumbGradient: "from-blue-50 to-slate-100",
+    swatch: { primary: "#1E40AF", bg: "#FFFFFF" },
+    language: "da",
+  },
+  {
+    id: "aabenraa",
+    name: "Aabenraa",
+    blurb:
+      "Transport- og chauffør-CV. Sidebar med kørekort-kategorier som badges + certifikater (ADR, EU-direktiv 5). Til lastbil, varevogn, taxi, kurer, busschauffør.",
+    thumbGradient: "from-zinc-100 to-yellow-50",
+    swatch: { primary: "#1A1A1A", bg: "#FFFFFF" },
+    language: "da",
+  },
 ];
 
 export const TEMPLATES_BY_ID: Record<TemplateId, TemplateMeta> =

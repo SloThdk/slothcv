@@ -140,6 +140,10 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateComponentProps>> = {
     () => import("./frederiksberg"),
     "FrederiksbergTemplate",
   ),
+  // Service / detailhandel / transport.
+  helsingor: lazyTemplate(() => import("./helsingor"), "HelsingorTemplate"),
+  silkeborg: lazyTemplate(() => import("./silkeborg"), "SilkeborgTemplate"),
+  aabenraa: lazyTemplate(() => import("./aabenraa"), "AabenraaTemplate"),
 };
 
 interface RendererProps {

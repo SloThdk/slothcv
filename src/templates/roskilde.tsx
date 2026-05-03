@@ -143,6 +143,21 @@ function ContactLine({ data }: { data: ResumeData }) {
       </span>,
     );
   }
+  // Kørekort surfaceres kun hvis brugeren har udfyldt det. Roskilde
+  // er typisk tech / startup hvor B sjældent er afgørende, men nogle
+  // roller (fx onsite-ingeniør hos Vestas) værdsætter det.
+  if (personal.koreekort) {
+    items.push(
+      <span
+        key="koreekort"
+        data-element-id="personal.koreekort"
+        className={itemClass}
+        style={elementStyle(data, "personal.koreekort")}
+      >
+        Kørekort: {personal.koreekort}
+      </span>,
+    );
+  }
   for (const l of personal.links) {
     items.push(
       <a

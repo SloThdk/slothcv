@@ -22,6 +22,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   ArrowDown,
   ArrowRight,
@@ -535,6 +536,7 @@ function Inspector({ element }: { element: CustomElement }) {
   const sendBackward = useEditorStore((s) => s.sendBackward);
   const selectElement = useEditorStore((s) => s.selectElement);
   const confirm = useConfirm();
+  const { t } = useLanguage();
 
   // Live x/y mirrors. Refs + direct DOM mutation when the preview drag
   // dispatches `slothcv:custom-drag-tick`. No React rerender during drag.
@@ -560,15 +562,19 @@ function Inspector({ element }: { element: CustomElement }) {
     };
   }, [element.id]);
 
+  // Localised shape-kind label — used in the heading + delete-confirm.
+  // Computed once per render rather than per-callsite so we don't pay
+  // two t() lookups for the same value.
+  const kindName = t(kindLabelKey(element.kind));
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-            {kindLabel(element.kind)} selected
+            {t("inspector.selected", { kind: kindName })}
           </p>
           <p className="mt-0.5 text-[11px] text-subtle">
-            Drag in the preview to move. Use these controls to fine-tune.
+            {t("inspector.dragInPreview")}
           </p>
         </div>
         <Button
@@ -576,14 +582,14 @@ function Inspector({ element }: { element: CustomElement }) {
           variant="ghost"
           size="sm"
           onClick={() => selectElement(null)}
-          title="Close inspector"
+          title={t("inspector.closeAria")}
         >
-          Done
+          {t("common.done")}
         </Button>
       </div>
 
       {/* --- Position --- */}
-      <Section title="Position">
+      <Section title={t("inspector.position")}>
         <div className="grid grid-cols-2 gap-2">
           <NumField
             label="X"
@@ -609,7 +615,7 @@ function Inspector({ element }: { element: CustomElement }) {
       </Section>
 
       {/* --- Size --- */}
-      <Section title="Size">
+      <Section title={t("inspector.size")}>
         <div className="grid grid-cols-2 gap-2">
           <NumField
             label="W"
@@ -652,9 +658,9 @@ function Inspector({ element }: { element: CustomElement }) {
       {element.kind === "icon" && <IconControls element={element} />}
 
       {/* --- Common: rotation, opacity --- */}
-      <Section title="Transform">
+      <Section title={t("inspector.transform")}>
         <NumField
-          label="Rotate (deg)"
+          label={t("inspector.rotate")}
           id="rotate"
           value={element.rotate ?? 0}
           min={-360}
@@ -662,7 +668,7 @@ function Inspector({ element }: { element: CustomElement }) {
           onChange={(v) => updateCustomElement(element.id, { rotate: v })}
         />
         <NumField
-          label="Opacity"
+          label={t("inspector.opacity")}
           id="opacity"
           value={Math.round((element.opacity ?? 1) * 100)}
           min={0}
@@ -675,7 +681,7 @@ function Inspector({ element }: { element: CustomElement }) {
       </Section>
 
       {/* --- Layer + delete --- */}
-      <Section title="Layer">
+      <Section title={t("inspector.layer")}>
         <div className="flex flex-wrap gap-1.5">
           <Button
             type="button"
@@ -684,7 +690,7 @@ function Inspector({ element }: { element: CustomElement }) {
             onClick={() => bringForward(element.id)}
           >
             <ArrowUp className="h-3.5 w-3.5" />
-            Forward
+            {t("inspector.bringForward")}
           </Button>
           <Button
             type="button"
@@ -693,7 +699,7 @@ function Inspector({ element }: { element: CustomElement }) {
             onClick={() => sendBackward(element.id)}
           >
             <ArrowDown className="h-3.5 w-3.5" />
-            Backward
+            {t("inspector.sendBackward")}
           </Button>
           <Button
             type="button"
@@ -706,12 +712,12 @@ function Inspector({ element }: { element: CustomElement }) {
             {element.visible ? (
               <>
                 <EyeOff className="h-3.5 w-3.5" />
-                Hide
+                {t("inspector.hide")}
               </>
             ) : (
               <>
                 <Eye className="h-3.5 w-3.5" />
-                Show
+                {t("inspector.show")}
               </>
             )}
           </Button>
@@ -725,10 +731,10 @@ function Inspector({ element }: { element: CustomElement }) {
                 opacity: 1,
               })
             }
-            title="Reset transform"
+            title={t("inspector.resetTransform")}
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
+            {t("inspector.reset")}
           </Button>
         </div>
       </Section>
@@ -740,11 +746,12 @@ function Inspector({ element }: { element: CustomElement }) {
           size="sm"
           onClick={async () => {
             const ok = await confirm({
-              title: `Delete this ${kindLabel(element.kind).toLowerCase()}?`,
-              description:
-                "The element will be removed from the canvas. Other elements stay where they are.",
-              confirmLabel: "Delete",
-              cancelLabel: "Cancel",
+              title: t("inspector.deletePromptTitle", {
+                kind: kindName.toLowerCase(),
+              }),
+              description: t("inspector.deletePromptDesc"),
+              confirmLabel: t("common.delete"),
+              cancelLabel: t("common.cancel"),
               variant: "danger",
             });
             if (ok) removeCustomElement(element.id);
@@ -752,7 +759,7 @@ function Inspector({ element }: { element: CustomElement }) {
           className="text-red-600 hover:bg-red-50 hover:text-red-700"
         >
           <Trash2 className="h-3.5 w-3.5" />
-          Delete element
+          {t("inspector.deleteElement")}
         </Button>
       </Section>
     </div>
@@ -765,22 +772,23 @@ function Inspector({ element }: { element: CustomElement }) {
 
 function RectControls({ element }: { element: RectElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
   return (
-    <Section title="Fill & stroke">
+    <Section title={t("inspector.fillStroke")}>
       <ColorField
-        label="Fill"
+        label={t("inspector.fill")}
         value={element.fill}
         onChange={(v) => update(element.id, { fill: v })}
       />
       <ColorField
-        label="Stroke"
+        label={t("inspector.stroke")}
         value={element.stroke ?? ""}
         onChange={(v) =>
           update(element.id, { stroke: v.trim() ? v : undefined })
         }
       />
       <NumField
-        label="Stroke width"
+        label={t("inspector.strokeWidth")}
         id="rect-stroke-w"
         value={element.strokeWidth ?? 0}
         min={0}
@@ -790,7 +798,7 @@ function RectControls({ element }: { element: RectElement }) {
         }
       />
       <NumField
-        label="Corner radius"
+        label={t("inspector.cornerRadius")}
         id="rect-radius"
         value={element.radius ?? 0}
         min={0}
@@ -803,22 +811,23 @@ function RectControls({ element }: { element: RectElement }) {
 
 function EllipseControls({ element }: { element: EllipseElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
   return (
-    <Section title="Fill & stroke">
+    <Section title={t("inspector.fillStroke")}>
       <ColorField
-        label="Fill"
+        label={t("inspector.fill")}
         value={element.fill}
         onChange={(v) => update(element.id, { fill: v })}
       />
       <ColorField
-        label="Stroke"
+        label={t("inspector.stroke")}
         value={element.stroke ?? ""}
         onChange={(v) =>
           update(element.id, { stroke: v.trim() ? v : undefined })
         }
       />
       <NumField
-        label="Stroke width"
+        label={t("inspector.strokeWidth")}
         id="ellipse-stroke-w"
         value={element.strokeWidth ?? 0}
         min={0}
@@ -850,22 +859,23 @@ function PolygonControls({
     | import("@/types/resume").ArrowElement;
 }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
   return (
-    <Section title="Fill & stroke">
+    <Section title={t("inspector.fillStroke")}>
       <ColorField
-        label="Fill"
+        label={t("inspector.fill")}
         value={element.fill}
         onChange={(v) => update(element.id, { fill: v })}
       />
       <ColorField
-        label="Stroke"
+        label={t("inspector.stroke")}
         value={element.stroke ?? ""}
         onChange={(v) =>
           update(element.id, { stroke: v.trim() ? v : undefined })
         }
       />
       <NumField
-        label="Stroke width"
+        label={t("inspector.strokeWidth")}
         id="polygon-stroke-w"
         value={element.strokeWidth ?? 0}
         min={0}
@@ -880,16 +890,17 @@ function PolygonControls({
 
 function LineControls({ element }: { element: LineElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
   const isDashed = !!(element.dash && element.dash.length > 0);
   return (
-    <Section title="Stroke">
+    <Section title={t("inspector.stroke")}>
       <ColorField
-        label="Color"
+        label={t("inspector.color")}
         value={element.color}
         onChange={(v) => update(element.id, { color: v })}
       />
       <NumField
-        label="Thickness"
+        label={t("inspector.thickness")}
         id="line-thickness"
         value={element.thickness}
         min={0.5}
@@ -906,7 +917,7 @@ function LineControls({ element }: { element: LineElement }) {
           }
         />
         <Label htmlFor="line-dashed" className="!mb-0">
-          Dashed
+          {t("inspector.dashed")}
         </Label>
       </div>
     </Section>
@@ -915,22 +926,30 @@ function LineControls({ element }: { element: LineElement }) {
 
 function TextControls({ element }: { element: TextElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
+  // Mapping fra align-værdi → translation key for de tre justerings-
+  // valgmuligheder. Holdes lokalt fordi det kun er relevant her.
+  const alignLabel: Record<"left" | "center" | "right", TranslationKey> = {
+    left: "inspector.alignLeft",
+    center: "inspector.alignCenter",
+    right: "inspector.alignRight",
+  };
   return (
-    <Section title="Text">
+    <Section title={t("inspector.text")}>
       <div>
-        <Label htmlFor="text-content">Content</Label>
+        <Label htmlFor="text-content">{t("inspector.textContent")}</Label>
         <textarea
           id="text-content"
           value={element.text}
           onChange={(e) => update(element.id, { text: e.target.value })}
           rows={3}
           className="block w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] focus-visible:ring-offset-2"
-          placeholder="Type your text…"
+          placeholder={t("inspector.textPlaceholder")}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <NumField
-          label="Font size"
+          label={t("inspector.fontSize")}
           id="text-fs"
           value={element.fontSize}
           min={6}
@@ -938,7 +957,7 @@ function TextControls({ element }: { element: TextElement }) {
           onChange={(v) => update(element.id, { fontSize: v })}
         />
         <NumField
-          label="Weight"
+          label={t("inspector.fontWeight")}
           id="text-fw"
           value={element.fontWeight}
           min={100}
@@ -948,12 +967,12 @@ function TextControls({ element }: { element: TextElement }) {
         />
       </div>
       <ColorField
-        label="Color"
+        label={t("inspector.color")}
         value={element.color}
         onChange={(v) => update(element.id, { color: v })}
       />
       <div>
-        <Label>Align</Label>
+        <Label>{t("inspector.align")}</Label>
         <div className="flex gap-1">
           {(["left", "center", "right"] as const).map((a) => (
             <Button
@@ -961,10 +980,10 @@ function TextControls({ element }: { element: TextElement }) {
               type="button"
               variant={element.align === a ? "default" : "outline"}
               size="sm"
-              className="h-7 flex-1 text-xs capitalize"
+              className="h-7 flex-1 text-xs"
               onClick={() => update(element.id, { align: a })}
             >
-              {a}
+              {t(alignLabel[a])}
             </Button>
           ))}
         </div>
@@ -978,7 +997,7 @@ function TextControls({ element }: { element: TextElement }) {
               update(element.id, { italic: e.target.checked || undefined })
             }
           />
-          Italic
+          {t("inspector.italic")}
         </label>
         <label className="flex items-center gap-1.5">
           <input
@@ -988,7 +1007,7 @@ function TextControls({ element }: { element: TextElement }) {
               update(element.id, { underline: e.target.checked || undefined })
             }
           />
-          Underline
+          {t("inspector.underline")}
         </label>
       </div>
     </Section>
@@ -1013,6 +1032,7 @@ function TextControls({ element }: { element: TextElement }) {
  *  on a brand glyph generally violates the network's logo policy. */
 function IconControls({ element }: { element: IconElement }) {
   const update = useEditorStore((s) => s.updateCustomElement);
+  const { t } = useLanguage();
   // Suggest a sensible default URL placeholder per brand so the user
   // doesn't have to remember whether LinkedIn is `/in/` or `/company/`.
   // These are HINTS only — the actual stored value is always whatever
@@ -1044,9 +1064,9 @@ function IconControls({ element }: { element: IconElement }) {
                             ? "mailto:you@example.com"
                             : "https://example.com";
   return (
-    <Section title="Icon">
+    <Section title={t("inspector.icon")}>
       <div>
-        <Label>Brand</Label>
+        <Label>{t("inspector.brand")}</Label>
         <div className="grid grid-cols-3 gap-1.5">
           {SOCIAL_ICONS.map((it) => {
             const isActive = element.iconName === it.name;
@@ -1081,7 +1101,7 @@ function IconControls({ element }: { element: IconElement }) {
         </div>
       </div>
       <ColorField
-        label="Color"
+        label={t("inspector.color")}
         value={element.color}
         onChange={(v) => update(element.id, { color: v })}
       />
@@ -1091,7 +1111,7 @@ function IconControls({ element }: { element: IconElement }) {
           navigate on click (clicks select the element); the URL is
           purely for export. */}
       <div>
-        <Label>Link URL</Label>
+        <Label>{t("inspector.url")}</Label>
         <UrlInput
           value={element.url ?? ""}
           onChange={(e) =>
@@ -1099,10 +1119,7 @@ function IconControls({ element }: { element: IconElement }) {
           }
           placeholder={placeholder}
         />
-        <p className="mt-1 text-[10px] text-subtle">
-          Optional. When set, the icon becomes a clickable link in the
-          exported PDF.
-        </p>
+        <p className="mt-1 text-[10px] text-subtle">{t("inspector.urlHint")}</p>
       </div>
     </Section>
   );
@@ -1139,7 +1156,7 @@ function ImageControls({ element }: { element: ImageElement }) {
   }
 
   return (
-    <Section title="Image">
+    <Section title={t("inspector.image")}>
       <div className="flex items-center gap-2">
         {element.url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -1169,7 +1186,11 @@ function ImageControls({ element }: { element: ImageElement }) {
             disabled={uploading}
           >
             <Upload className="h-3.5 w-3.5" />
-            {uploading ? "Uploading…" : element.url ? "Replace" : "Upload image"}
+            {uploading
+              ? t("inspector.uploading")
+              : element.url
+                ? t("inspector.replaceImage")
+                : t("inspector.uploadImage")}
           </Button>
           {element.url && (
             <Button
@@ -1179,7 +1200,7 @@ function ImageControls({ element }: { element: ImageElement }) {
               onClick={() => update(element.id, { url: "" })}
               disabled={uploading}
             >
-              Clear
+              {t("inspector.clearImage")}
             </Button>
           )}
         </div>
@@ -1200,11 +1221,11 @@ function ImageControls({ element }: { element: ImageElement }) {
           onClick={() => setShowUrl(true)}
           className="text-[11px] text-muted underline-offset-2 hover:underline"
         >
-          Paste a URL instead
+          {t("inspector.pasteUrlInstead")}
         </button>
       ) : (
         <div>
-          <Label>Image URL</Label>
+          <Label>{t("inspector.imageUrl")}</Label>
           <UrlInput
             value={element.url}
             onChange={(e) => update(element.id, { url: e.target.value })}
@@ -1375,37 +1396,41 @@ function ColorField({
   );
 }
 
-function kindLabel(k: CustomElementKind): string {
+/** Map a custom-element `kind` to its inspector translation key. The
+ *  caller (Inspector, delete-confirm dialog) calls `t(kindLabelKey(k))`
+ *  to get the localised label, so swapping language flips every shape
+ *  name in one go without per-callsite t() boilerplate. */
+function kindLabelKey(k: CustomElementKind): TranslationKey {
   switch (k) {
     case "rect":
-      return "Rectangle";
+      return "inspector.kind.rect";
     case "ellipse":
-      return "Ellipse";
+      return "inspector.kind.ellipse";
     case "line":
-      return "Line";
+      return "inspector.kind.line";
     case "triangle":
-      return "Triangle";
+      return "inspector.kind.triangle";
     case "star":
-      return "Star";
+      return "inspector.kind.star";
     case "hexagon":
-      return "Hexagon";
+      return "inspector.kind.hexagon";
     case "octagon":
-      return "Octagon";
+      return "inspector.kind.octagon";
     case "diamond":
-      return "Diamond";
+      return "inspector.kind.diamond";
     case "heart":
-      return "Heart";
+      return "inspector.kind.heart";
     case "cross":
-      return "Cross";
+      return "inspector.kind.cross";
     case "sparkle":
-      return "Sparkle";
+      return "inspector.kind.sparkle";
     case "arrow":
-      return "Arrow";
+      return "inspector.kind.arrow";
     case "text":
-      return "Text";
+      return "inspector.kind.text";
     case "image":
-      return "Image";
+      return "inspector.kind.image";
     case "icon":
-      return "Icon";
+      return "inspector.kind.icon";
   }
 }

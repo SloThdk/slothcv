@@ -188,13 +188,17 @@ export function sampleResumeData(template: TemplateId): ResumeData {
     case "marina":
       return overrideTemplate(madridPersona(), template);
     // ── Danish CV pool (2026-05) ─────────────────────────────────────
-    // First trio — formel/tech/kreativ — shares Mette Jensen
-    // (marketing/comms, København). One persona across three templates
-    // because the visual layouts differ enough that gallery thumbnails
-    // still read as distinct, and Mette's content fits all three
-    // industry pitches.
+    // Hver template får sin egen industri-specifikke persona så
+    // gallery-thumbnails giver ægte "denne her er for X-segmentet"-
+    // signal. Aarhus (offentlig/finans) → Anders Hansen
+    // (økonomikonsulent), Roskilde (tech) → Christian Møller (senior
+    // engineer), Odense (kreativ) → Mette Jensen (marketing — den
+    // oprindelige danishPersona, beholdt fordi marketing/comms ER
+    // den naturlige Odense-fit).
     case "aarhus":
+      return overrideTemplate(danishFinancePersona(), template);
     case "roskilde":
+      return overrideTemplate(danishTechPersona(), template);
     case "odense":
       return overrideTemplate(danishPersona(), template);
     // ── Industri-udvidelse ─────────────────────────────────────────
@@ -486,6 +490,229 @@ function danishPersona(): ResumeData {
 }
 
 /**
+ * Anders Hansen — offentlig-sektor / finans persona for Aarhus templatet.
+ *
+ * Aarhus er den klassiske formelle skabelon — public sector, finans,
+ * jura, SMV. Anders dækker det segment med en økonomikonsulent-
+ * baggrund i kommunal forvaltning. Faglig profil rammer "stabil,
+ * regelret, analytisk" register som matcher recruiter-forventningerne
+ * i offentlig sektor. Civilstatus / fødselsdato udelades bevidst —
+ * danske offentlige arbejdsgivere har lige siden 2024 anbefalet at
+ * droppe dem ift. ligebehandlings-loven.
+ */
+function danishFinancePersona(): ResumeData {
+  const shell = buildShell("aarhus", {
+    accentColor: "#1F3A5F",
+    layout: "sidebar-left",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "circle", position: "sidebar" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Anders Hansen",
+      headline: "Økonomikonsulent · Cand.merc.aud.",
+      email: "anders@example.com",
+      phone: "+45 26 18 04 71",
+      location: "Aarhus C, DK",
+      photoUrl: "/sample-photos/berlin.webp",
+      links: [
+        {
+          id: "ah1",
+          label: "linkedin.com/in/anders-cv",
+          url: "https://example.com/in/anders-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Erfaren økonomikonsulent med 9 års baggrund fra kommunal forvaltning og revisionsbranchen. Stærk i budgetlægning, regnskabsanalyse og overholdelse af regnskabsloven. Trives i regulerede miljøer hvor præcision og dokumentation vejer tungere end hastighed.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Økonomikonsulent",
+            company: "Aarhus Kommune, Borgmesterens Afdeling",
+            location: "Aarhus",
+            start: "2021-08",
+            end: "",
+            current: true,
+            bullets: [
+              "Drev årsregnskab og budgetopfølgning for forvaltning med 240 mio. kr. ramme; nul anmærkninger i revision 3 år i træk.",
+              "Udviklede dashboard i Power BI til realtidsovervågning af forbrug — adopteret af 4 andre forvaltninger.",
+              "Repræsenterede afdelingen i tværkommunale arbejdsgrupper omkring regnskabsstandardisering.",
+            ],
+          },
+          {
+            role: "Revisor-assistent",
+            company: "BDO Statsautoriseret revisionsaktieselskab",
+            location: "Aarhus",
+            start: "2017-09",
+            end: "2021-07",
+            current: false,
+            bullets: [
+              "Revision af mellemstore SMV'er og almennyttige boligselskaber.",
+              "Bestod cand.merc.aud.-eksamen mens fuldtidsansat.",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Aarhus Universitet, BSS",
+          degree: "Cand.merc.aud.",
+          field: "Revision og regnskab",
+          location: "Aarhus",
+          start: "2019",
+          end: "2021",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "Regnskabsanalyse efter ÅRL og IFRS",
+            "Budgetlægning og -opfølgning",
+            "Power BI / Excel (avanceret)",
+            "OPUS / Prisme 365 (kommunalt regnskabssystem)",
+            "Skatteret",
+            "Tværfagligt samarbejde",
+          ],
+          "Faglige",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "C1", level: 4 },
+          { name: "Tysk", proficiency: "B1", level: 3 },
+        ]),
+        title: "Sprog",
+      },
+    ],
+  };
+}
+
+/**
+ * Christian Møller — tech / startup persona for Roskilde templatet.
+ *
+ * Roskilde er ATS-clean og skrævlende moderne. Persona'en målretter
+ * mod store internationale tech-arbejdsgivere i CPH (Tradeshift,
+ * Pleo, Coinify, Worksome, Templafy, Trustpilot, Zendesk DK) eller
+ * Vestas/Maersk/LEGO's tech-divisioner. Erhvervserfaring viser
+ * end-to-end ownership snarere end siloed dev-tasks — det signal
+ * scaleup-rekrutterere scanner for.
+ */
+function danishTechPersona(): ResumeData {
+  const shell = buildShell("roskilde", {
+    accentColor: "#0A0A0A",
+    layout: "single",
+    headerStyle: "uppercase",
+    photo: { enabled: false, shape: "circle", position: "top-left" },
+  });
+  return {
+    ...shell,
+    meta: { ...shell.meta, language: "da" },
+    personal: {
+      fullName: "Christian Møller",
+      headline: "Senior Software Engineer",
+      email: "christian@example.com",
+      phone: "+45 31 04 78 22",
+      location: "København N, DK",
+      links: [
+        {
+          id: "cm1",
+          label: "github.com/christian-cv",
+          url: "https://example.com/christian-cv",
+        },
+        {
+          id: "cm2",
+          label: "linkedin.com/in/christian-cv",
+          url: "https://example.com/in/christian-cv",
+        },
+      ],
+    },
+    sections: [
+      {
+        ...summary(
+          "Senior software engineer med 8 års erfaring i distribuerede backend-systemer i scaleup- og enterprise-miljøer. Stærk i TypeScript, Go og PostgreSQL. Arbejder end-to-end fra produktopdagelse til produktion og on-call. Bidrager open-source og holder oplæg til Copenhagen.js.",
+        ),
+        title: "Faglig profil",
+      },
+      {
+        ...experience(
+          {
+            role: "Senior Software Engineer",
+            company: "Pleo Technologies",
+            location: "København",
+            start: "2022-11",
+            end: "",
+            current: true,
+            bullets: [
+              "Tech lead på betalingsplatformen — flytter ~120 mio. EUR/år gennem Stripe Connect og lokale danske bank-API'er.",
+              "Sænkede p99 latency på checkout-flow fra 1.4s til 380ms via lazy-loaded session state og Postgres index-tuning.",
+              "Onboardede 4 juniorer; ejer praktikant-programmet for backend-teamet.",
+            ],
+          },
+          {
+            role: "Software Engineer",
+            company: "Tradeshift",
+            location: "København",
+            start: "2017-08",
+            end: "2022-10",
+            current: false,
+            bullets: [
+              "Byggede public API for B2B-faktura-routing; 18 enterprise-kunder migrerede fra legacy SOAP til REST på 6 måneder.",
+              "Var lead på migrering fra monolith til event-driven arkitektur (Kafka).",
+            ],
+          },
+        ),
+        title: "Erhvervserfaring",
+      },
+      {
+        ...education({
+          institution: "Københavns Universitet (DIKU)",
+          degree: "Cand.scient.",
+          field: "Datalogi",
+          location: "København",
+          start: "2014",
+          end: "2017",
+        }),
+        title: "Uddannelse",
+      },
+      {
+        ...skills(
+          [
+            "TypeScript / Node.js",
+            "Go",
+            "PostgreSQL + Redis",
+            "Kafka / event-driven arkitektur",
+            "Kubernetes / GCP",
+            "End-to-end ownership + on-call",
+          ],
+          "Tekniske",
+        ),
+        title: "Kompetencer",
+      },
+      {
+        ...languages([
+          { name: "Dansk", proficiency: "Modersmål", level: 5 },
+          { name: "Engelsk", proficiency: "C2", level: 5 },
+          { name: "Tysk", proficiency: "B1", level: 3 },
+        ]),
+        title: "Sprog",
+      },
+    ],
+  };
+}
+
+/**
  * Kasper Larsen — ufaglært dansk persona for Vejle templatet.
  *
  * Dækker hourly / service-job markedet: lager, butik, kantine,
@@ -515,13 +742,11 @@ function danishHourlyPersona(): ResumeData {
       phone: "+45 30 12 45 67",
       location: "Vejle, DK",
       photoUrl: "/sample-photos/berlin.webp",
-      links: [
-        {
-          id: "kl1",
-          label: "Kørekort B + Truckcertifikat",
-          url: "https://example.com/kasper-cv",
-        },
-      ],
+      // Kørekort er nu et dedikeret felt på PersonalInfo — surfaceres
+      // direkte i Vejle templatets kontaktblok. Truckcertifikat
+      // tilføjes via certificeringer-sektionen i en senere iteration.
+      koreekort: "B + Truck",
+      links: [],
     },
     sections: [
       {
@@ -632,13 +857,8 @@ function danishTradePersona(): ResumeData {
       phone: "+45 22 84 19 33",
       location: "Aalborg, DK",
       photoUrl: "/sample-photos/berlin.webp",
-      links: [
-        {
-          id: "la1",
-          label: "Kørekort B + C",
-          url: "https://example.com/lars-cv",
-        },
-      ],
+      koreekort: "B + C",
+      links: [],
     },
     sections: [
       {
@@ -751,16 +971,12 @@ function danishCarePersona(): ResumeData {
       phone: "+45 26 71 03 22",
       location: "Frederiksberg, DK",
       photoUrl: "/sample-photos/berlin.webp",
+      koreekort: "B",
       links: [
         {
           id: "as1",
           label: "Autorisation: 0DTGN",
           url: "https://example.com/anne-cv",
-        },
-        {
-          id: "as2",
-          label: "Kørekort B",
-          url: "https://example.com/anne-koreekort",
         },
       ],
     },
@@ -999,13 +1215,8 @@ function danishRetailPersona(): ResumeData {
       phone: "+45 30 27 49 15",
       location: "Silkeborg, DK",
       photoUrl: "/sample-photos/berlin.webp",
-      links: [
-        {
-          id: "mc1",
-          label: "Kørekort B",
-          url: "https://example.com/mads-cv",
-        },
-      ],
+      koreekort: "B",
+      links: [],
     },
     sections: [
       {
@@ -1115,18 +1326,10 @@ function danishTransportPersona(): ResumeData {
       phone: "+45 22 78 31 04",
       location: "Aabenraa, DK",
       photoUrl: "/sample-photos/berlin.webp",
-      links: [
-        {
-          id: "oj1",
-          label: "Kørekort B + C + CE",
-          url: "https://example.com/ole-cv",
-        },
-        {
-          id: "oj2",
-          label: "ADR-bevis (klasse 1-9)",
-          url: "https://example.com/ole-adr",
-        },
-      ],
+      // Aabenraa templatet renderer dette felt som visuelle gule
+      // badges øverst i sidebar — én kategori pr. badge.
+      koreekort: "B + C + CE",
+      links: [],
     },
     sections: [
       {

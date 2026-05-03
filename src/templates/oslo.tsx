@@ -38,11 +38,11 @@ export function OsloTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
-        className="mb-5 cursor-pointer rounded-md p-1 -m-1 text-center transition-colors hover:bg-neutral-100/60"
+        className="mb-5 cursor-pointer rounded-md p-1 -m-1 text-center transition-colors"
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[2.1em] font-bold leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="block w-fit cursor-text text-[2.1em] font-bold leading-[1.05] tracking-tight"
           style={{
             fontFamily: `'Lora', 'Source Serif 4', serif`,
             ...elementStyle(data, "personal.name"),
@@ -53,7 +53,7 @@ export function OsloTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[1.05em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[1.05em] italic"
             style={{
               color: design.accentColor,
               ...elementStyle(data, "personal.headline"),
@@ -78,7 +78,7 @@ export function OsloTemplate({ data, fixedSize, skipOverlay }: Props) {
             key={s.id}
             data-section-id={s.id}
             style={positionStyle(s)}
-            className={`group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15 ${idx === 0 ? "" : "mt-5"}`}
+            className={`group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 ${idx === 0 ? "" : "mt-5"}`}
           >
             <div
               className="mb-2 h-px w-full"

@@ -87,7 +87,7 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
         >
           <h1
             data-element-id="personal.name"
-            className="block w-fit cursor-text text-[2.7em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-amber-200/30 hover:ring-offset-2 hover:ring-offset-transparent"
+            className="block w-fit cursor-text text-[2.7em] leading-[1.05] tracking-tight"
             style={{
               color: CREAM,
               fontFamily:
@@ -101,7 +101,7 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mt-1 block w-fit cursor-text text-[1em] italic transition-shadow hover:ring-2 hover:ring-amber-200/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="mt-1 block w-fit cursor-text text-[1em] italic"
               style={{
                 color: GOLD,
                 fontFamily:
@@ -177,7 +177,7 @@ function GoldOrnament() {
 function DubaiContact({ data }: { data: ResumeData }) {
   const { personal } = data;
   const grab =
-    "block w-fit cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-amber-200/30 hover:ring-offset-1 hover:ring-offset-transparent";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div>
       <h3
@@ -259,11 +259,11 @@ function DubaiSidebarSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-amber-200/30"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[0.85em] transition-shadow hover:ring-2 hover:ring-amber-200/30 hover:ring-offset-1 hover:ring-offset-transparent"
+        className="mb-1 inline-block cursor-text text-[0.85em]"
         style={{
           color: GOLD,
           fontFamily:
@@ -305,11 +305,11 @@ function DubaiMainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-amber-200/30"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-amber-200/30 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="mb-2 inline-block cursor-text text-[1em]"
         style={{
           color: GOLD,
           fontFamily:

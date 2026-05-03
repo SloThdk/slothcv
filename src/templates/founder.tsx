@@ -105,7 +105,7 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
         <div>
           <h1
             data-element-id="personal.name"
-            className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
             style={{
               color: INK,
               fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -141,7 +141,7 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
       {heroQuote && (
         <div
           data-element-id="personal.headline"
-          className="mb-5 cursor-text rounded-md py-3 transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+          className="mb-5 cursor-text rounded-md py-3"
           style={elementStyle(data, "personal.headline")}
         >
           <p
@@ -220,7 +220,7 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
                     <article
                       key={t.id}
                       data-element-id={id}
-                      className="cursor-grab rounded-sm text-[0.85em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+                      className="cursor-grab rounded-sm text-[0.85em]"
                       style={elementStyle(data, id)}
                     >
                       {t.url ? (
@@ -305,7 +305,7 @@ function FounderContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="mt-1 text-[0.85em]"
@@ -364,7 +364,7 @@ function FounderPillar({
   return (
     <div
       data-section-id={sectionForActions?.id}
-      className="group relative space-y-2.5 rounded-md p-2 transition-[background-color,box-shadow] hover:bg-violet-50/40 hover:ring-2 hover:ring-violet-300/40"
+      className="group relative space-y-2.5 rounded-md p-2"
     >
       <h2
         className="text-[0.78em] uppercase"
@@ -398,7 +398,7 @@ function FounderJobCard({
   return (
     <article
       data-element-id={id}
-      className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+      className="cursor-grab rounded-sm"
       style={elementStyle(data, id)}
     >
       <h3
@@ -468,7 +468,7 @@ function FounderBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-1.5 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-1.5 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span
@@ -516,11 +516,11 @@ function FounderTailSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-violet-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: VIOLET,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -554,7 +554,7 @@ function FounderTailBody({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em] leading-[1.55]"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -585,7 +585,7 @@ function FounderTailBody({
             <span
               key={it.id}
               data-element-id={id}
-              className="cursor-grab rounded-md px-2 py-0.5 text-[0.85em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="cursor-grab rounded-md px-2 py-0.5 text-[0.85em]"
               style={{
                 background: `${VIOLET}10`,
                 border: `1px solid ${VIOLET}33`,

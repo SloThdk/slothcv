@@ -135,7 +135,7 @@ function Watermark({ design, data }: { design: GlobalDesign; data: ResumeData })
       // `--tw-ring-color` is the underlying CSS variable Tailwind v4
       // resolves for `ring-*` utilities; setting it inline lets the
       // ring colour adapt per template without static class lookups.
-      className={`absolute ${cornerClass} cursor-text select-none rounded-sm transition-shadow hover:ring-2 hover:ring-offset-2 hover:ring-offset-transparent`}
+      className={`absolute ${cornerClass} cursor-text select-none rounded-sm`}
       style={{
         color,
         fontWeight: 800,

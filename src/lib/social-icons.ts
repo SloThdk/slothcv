@@ -34,7 +34,7 @@
  * which publishes their SVG paths under CC0 1.0 (public domain). The
  * brand TRADEMARK still belongs to each company — using the icons in a
  * personal CV to indicate "here is my LinkedIn" is fair use; we do
- * NOT apply Sloth Studio branding to the icons or imply endorsement.
+ * NOT apply additional branding to the icons or imply endorsement.
  *
  * # Picking a default brand color
  *

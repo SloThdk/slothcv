@@ -88,7 +88,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
-        className="-m-4 mb-6 cursor-pointer p-6 transition-colors hover:bg-neutral-100/15"
+        className="-m-4 mb-6 cursor-pointer p-6 transition-colors"
         style={{
           // The dark band is a darker shade of accent so brand color
           // changes ripple here automatically. Falls back to a deep
@@ -121,7 +121,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.4em] font-extrabold leading-[1.0] tracking-[0.01em] uppercase transition-shadow hover:ring-2 hover:ring-white/40 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.4em] font-extrabold leading-[1.0] tracking-[0.01em] uppercase"
               style={{ color: "#ffffff", ...elementStyle(data, "personal.name") }}
             >
               {personal.fullName || "Your name"}
@@ -129,7 +129,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-2 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/40 hover:ring-offset-2"
+                className="mt-2 block w-fit cursor-text text-[0.95em] font-medium uppercase tracking-[0.22em]"
                 style={{
                   color: "rgba(255,255,255,0.8)",
                   ...elementStyle(data, "personal.headline"),
@@ -168,7 +168,7 @@ export function CapitolTemplate({ data, fixedSize, skipOverlay }: Props) {
                 key={s.id}
                 data-section-id={s.id}
                 style={positionStyle(s)}
-                className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+                className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
               >
                 {/* Timeline anchor — the lucide-icon-in-circle that sits
                     on top of the gutter rule. Negative left positions

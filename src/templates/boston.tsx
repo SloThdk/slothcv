@@ -70,7 +70,7 @@ export function BostonTemplate({ data, fixedSize, skipOverlay }: Props) {
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
           style={{
             color: BOSTON_INK,
             fontFamily:
@@ -84,7 +84,7 @@ export function BostonTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-1 block w-fit cursor-text text-[0.95em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mt-1 block w-fit cursor-text text-[0.95em] italic"
             style={{
               color: BOSTON_INK,
               fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
@@ -126,7 +126,7 @@ function BostonContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-1";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="mt-2 text-[0.85em]"
@@ -178,13 +178,13 @@ function BostonSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Small-caps title with a thin, full-width Boston-red hairline beneath.
           Letterspacing wide so the small-caps read crisply at this size. */}
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[0.8em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1 inline-block cursor-text text-[0.8em] uppercase"
         style={{
           color: BOSTON_RED,
           fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
@@ -220,7 +220,7 @@ function BostonBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.5] transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-1"
+          className="cursor-text text-[0.95em] leading-[1.5]"
           style={{
             color: BOSTON_INK,
             fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
@@ -279,7 +279,7 @@ function BostonExperience({
           <div
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -330,7 +330,7 @@ function BostonEducation({
           <div
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -387,7 +387,7 @@ function BostonPublications({
           <li
             key={p.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm text-[0.9em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm text-[0.9em]"
             style={{
               fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
               color: BOSTON_INK,
@@ -444,7 +444,7 @@ function BostonTalks({
           <div
             key={t.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em]"
             style={{
               fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
               color: BOSTON_INK,
@@ -480,7 +480,7 @@ function BostonCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em]"
             style={{
               fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
               color: BOSTON_INK,
@@ -513,7 +513,7 @@ function BostonFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.9em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.9em]"
         style={{
           color: BOSTON_INK,
           fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
@@ -543,7 +543,7 @@ function BostonFallback({
             <li
               key={it.id}
               data-element-id={id}
-              className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="cursor-grab rounded-sm"
               style={elementStyle(data, id)}
             >
               {it.name ?? it.text ?? ""}
@@ -582,7 +582,7 @@ function BostonBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span

@@ -91,7 +91,7 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
         >
           <h1
             data-element-id="personal.name"
-            className="mx-auto block w-fit cursor-text leading-[1.0] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+            className="mx-auto block w-fit cursor-text leading-[1.0]"
             style={{
               color: GOLD,
               fontFamily: SERIF,
@@ -106,7 +106,7 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mx-auto mt-3 block w-fit cursor-text uppercase transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="mx-auto mt-3 block w-fit cursor-text uppercase"
               style={{
                 color: CREAM,
                 fontFamily: SERIF,
@@ -174,7 +174,7 @@ function MidnightContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-4 text-[0.88em] italic"
@@ -227,11 +227,11 @@ function MidnightSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-sm p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-white/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-sm p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text uppercase transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="mb-2 inline-block cursor-text uppercase"
         style={{
           color: GOLD,
           fontFamily: SERIF,
@@ -271,7 +271,7 @@ function MidnightBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.65] transition-shadow hover:ring-2 hover:ring-white/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.65]"
           style={{
             color: CREAM,
             fontFamily: SERIF,
@@ -321,7 +321,7 @@ function MidnightExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -394,7 +394,7 @@ function MidnightProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -479,7 +479,7 @@ function MidnightEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -557,7 +557,7 @@ function MidnightSkills({
                   {i > 0 && <span style={{ color: CREAM_DIM }}>, </span>}
                   <span
                     data-element-id={id}
-                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+                    className="cursor-grab rounded-sm"
                     style={elementStyle(data, id)}
                   >
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
@@ -592,7 +592,7 @@ function MidnightCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -633,7 +633,7 @@ function MidnightFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-white/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: CREAM,
           fontFamily: SERIF,
@@ -694,7 +694,7 @@ function MidnightBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

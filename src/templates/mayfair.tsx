@@ -83,7 +83,7 @@ export function MayfairTemplate({ data, fixedSize, skipOverlay }: Props) {
         >
           <h1
             data-element-id="personal.name"
-            className="mx-auto block w-fit cursor-text text-[3.2em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mx-auto block w-fit cursor-text text-[3.2em] leading-[1.05] tracking-tight"
             style={{
               color: BURGUNDY,
               fontFamily:
@@ -98,7 +98,7 @@ export function MayfairTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mx-auto mt-2 block w-fit cursor-text text-[1em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="mx-auto mt-2 block w-fit cursor-text text-[1em] italic"
               style={{
                 color: INK,
                 fontFamily: "var(--font-lora, 'Lora'), serif",
@@ -149,7 +149,7 @@ function MayfairContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="mt-3 text-[0.85em] italic"
@@ -205,12 +205,12 @@ function MayfairSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-amber-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Section heading — italic small-caps, modest size, hairline beneath. */}
       <h2
         data-element-id={titleId}
-        className="mb-1 inline-block cursor-text text-[1em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1 inline-block cursor-text text-[1em] italic"
         style={{
           color: BURGUNDY,
           fontFamily:
@@ -248,7 +248,7 @@ function MayfairBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[1em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[1em] leading-[1.6]"
           style={{
             color: INK,
             fontFamily: "var(--font-lora, 'Lora'), serif",
@@ -292,7 +292,7 @@ function MayfairExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -375,7 +375,7 @@ function MayfairBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span
@@ -430,7 +430,7 @@ function MayfairInlineList({
           <li
             key={it.id}
             data-element-id={id}
-            className="mb-0.5 flex cursor-grab break-inside-avoid items-baseline gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="mb-0.5 flex cursor-grab break-inside-avoid items-baseline gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span style={{ color: BURGUNDY }} aria-hidden>
@@ -465,7 +465,7 @@ function MayfairFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
           fontFamily: "var(--font-lora, 'Lora'), serif",

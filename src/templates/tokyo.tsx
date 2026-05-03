@@ -47,13 +47,13 @@ export function TokyoTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
-        className="mb-5 flex cursor-pointer items-start justify-between gap-5 rounded-md p-1 -m-1 pb-4 transition-colors hover:bg-neutral-100/60"
+        className="mb-5 flex cursor-pointer items-start justify-between gap-5 rounded-md p-1 -m-1 pb-4 transition-colors"
         style={{ borderBottom: `2px solid ${design.accentColor}` }}
       >
         <div>
           <h1
             data-element-id="personal.name"
-            className="block w-fit cursor-text text-[2em] font-extrabold leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="block w-fit cursor-text text-[2em] font-extrabold leading-[1.05] tracking-tight"
             style={elementStyle(data, "personal.name")}
           >
             {personal.fullName || "Your name"}
@@ -61,7 +61,7 @@ export function TokyoTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mt-1 block w-fit cursor-text text-[0.95em] font-semibold uppercase tracking-[0.16em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="mt-1 block w-fit cursor-text text-[0.95em] font-semibold uppercase tracking-[0.16em]"
               style={{
                 color: design.accentColor,
                 ...elementStyle(data, "personal.headline"),
@@ -75,7 +75,7 @@ export function TokyoTemplate({ data, fixedSize, skipOverlay }: Props) {
         {design.photo.enabled && personal.photoUrl && (
           <div
             data-element-id="personal.photo"
-            className={`shrink-0 cursor-grab overflow-hidden transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 ${
+            className={`shrink-0 cursor-grab overflow-hidden ${
               design.photo.shape === "square"
                 ? "h-20 w-20 rounded-md"
                 : design.photo.shape === "rounded"
@@ -139,7 +139,7 @@ function Block({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2 className="mb-1.5 flex items-center gap-2 text-[0.82em] font-bold uppercase tracking-[0.2em]">
         <span

@@ -65,7 +65,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
 
   const accent = design.accentColor;
   const cardCls =
-    "relative rounded-2xl bg-white p-4 transition-shadow group cursor-pointer break-inside-avoid hover:ring-2 hover:ring-neutral-900/15";
+    "relative rounded-2xl bg-white p-4 group cursor-pointer break-inside-avoid";
   const cardStyle: React.CSSProperties = {
     boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)",
     borderTop: `2px solid ${accent}`,
@@ -93,7 +93,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
             <div>
               <h1
                 data-element-id="personal.name"
-                className="block w-fit cursor-text text-[2.2em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="block w-fit cursor-text text-[2.2em] leading-[1.05] tracking-tight"
                 style={{
                   color: design.textColor,
                   fontFamily:
@@ -107,7 +107,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
               {personal.headline && (
                 <p
                   data-element-id="personal.headline"
-                  className="mt-1 block w-fit cursor-text text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                  className="mt-1 block w-fit cursor-text text-[0.92em]"
                   style={{
                     color: accent,
                     fontFamily:
@@ -238,7 +238,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
 function BentoContact({ data }: { data: ResumeData }) {
   const { personal, design } = data;
   const grab =
-    "block w-fit cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-1";
+    "block w-fit cursor-text rounded-sm";
   return (
     <div
       className="space-y-0.5 text-[0.85em] break-words"
@@ -314,7 +314,7 @@ function BentoCell({
     >
       <h2
         data-element-id={titleId}
-        className="mb-2 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-2 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: d.accentColor,
           fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",

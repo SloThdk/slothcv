@@ -80,7 +80,7 @@ export function AuroraTemplate({ data, fixedSize, skipOverlay }: Props) {
         <div>
           <h1
             data-element-id="personal.name"
-            className="block w-fit cursor-text text-[2.4em] font-light leading-tight tracking-tight transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+            className="block w-fit cursor-text text-[2.4em] font-light leading-tight tracking-tight"
             style={{
               color: design.textColor,
               ...elementStyle(data, "personal.name"),
@@ -91,7 +91,7 @@ export function AuroraTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mt-2 block w-fit cursor-text text-[0.78em] font-semibold uppercase tracking-[0.18em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+              className="mt-2 block w-fit cursor-text text-[0.78em] font-semibold uppercase tracking-[0.18em]"
               style={{
                 color: design.accentColor,
                 ...elementStyle(data, "personal.headline"),
@@ -105,7 +105,7 @@ export function AuroraTemplate({ data, fixedSize, skipOverlay }: Props) {
         {design.photo.enabled && personal.photoUrl && (
           <div
             data-element-id="personal.photo"
-            className="cursor-grab transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+            className="cursor-grab"
             style={elementStyle(data, "personal.photo")}
           >
             <Photo
@@ -297,7 +297,7 @@ function KeyValue({
   return (
     <div
       data-element-id={elementId}
-      className="grid cursor-grab grid-cols-[auto_1fr] gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-1 hover:ring-offset-transparent"
+      className="grid cursor-grab grid-cols-[auto_1fr] gap-3 rounded-sm"
       style={elementStyle(data, elementId)}
     >
       <span className="text-[0.95em]" style={{ color: muted }}>
@@ -327,11 +327,11 @@ function AuroraSidebarSection({
     <div
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.06] hover:ring-2 hover:ring-[var(--aurora-accent,#7FFAB6)]/40"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em]"
         style={{ color: design.accentColor, ...elementStyle(data, titleId) }}
       >
         <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>
@@ -345,7 +345,7 @@ function AuroraSidebarSection({
 }
 
 const auroraGrab =
-  "cursor-grab transition-shadow hover:ring-2 hover:ring-white/20 hover:ring-offset-1 hover:ring-offset-transparent rounded-sm";
+  "cursor-grab rounded-sm";
 
 function AuroraSidebarBody({
   section,
@@ -601,7 +601,7 @@ function SkillsGroupedChips({
                 <span
                   key={s.id}
                   data-element-id={id}
-                  className="cursor-grab rounded-md px-2 py-0.5 text-[0.78em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-1 hover:ring-offset-transparent"
+                  className="cursor-grab rounded-md px-2 py-0.5 text-[0.78em]"
                   style={{
                     background: `${design.accentColor}10`,
                     border: `1px solid ${design.accentColor}40`,
@@ -659,11 +659,11 @@ function AuroraMainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.06] hover:ring-2 hover:ring-[var(--aurora-accent,#7FFAB6)]/40"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+        className="inline-block cursor-text text-[0.72em] font-semibold uppercase tracking-[0.22em]"
         style={{ color: design.accentColor, ...elementStyle(data, titleId) }}
       >
         <EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>

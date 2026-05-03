@@ -75,7 +75,7 @@ export function StripeTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.5em] leading-[1.05] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.5em] leading-[1.05]"
               style={{
                 color: design.textColor,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -89,7 +89,7 @@ export function StripeTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[1em]"
                 style={{
                   color: INDIGO,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -156,7 +156,7 @@ function StripeContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-3 text-[0.85em]"
@@ -209,7 +209,7 @@ function StripeSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md transition-shadow hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md"
     >
       <div
         className="mb-3 flex items-center gap-2 rounded-md px-2 py-1.5"
@@ -225,7 +225,7 @@ function StripeSection({
         />
         <h2
           data-element-id={titleId}
-          className="cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+          className="cursor-text text-[0.95em]"
           style={{
             color: design.textColor,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -258,7 +258,7 @@ function StripeBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.55]"
           style={{
             color: design.textColor,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -302,7 +302,7 @@ function StripeExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -374,7 +374,7 @@ function StripeProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -460,7 +460,7 @@ function StripeEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <div>
@@ -538,7 +538,7 @@ function StripeSkills({
                 <span
                   key={s.id}
                   data-element-id={id}
-                  className="cursor-grab rounded-md px-2.5 py-0.5 text-[0.82em] transition-shadow hover:ring-2 hover:ring-neutral-900/20"
+                  className="cursor-grab rounded-md px-2.5 py-0.5 text-[0.82em]"
                   style={{
                     background: `linear-gradient(135deg, ${INDIGO}1a, ${INDIGO}08)`,
                     border: `1px solid ${INDIGO}33`,
@@ -575,7 +575,7 @@ function StripeCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="grid cursor-grab grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -616,7 +616,7 @@ function StripeFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: design.textColor, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -669,7 +669,7 @@ function StripeBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

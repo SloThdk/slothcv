@@ -107,7 +107,7 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div>
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.8em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.8em] leading-[1.05] tracking-tight"
               style={{
                 color: INK,
                 fontFamily: "var(--font-lora, 'Lora'), serif",
@@ -120,7 +120,7 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[1em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[1em] italic"
                 style={{
                   color: CYAN,
                   fontFamily: "var(--font-lora, 'Lora'), serif",
@@ -184,7 +184,7 @@ function CanvasContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20";
+    "inline-block cursor-text rounded-sm";
   return (
     <p
       className="mt-2 text-[0.85em]"
@@ -242,7 +242,7 @@ function CanvasSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative grid cursor-pointer break-inside-avoid gap-5 rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-amber-50/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative grid cursor-pointer break-inside-avoid gap-5 rounded-md p-1 -m-1"
     >
       <div
         className="grid"
@@ -250,7 +250,7 @@ function CanvasSection({
       >
         <h2
           data-element-id={titleId}
-          className="cursor-text text-right text-[0.95em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+          className="cursor-text text-right text-[0.95em] italic"
           style={{
             color: CYAN,
             fontFamily: "var(--font-lora, 'Lora'), serif",
@@ -285,7 +285,7 @@ function CanvasBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text text-[0.95em] leading-[1.6]"
           style={{
             color: INK,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -323,7 +323,7 @@ function CanvasExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -403,7 +403,7 @@ function CanvasBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-text gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-text gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span
@@ -433,7 +433,7 @@ function CanvasFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -464,7 +464,7 @@ function CanvasFallback({
             <span
               key={it.id}
               data-element-id={id}
-              className="cursor-grab rounded-full px-2.5 py-0.5 text-[0.85em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+              className="cursor-grab rounded-full px-2.5 py-0.5 text-[0.85em]"
               style={{
                 background: `${CYAN}10`,
                 border: `1px solid ${CYAN}33`,

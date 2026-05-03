@@ -90,7 +90,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
         >
           <h1
             data-element-id="personal.name"
-            className="mx-auto block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+            className="mx-auto block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
             style={{
               color: design.textColor,
               fontFamily:
@@ -104,7 +104,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
           {personal.headline && (
             <p
               data-element-id="personal.headline"
-              className="mx-auto mt-1 block w-fit cursor-text text-[0.95em] italic transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="mx-auto mt-1 block w-fit cursor-text text-[0.95em] italic"
               style={{
                 color: RED,
                 fontFamily:
@@ -133,7 +133,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
 function HeidelbergContact({ data }: { data: ResumeData }) {
   const { personal, design } = data;
   const grab =
-    "cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-1";
+    "cursor-text rounded-sm";
   return (
     <div
       className="mt-2 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-0.5 text-[0.88em]"
@@ -203,11 +203,11 @@ function HeidelbergSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-rose-50/40 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         data-element-id={titleId}
-        className="mb-1.5 inline-block cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-neutral-900/30 hover:ring-offset-2"
+        className="mb-1.5 inline-block cursor-text text-[1em]"
         style={{
           color: RED,
           fontFamily:

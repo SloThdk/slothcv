@@ -58,7 +58,7 @@ export function EclipseTemplate({ data, fixedSize, skipOverlay }: Props) {
       >
         <h1
           data-element-id="personal.name"
-          className="block w-fit cursor-text text-[3.4em] leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+          className="block w-fit cursor-text text-[3.4em] leading-[1.05] tracking-tight"
           style={{
             color: design.accentColor,
             fontFamily:
@@ -73,7 +73,7 @@ export function EclipseTemplate({ data, fixedSize, skipOverlay }: Props) {
         {personal.headline && (
           <p
             data-element-id="personal.headline"
-            className="mt-2 block w-fit cursor-text text-[0.9em] uppercase tracking-[0.16em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+            className="mt-2 block w-fit cursor-text text-[0.9em] uppercase tracking-[0.16em]"
             style={{
               color: `${design.textColor}cc`,
               fontFamily:
@@ -114,12 +114,12 @@ function EclipseSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-white/[0.04] hover:ring-2 hover:ring-white/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <div className="mb-3 flex items-baseline gap-3">
         <h2
           data-element-id={titleId}
-          className="inline-block cursor-text text-[0.78em] uppercase tracking-[0.18em] transition-shadow hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-transparent"
+          className="inline-block cursor-text text-[0.78em] uppercase tracking-[0.18em]"
           style={{
             color: design.accentColor,
             fontFamily:
@@ -156,7 +156,7 @@ function EclipseBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6] transition-shadow hover:ring-2 hover:ring-white/15 hover:ring-offset-2 hover:ring-offset-transparent"
+          className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
           style={{
             color: design.textColor,
             fontFamily:
@@ -182,7 +182,7 @@ function EclipseBody({
               <span
                 key={s.id}
                 data-element-id={id}
-                className="cursor-grab rounded-full px-2.5 py-0.5 text-[0.82em] transition-shadow hover:ring-2 hover:ring-white/30"
+                className="cursor-grab rounded-full px-2.5 py-0.5 text-[0.82em]"
                 style={{
                   background: `${design.accentColor}14`,
                   border: `1px solid ${design.accentColor}40`,
@@ -220,7 +220,7 @@ function EclipseExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -297,7 +297,7 @@ function EclipseProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-white/20"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -376,7 +376,7 @@ function EclipseFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-white/20"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: design.textColor, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -426,7 +426,7 @@ function EclipseBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-white/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={{ color: design.textColor, ...elementStyle(data, id) }}
           >
             {glyph && (

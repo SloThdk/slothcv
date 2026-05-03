@@ -102,7 +102,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.4em] leading-[1.1] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.4em] leading-[1.1]"
               style={{
                 color: design.textColor,
                 fontFamily:
@@ -116,7 +116,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1 block w-fit cursor-text text-[1em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1 block w-fit cursor-text text-[1em]"
                 style={{
                   color: `${design.textColor}aa`,
                   fontFamily:
@@ -148,7 +148,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                 borderRadius: "8px",
                 padding: "16px 18px",
               }}
-              className="group relative cursor-pointer break-inside-avoid transition-shadow hover:ring-2 hover:ring-neutral-900/10"
+              className="group relative cursor-pointer break-inside-avoid"
             >
               <div className="mb-2 flex items-center gap-2">
                 <span
@@ -158,7 +158,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                 />
                 <h2
                   data-element-id={titleId}
-                  className="cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                  className="cursor-text text-[0.95em]"
                   style={{
                     color: design.textColor,
                     fontFamily:
@@ -199,7 +199,7 @@ function NotionContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-flex items-center gap-1 cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-md px-2 py-0.5";
+    "inline-flex items-center gap-1 cursor-text rounded-md px-2 py-0.5";
   return (
     <div
       className="mt-3 flex flex-wrap gap-1.5 text-[0.85em]"

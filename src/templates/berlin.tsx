@@ -85,7 +85,7 @@ export function BerlinTemplate({ data, fixedSize, skipOverlay }: Props) {
           {design.photo.enabled && personal.photoUrl && (
             <div
               data-element-id="personal.photo"
-              className={`mb-4 cursor-grab overflow-hidden transition-shadow hover:ring-2 hover:ring-[var(--berlin-accent,${design.accentColor})] ${
+              className={`mb-4 cursor-grab overflow-hidden ${
                 design.photo.shape === "circle"
                   ? "h-24 w-24 rounded-full"
                   : design.photo.shape === "rounded"
@@ -167,11 +167,11 @@ export function BerlinTemplate({ data, fixedSize, skipOverlay }: Props) {
         <div className="pt-1">
           <header
             data-section-id="personal"
-            className="mb-5 cursor-pointer rounded-md p-1 -m-1 transition-colors hover:bg-neutral-100/60"
+            className="mb-5 cursor-pointer rounded-md p-1 -m-1 transition-colors"
           >
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.6em] font-light leading-[1.05] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.6em] font-light leading-[1.05] tracking-tight"
               style={elementStyle(data, "personal.name")}
             >
               {personal.fullName || "Your name"}
@@ -179,7 +179,7 @@ export function BerlinTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-2 block w-fit cursor-text text-[0.82em] font-semibold uppercase tracking-[0.18em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-2 block w-fit cursor-text text-[0.82em] font-semibold uppercase tracking-[0.18em]"
                 style={{
                   color: design.accentColor,
                   ...elementStyle(data, "personal.headline"),
@@ -222,7 +222,7 @@ function Detail({
   // Drag affordance shared by both anchor and span variants — keeps the
   // hover ring + cursor consistent regardless of whether the row is a link.
   const valueClass =
-    "block break-words cursor-text rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15 hover:ring-offset-1";
+    "block break-words cursor-text rounded-sm";
   return (
     <div className="flex flex-col">
       <span
@@ -267,7 +267,7 @@ function SidebarSection({
     <div
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       <h2
         className="mb-2 text-[0.78em] font-bold uppercase tracking-[0.2em]"
@@ -293,7 +293,7 @@ function MainSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/60 hover:ring-2 hover:ring-neutral-900/15"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Accent rule above the heading — gives the page rhythm. */}
       <div

@@ -71,7 +71,7 @@ export function HelveticaTemplate({ data, fixedSize, skipOverlay }: Props) {
           <div className="flex-1">
             <h1
               data-element-id="personal.name"
-              className="block w-fit cursor-text text-[2.6em] leading-[1.0] tracking-tight transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+              className="block w-fit cursor-text text-[2.6em] leading-[1.0] tracking-tight"
               style={{
                 color: design.textColor,
                 fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -85,7 +85,7 @@ export function HelveticaTemplate({ data, fixedSize, skipOverlay }: Props) {
             {personal.headline && (
               <p
                 data-element-id="personal.headline"
-                className="mt-1.5 block w-fit cursor-text text-[0.95em] transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+                className="mt-1.5 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -155,7 +155,7 @@ function HelveticaContact({ data }: { data: ResumeData }) {
   }
   if (items.length === 0) return null;
   const grab =
-    "inline-block cursor-text transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2 rounded-sm";
+    "inline-block cursor-text rounded-sm";
   return (
     <div
       className="mt-3 text-[0.85em]"
@@ -214,12 +214,12 @@ function HelveticaSection({
     <section
       data-section-id={section.id}
       style={positionStyle(section)}
-      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1 transition-[background-color,box-shadow] hover:bg-neutral-100/40 hover:ring-2 hover:ring-neutral-900/10"
+      className="group relative cursor-pointer break-inside-avoid rounded-md p-1 -m-1"
     >
       {/* Section title sits above its 0.5px rule — flush left, no decoration. */}
       <h2
         data-element-id={titleId}
-        className="mb-1.5 inline-block cursor-text text-[0.78em] uppercase transition-shadow hover:ring-2 hover:ring-neutral-900/20 hover:ring-offset-2"
+        className="mb-1.5 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: design.textColor,
           fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -258,7 +258,7 @@ function HelveticaBody({
       return (
         <p
           data-element-id={id}
-          className="cursor-text whitespace-pre-wrap text-left text-[0.95em] leading-[1.55] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+          className="cursor-text whitespace-pre-wrap text-left text-[0.95em] leading-[1.55]"
           style={{
             color: design.textColor,
             fontFamily: "var(--font-inter, 'Inter'), sans-serif",
@@ -314,7 +314,7 @@ function HelveticaExperience({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -394,7 +394,7 @@ function HelveticaProjects({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -492,7 +492,7 @@ function HelveticaEducation({
           <article
             key={it.id}
             data-element-id={id}
-            className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="cursor-grab rounded-sm"
             style={elementStyle(data, id)}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -581,7 +581,7 @@ function HelveticaSkills({
                   )}
                   <span
                     data-element-id={id}
-                    className="cursor-grab rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+                    className="cursor-grab rounded-sm"
                     style={elementStyle(data, id)}
                   >
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${s.id}.name`} value={s.name} placeholder="Name" />
@@ -614,7 +614,7 @@ function HelveticaLanguages({
           <div
             key={l.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab items-baseline justify-between rounded-sm"
             style={elementStyle(data, id)}
           >
             <span><EditableFallback data={data} fieldId={`section.${section.id}.item.${l.id}.name`} value={l.name} placeholder="Name" /></span>
@@ -653,7 +653,7 @@ function HelveticaCerts({
           <div
             key={c.id}
             data-element-id={id}
-            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm"
             style={elementStyle(data, id)}
           >
             <span>
@@ -698,7 +698,7 @@ function HelveticaFallback({
     return (
       <p
         data-element-id={id}
-        className="cursor-text whitespace-pre-wrap text-[0.92em] transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+        className="cursor-text whitespace-pre-wrap text-[0.92em]"
         style={{ color: design.textColor, ...elementStyle(data, id) }}
       >
         {(section as { body: string }).body}
@@ -751,7 +751,7 @@ function HelveticaBullets({
           <li
             key={b.id}
             data-element-id={id}
-            className="flex cursor-grab gap-2 rounded-sm transition-shadow hover:ring-2 hover:ring-neutral-900/15"
+            className="flex cursor-grab gap-2 rounded-sm"
             style={elementStyle(data, id)}
           >
             {glyph && (

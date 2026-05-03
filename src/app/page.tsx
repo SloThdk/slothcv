@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -28,6 +28,12 @@ import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { TEMPLATES } from "@/templates/registry";
 import { TemplatePreview } from "@/components/editor/template-preview";
+import {
+  DkBadge,
+  TemplateFilterTabs,
+  filterTemplates,
+  type TemplateRegion,
+} from "@/components/templates/template-filter";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   EASE,
@@ -70,6 +76,20 @@ export default function LandingPage() {
   // personal contact links — nesting them inside a Link's anchor causes
   // a hydration error ("<a> cannot be a descendant of <a>").
   const router = useRouter();
+  // Region filter — local state only on the marketing landing (no URL
+  // sync; the page is a static export and adding query handling would
+  // bloat the home route for marginal value). Defaults to "all". The
+  // /new page does the URL-sync version since signed-in users care
+  // about deep-linkable filter state.
+  const [region, setRegion] = useState<TemplateRegion>("all");
+  const counts = useMemo(() => {
+    const da = TEMPLATES.filter((tpl) => tpl.language === "da").length;
+    return { all: TEMPLATES.length, da, en: TEMPLATES.length - da };
+  }, []);
+  const visibleTemplates = useMemo(
+    () => filterTemplates(TEMPLATES, region),
+    [region],
+  );
   // Refs + useInView for sections that should animate when scrolled into
   // view (feature trio + template gallery). once:true so the animation
   // runs exactly the first time the section enters the viewport. margin
@@ -185,15 +205,24 @@ export default function LandingPage() {
 
       {/* ---------------- Template gallery ---------------- */}
       <section className="mx-auto max-w-6xl px-4 pb-24">
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-3xl">
               {t("templates.title")}
             </h2>
             <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-              {TEMPLATES.length} {t("templates.body")}
+              {visibleTemplates.length} {t("templates.body")}
             </p>
           </div>
+          {/* Region filter pills — Alle / English / Dansk CV. Right-
+              aligned on desktop so the heading anchors the left of the
+              row and the filter sits opposite. Wraps below the heading
+              on narrow viewports for safe stacking. */}
+          <TemplateFilterTabs
+            active={region}
+            onChange={setRegion}
+            counts={counts}
+          />
         </div>
         {/* Gallery cascade — 30ms apart, slightly faster than the
             features stagger because there are many more cards. */}
@@ -211,7 +240,7 @@ export default function LandingPage() {
           // grid-cols-1 expands to) breaks that inflation.
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {TEMPLATES.map((tpl) => (
+          {visibleTemplates.map((tpl) => (
             <motion.div
               key={tpl.id}
               variants={staggerItem}
@@ -233,8 +262,9 @@ export default function LandingPage() {
                 aria-label={tpl.name}
                 className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-left shadow-sm transition-shadow duration-200 hover:border-[color:var(--color-border-strong)] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] focus-visible:ring-offset-2 cursor-pointer"
               >
-                <div className="pointer-events-none border-b border-[color:var(--color-border)]">
+                <div className="pointer-events-none relative border-b border-[color:var(--color-border)]">
                   <TemplatePreview id={tpl.id} />
+                  {tpl.language === "da" && <DkBadge />}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-baseline justify-between gap-3">

@@ -592,6 +592,55 @@ export function defaultDesignForTemplate(
         skillBarStyle: "bar",
         photo: { enabled: true, shape: "circle", position: "top-left" },
       };
+
+    // ── Danish CV pool ────────────────────────────────────────────────
+    // Section names + personal-info block follow Danish norms; design
+    // tokens carry the visual identity per Scout's research:
+    //   - aarhus    classic, photo ON, navy + creme, sidebar layout
+    //   - roskilde  modern ATS-clean, photo OFF, monochrome, single-col
+    //   - odense    Scandi hybrid, photo ON (toggleable), sage accent,
+    //               warm off-white paper, two-col body
+    case "aarhus":
+      return {
+        ...base,
+        accentColor: "#1F3A5F", // muted Dannebrog navy
+        secondaryColor: "#5C6F89",
+        pageBg: "#ffffff",
+        textColor: "#0A0A0A",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
+    case "roskilde":
+      return {
+        ...base,
+        accentColor: "#0A0A0A",
+        secondaryColor: "#737373",
+        pageBg: "#FFFFFF",
+        textColor: "#0A0A0A",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        // ATS-friendly: uppercase-tracked headers, no decorative
+        // dividers, hairline rule only.
+        headerStyle: "uppercase",
+        photo: { enabled: false, shape: "circle", position: "top-left" },
+      };
+    case "odense":
+      return {
+        ...base,
+        accentColor: "#7C9082", // muted sage — Danish design-shop neutral
+        secondaryColor: "#6B7568",
+        pageBg: "#FAFAF7",
+        textColor: "#1A1A1A",
+        // Fraunces for the editorial italic name (Scout's
+        // recommendation), Inter for the body to keep readability
+        // tight on Danish A4.
+        titleFont: "Fraunces",
+        bodyFont: "Inter",
+        headerStyle: "titlecase",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
   }
 }
 

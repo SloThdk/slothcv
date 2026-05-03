@@ -85,6 +85,22 @@ export const TRANSLATIONS = {
   "templates.use": { en: "Use →", da: "Brug →" },
   "templates.openDashboard": { en: "Open dashboard", da: "Åbn oversigten" },
 
+  // ─── Template gallery filter (English / Danish CV pool) ───────────
+  // Three pill-tabs above the gallery let users narrow the visible
+  // templates to either the existing English-shaped pool or the
+  // Danish-shaped one (aarhus / roskilde / odense). Default is "Alle"
+  // (all) so existing users never lose access. The DK badge tag below
+  // appears top-right on Danish thumbnails so they're identifiable
+  // in the All view too — same neutral grey vocab as the swatch chip.
+  "templates.filter.all": { en: "All", da: "Alle" },
+  "templates.filter.en": { en: "English", da: "Engelske" },
+  "templates.filter.da": { en: "Dansk CV", da: "Dansk CV" },
+  "templates.filter.empty": {
+    en: "No templates match this filter.",
+    da: "Ingen skabeloner matcher dette filter.",
+  },
+  "templates.filter.daBadge": { en: "DK", da: "DK" },
+
   // ─── /new — template-picker landing for "+ New CV" ────────────────
   // Shown when a signed-in user clicks "+ New CV" from the dashboard.
   // Lets them browse the full gallery before any DB row is created;

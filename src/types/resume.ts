@@ -98,6 +98,16 @@ export const TEMPLATE_IDS = [
   "capitol",
   "vesterbro",
   "marina",
+  // ── Danish-shaped templates (2026-05). These are the only templates
+  // whose section labels and personal-info block follow Danish CV norms
+  // (Erhvervserfaring / Uddannelse / Sprog / IT-kompetencer / Kørekort /
+  // Fritidsinteresser / Referencer fås ved henvendelse). Photo policy
+  // varies per template — see Scout research at
+  // research/danish-cv-templates.md. Surface as `Dansk CV` in the
+  // gallery filter.
+  "aarhus",
+  "roskilde",
+  "odense",
 ] as const;
 
 /** Identifier of the active visual template. Templates render the same

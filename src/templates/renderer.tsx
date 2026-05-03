@@ -31,7 +31,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { ComponentType } from "react";
+import { memo, type ComponentType } from "react";
 import type { ResumeData, TemplateId } from "@/types/resume";
 
 /** Shared shape for every per-template component. The template files all
@@ -129,6 +129,10 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateComponentProps>> = {
   capitol: lazyTemplate(() => import("./capitol"), "CapitolTemplate"),
   vesterbro: lazyTemplate(() => import("./vesterbro"), "VesterbroTemplate"),
   marina: lazyTemplate(() => import("./marina"), "MarinaTemplate"),
+  // ── Danish CV pool (2026-05) ──────────────────────────────────────
+  aarhus: lazyTemplate(() => import("./aarhus"), "AarhusTemplate"),
+  roskilde: lazyTemplate(() => import("./roskilde"), "RoskildeTemplate"),
+  odense: lazyTemplate(() => import("./odense"), "OdenseTemplate"),
 };
 
 interface RendererProps {
@@ -142,8 +146,19 @@ interface RendererProps {
 
 /** Resolve `data.meta.template` to a renderable component, falling back to
  *  Berlin if the saved id no longer exists in the registry (e.g. after
- *  removing a template). */
-export function TemplateRenderer({
+ *  removing a template).
+ *
+ *  Wrapped in `React.memo` so a `useDeferredValue(data)` upstream in
+ *  Preview can actually skip the heavy template render between
+ *  keystrokes. Without `memo`, every parent rerender (autosave tick,
+ *  unrelated section update, drag-end commit) would re-walk the full
+ *  template tree even when `data` reference is stable. The default
+ *  shallow comparator is correct here — `data` is replaced wholesale
+ *  by the Zustand store, so reference equality is exact.
+ *
+ *  Per react.dev/reference/react/useDeferredValue, the heavy component
+ *  MUST be memoized for deferral to work; this is the canonical pair. */
+function TemplateRendererImpl({
   data,
   fixedSize = true,
   skipOverlay = false,
@@ -158,3 +173,4 @@ export function TemplateRenderer({
     />
   );
 }
+export const TemplateRenderer = memo(TemplateRendererImpl);

@@ -38,6 +38,7 @@
 
 "use client";
 
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +47,12 @@ import { TEMPLATES, TEMPLATES_BY_ID } from "@/templates/registry";
 import { duplicateAsVariant } from "@/lib/resumes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { translateError } from "@/lib/translatable-error";
+import {
+  DkBadge,
+  TemplateFilterTabs,
+  filterTemplates,
+  type TemplateRegion,
+} from "@/components/templates/template-filter";
 import { TemplatePreview } from "./template-preview";
 import { staggerContainer, staggerItem } from "@/lib/motion";
 
@@ -64,6 +71,25 @@ export function TemplatesTab() {
   // WYSIWYG: card thumbnail must match what the editor will render
   // post-swap, so per-card sample personas are out.
   const userData = useEditorStore((s) => s.data);
+
+  // Region filter — local state only, no URL sync. The editor URL
+  // already carries `?id=<resume-id>` and we don't want to clobber
+  // that when toggling pills. Default initialised to the current
+  // template's pool so DA users editing a Danish CV land on the
+  // Danish pool first; everyone else lands on Alle.
+  const initialRegion: TemplateRegion =
+    TEMPLATES.find((tpl) => tpl.id === current)?.language === "da"
+      ? "da"
+      : "all";
+  const [region, setRegion] = useState<TemplateRegion>(initialRegion);
+  const counts = useMemo(() => {
+    const da = TEMPLATES.filter((tpl) => tpl.language === "da").length;
+    return { all: TEMPLATES.length, da, en: TEMPLATES.length - da };
+  }, []);
+  const visibleTemplates = useMemo(
+    () => filterTemplates(TEMPLATES, region),
+    [region],
+  );
 
   function handlePick(newTplId: string) {
     if (newTplId === current) return;
@@ -184,18 +210,31 @@ export function TemplatesTab() {
   return (
     <div>
       <p className="mb-3 text-xs text-muted">{t("templates.swap.intro")}</p>
+      {/* Region filter — sits between the intro line and the gallery.
+          Compact (no counts here — the panel is narrow) so the pills
+          don't fight for space with the card grid below. */}
+      <div className="mb-3">
+        <TemplateFilterTabs active={region} onChange={setRegion} counts={counts} />
+      </div>
+      {visibleTemplates.length === 0 && (
+        <p className="mt-6 text-center text-xs text-muted">
+          {t("templates.filter.empty")}
+        </p>
+      )}
       {/* Stagger entrance — when the user opens the Templates tab the
           cards cascade in 30ms apart. Quick enough that 50 templates
-          finish in well under a second; just enough to feel alive. */}
+          finish in well under a second; just enough to feel alive.
+          Map var renamed `tpl` so it doesn't shadow the outer `t`
+          translation function. */}
       <motion.div
         variants={staggerContainer(0.03)}
         initial="initial"
         animate="animate"
         className="grid grid-cols-2 gap-3"
       >
-        {TEMPLATES.map((t) => (
+        {visibleTemplates.map((tpl) => (
           <motion.button
-            key={t.id}
+            key={tpl.id}
             type="button"
             variants={staggerItem}
             // Hover scale + ring-fade. Press feedback on tap. Both
@@ -203,35 +242,42 @@ export function TemplatesTab() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            onClick={() => handlePick(t.id)}
-            className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-surface text-left transition-shadow duration-200 hover:shadow-md ${current === t.id ? "border-fg ring-2 ring-fg" : "border-border"}`}
+            onClick={() => handlePick(tpl.id)}
+            className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-surface text-left transition-shadow duration-200 hover:shadow-md ${current === tpl.id ? "border-fg ring-2 ring-fg" : "border-border"}`}
           >
-            {/* Aspect MUST match the real A4 page ratio (210/297). Earlier
-                code overrode this to aspect-[3/4] to make cards more compact,
-                but that clips the bottom 6% of every template — users picked
-                a template that looked one way in the thumbnail, then saw
-                content they hadn't seen in the gallery once selected. The
-                A4 ratio is also what TemplatePreview's internal width-based
-                scale loop assumes; any other ratio either clips the page
-                (taller-than-A4 ratio) or wastes horizontal space (wider).
-                Passing `data={userData}` ensures every card renders the
-                user's REAL content with the card's layout — no surprise
-                personas / stock avatars in the thumbnail that vanish on
-                selection. */}
-            <TemplatePreview
-              id={t.id}
-              className="aspect-[210/297] w-full"
-              data={userData}
-            />
+            {/* Thumbnail wrapper made `relative` so the DK badge can
+                position absolutely top-right inside it. Aspect MUST
+                match the real A4 page ratio (210/297) — see history
+                comment below the wrapper. */}
+            <div className="relative">
+              {/* Aspect MUST match the real A4 page ratio (210/297). Earlier
+                  code overrode this to aspect-[3/4] to make cards more compact,
+                  but that clips the bottom 6% of every template — users picked
+                  a template that looked one way in the thumbnail, then saw
+                  content they hadn't seen in the gallery once selected. The
+                  A4 ratio is also what TemplatePreview's internal width-based
+                  scale loop assumes; any other ratio either clips the page
+                  (taller-than-A4 ratio) or wastes horizontal space (wider).
+                  Passing `data={userData}` ensures every card renders the
+                  user's REAL content with the card's layout — no surprise
+                  personas / stock avatars in the thumbnail that vanish on
+                  selection. */}
+              <TemplatePreview
+                id={tpl.id}
+                className="aspect-[210/297] w-full"
+                data={userData}
+              />
+              {tpl.language === "da" && <DkBadge />}
+            </div>
             <div className="p-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">{t.name}</span>
-                {current === t.id && (
+                <span className="text-sm font-semibold">{tpl.name}</span>
+                {current === tpl.id && (
                   <Check className="h-4 w-4 text-fg" />
                 )}
               </div>
               <p className="mt-0.5 text-[11px] leading-snug text-muted">
-                {t.blurb}
+                {tpl.blurb}
               </p>
             </div>
           </motion.button>

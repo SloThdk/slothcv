@@ -92,7 +92,15 @@ const ACCENT_PRESETS = [
 // vibe (modern sans / classic serif / display / mono / humanist). See
 // src/lib/fonts/registry.ts for the full list and licensing notes.
 
-export function DesignTab() {
+/** Optional scroll target the editor page passes when the user clicks
+ *  the empty page background. DesignTab acts on it on its very first
+ *  render so the scroll fires on click 1, not click 2. */
+export interface DesignTabProps {
+  scrollTo?: "pageBg" | null;
+  onScrolled?: () => void;
+}
+
+export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const design = useEditorStore((s) => s.data.design);
   const setDesign = useEditorStore((s) => s.setDesign);
   const template = useEditorStore((s) => s.data.meta.template);
@@ -100,39 +108,44 @@ export function DesignTab() {
   const confirm = useConfirm();
 
   // Ref + flash state for the "click on page background → jump here"
-  // affordance. Wired up by preview.tsx: a background click fires
-  // `slothcv:open-design-tab`; editor/page.tsx switches the active tab
-  // to Design, and we scroll the BackgroundQuickPicker row into view
-  // and pulse a ring around it for ~1.4 s so the user notices where
-  // their click landed. Without the ring the tab-switch alone reads
-  // as "the panel jumped" which is more disorienting than helpful.
+  // affordance. Wiring: preview.tsx dispatches an event; editor/page.tsx
+  // listens, switches the active tab to Design AND sets a pending
+  // scrollTo prop that lands here on first render. We can't use a
+  // window event listener inside this component because DesignTab is
+  // conditionally mounted (`{tab === "design" && <DesignTab/>}`), so
+  // the listener only registers AFTER the tab switch — too late for
+  // the first event. The prop-driven path fires on the same render.
   const pageBgRef = useRef<HTMLDivElement>(null);
   const [bgFlash, setBgFlash] = useState(false);
   useEffect(() => {
-    function onOpen() {
-      // Two RAFs: first lets React commit the tab switch (so DesignTab
-      // is mounted + sized before we ask the browser to scroll to a
-      // child of it), second lets the layout settle so the smooth
-      // scroll lands on the final position rather than chasing it.
+    if (scrollTo !== "pageBg") return;
+    // Two RAFs: first lets React commit the layout (so the picker has
+    // its final position), second lets paints settle so the smooth
+    // scroll lands on the final position rather than chasing it.
+    let cancelled = false;
+    let timeoutId: number | undefined;
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          pageBgRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-          setBgFlash(true);
-          // Match the flash duration to two pulse cycles of the ring
-          // animation so the ring fades in, fades out, and the highlight
-          // class is removed all at once — no half-faded leftover state.
-          window.setTimeout(() => setBgFlash(false), 1400);
+        if (cancelled) return;
+        pageBgRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
         });
+        setBgFlash(true);
+        // Match flash duration to the two pulse cycles in the keyframe
+        // (0.7 s × 2) so the ring fades in/out twice then the class is
+        // removed cleanly — no half-faded leftover.
+        timeoutId = window.setTimeout(() => setBgFlash(false), 1400);
+        // Tell the parent the scroll has been consumed so it can clear
+        // its pending state (otherwise we'd fire again on every render).
+        onScrolled?.();
       });
-    }
-    window.addEventListener("slothcv:open-design-tab", onOpen);
+    });
     return () => {
-      window.removeEventListener("slothcv:open-design-tab", onOpen);
+      cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [scrollTo, onScrolled]);
 
   /** Reset using the CURRENT template's factory design — Aurora goes
    *  back to dark/mint, Eclipse to amber/black, etc. The user stays on
@@ -213,16 +226,27 @@ export function DesignTab() {
     <div className="space-y-5">
       {/* Inline keyframes for the page-bg flash. Co-located with the
           consumer so globals.css stays untouched. The animation pulses
-          a soft accent ring on the BackgroundQuickPicker wrapper for
-          ~1.4 s after a background click, confirming "your click
-          landed HERE". prefers-reduced-motion users get an animation
-          collapsed to ~0 ms by the global guard in globals.css. */}
+          a soft accent ring 6 px OUTSIDE the BackgroundQuickPicker
+          wrapper so it never overlaps the colour swatches inside —
+          the ring sits cleanly in the panel margin, with two pulse
+          cycles (0.7 s × 2) so the user has time to register where
+          their click landed. prefers-reduced-motion users get the
+          animation collapsed to ~0 ms by the global guard in
+          globals.css. We use `outline` (not `box-shadow`) so the ring
+          renders truly outside the wrapper without contributing to
+          the box's bounding rect — no layout shift, no overlap with
+          adjacent rows in the parent flex. */}
       <style>{`
         @keyframes slothcv-bg-flash {
-          0%, 100% { box-shadow: 0 0 0 0 transparent; }
-          50%      { box-shadow: 0 0 0 3px var(--color-accent); }
+          0%, 100% { outline-color: transparent; }
+          50%      { outline-color: var(--color-accent); }
         }
-        .slothcv-bg-flash { animation: slothcv-bg-flash 0.7s ease-in-out 2; }
+        .slothcv-bg-flash {
+          outline: 2px solid transparent;
+          outline-offset: 6px;
+          border-radius: 10px;
+          animation: slothcv-bg-flash 0.7s ease-in-out 2;
+        }
       `}</style>
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-subtle">
@@ -271,11 +295,12 @@ export function DesignTab() {
         />
         <div
           ref={pageBgRef}
-          // `bg-flash` (defined in globals.css) pulses a soft accent
-          // ring on the wrapper for ~1.4 s. Scroll-margin keeps the
-          // smooth-scroll target from butting against the panel edge
-          // when the row is near the top or bottom.
-          className={`scroll-mt-4 scroll-mb-4 rounded-lg ${bgFlash ? "slothcv-bg-flash" : ""}`}
+          // Scroll-margin keeps the smooth-scroll target from butting
+          // against the panel edge when the row is near the top or
+          // bottom. The flash class adds a 2 px outline 6 px outside
+          // the wrapper (see <style> block above) so the ring sits
+          // visibly clear of the colour swatches inside.
+          className={`scroll-mt-6 scroll-mb-6 ${bgFlash ? "slothcv-bg-flash" : ""}`}
         >
           <BackgroundQuickPicker
             value={design.pageBg}

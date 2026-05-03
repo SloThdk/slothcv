@@ -15,7 +15,7 @@
 
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -73,6 +73,22 @@ function EditorInner() {
   const [title, setTitle] = useState("");
   const [tab, setTab] = useState<Tab>("content");
   const [mobilePane, setMobilePane] = useState<MobilePane>("edit");
+  // "Click empty page → Design tab + scroll" plumbing. State lives in
+  // the parent (this component) instead of inside DesignTab so the
+  // first click works even when DesignTab isn't yet mounted (it's
+  // conditionally rendered: `{tab === "design" && <DesignTab />}`).
+  // The previous window-event-from-child design needed two clicks
+  // because the listener didn't register until after the first
+  // setTab made DesignTab mount. Passing as a prop means the prop
+  // is "pageBg" exactly when DesignTab mounts → scroll fires on the
+  // very first render. DesignTab calls back via onScrolled to clear.
+  const [pendingDesignScroll, setPendingDesignScroll] = useState<
+    "pageBg" | null
+  >(null);
+  const handleDesignScrolled = useCallback(
+    () => setPendingDesignScroll(null),
+    [],
+  );
   // Tab the user was on BEFORE selecting a custom element. We auto-switch
   // to "add" on selection so the inspector pops open, but on deselect we
   // want to send the user back to wherever they came from — not jump to
@@ -167,6 +183,10 @@ function EditorInner() {
       // deselect-restore effect would overwrite our setTab once
       // selectedElementId settles back to null.
       prevTabBeforeSelectionRef.current = null;
+      // Tell DesignTab to scroll its Page-bg picker into view on
+      // its very next render (the one where it actually mounts).
+      // DesignTab clears this back to null via onScrolled.
+      setPendingDesignScroll("pageBg");
     }
     window.addEventListener("slothcv:jump-to-section", onJump);
     window.addEventListener("slothcv:open-design-tab", onOpenDesign);
@@ -283,7 +303,12 @@ function EditorInner() {
           <Tabs tab={tab} onChange={setTab} />
           <div className="flex-1 overflow-auto p-3">
             {tab === "content" && <SectionList />}
-            {tab === "design" && <DesignTab />}
+            {tab === "design" && (
+              <DesignTab
+                scrollTo={pendingDesignScroll}
+                onScrolled={handleDesignScrolled}
+              />
+            )}
             {tab === "add" && <ToolshelfTab />}
             {tab === "layers" && <LayersPanel />}
             {tab === "templates" && <TemplatesTab />}

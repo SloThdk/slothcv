@@ -641,6 +641,55 @@ export function defaultDesignForTemplate(
         headerStyle: "titlecase",
         photo: { enabled: true, shape: "circle", position: "top-left" },
       };
+
+    // ── Danish industri-udvidelse (2026-05-04) ────────────────────────
+    // Three more templates spanning ufaglærte / faglærte / sundhed so
+    // SlothCV covers the full spectrum of Danish jobseekers, not just
+    // white-collar.
+    case "vejle":
+      return {
+        ...base,
+        // Warm orange — reads as "approachable, not corporate". Hourly /
+        // service jobs aren't typically branded with navy or grey.
+        accentColor: "#D97706",
+        secondaryColor: "#854D0E",
+        pageBg: "#FFFBF2", // warm sand off-white — friendlier than pure white
+        textColor: "#1A1410",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "titlecase",
+        photo: { enabled: true, shape: "square", position: "top-left" },
+      };
+    case "aalborg":
+      return {
+        ...base,
+        // Industrial slate — practical, workmanlike. Not festive, not
+        // tech-corporate. Fits trades / manufacturing / engineering.
+        accentColor: "#334155", // slate-700
+        secondaryColor: "#64748B",
+        pageBg: "#FFFFFF",
+        textColor: "#0F172A",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        photo: { enabled: true, shape: "square", position: "top-right" },
+      };
+    case "frederiksberg":
+      return {
+        ...base,
+        // Soft teal — care/health visual register. Professional but
+        // human, not clinical. Same family as the existing scrubs
+        // template (#0e7490 cyan) but more muted — Danish public-
+        // health palette rather than US medical chrome.
+        accentColor: "#0D9488", // teal-600
+        secondaryColor: "#0F766E",
+        pageBg: "#FFFFFF",
+        textColor: "#134E4A", // dark teal — softer than slate-900
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "titlecase",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
   }
 }
 

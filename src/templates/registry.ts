@@ -415,6 +415,34 @@ export const TEMPLATES: TemplateMeta[] = [
     swatch: { primary: "#7C9082", bg: "#FAFAF7" },
     language: "da",
   },
+  // ── Industri-udvidelse (2026-05-04): ufaglærte, faglærte, sundhed.
+  {
+    id: "vejle",
+    name: "Vejle",
+    blurb:
+      "Ufaglært dansk CV. Enkelt 1-side layout, foto øverst, kørekort fremhævet. Til lager-, butiks-, rengørings- og kantinejob. Varm og venlig tone.",
+    thumbGradient: "from-amber-50 to-orange-100",
+    swatch: { primary: "#D97706", bg: "#FFFBF2" },
+    language: "da",
+  },
+  {
+    id: "aalborg",
+    name: "Aalborg",
+    blurb:
+      "Faglært dansk CV. Kraftigt header-bånd + 2/3 erhvervserfaring og 1/3 certificeringer. Svendebrev og kørekort-kategorier fremhævet. Til el, vvs, mekanik, smede og industri.",
+    thumbGradient: "from-slate-100 to-zinc-200",
+    swatch: { primary: "#334155", bg: "#FFFFFF" },
+    language: "da",
+  },
+  {
+    id: "frederiksberg",
+    name: "Frederiksberg",
+    blurb:
+      "Sundhed og social-CV. Tintet teal sidebjælke med foto + autorisationer, hovedkolonne med erhvervserfaring og uddannelse. Til SOSU, sygeplejersker, pædagoger, terapeuter.",
+    thumbGradient: "from-teal-50 to-cyan-100",
+    swatch: { primary: "#0D9488", bg: "#F0FDFA" },
+    language: "da",
+  },
 ];
 
 export const TEMPLATES_BY_ID: Record<TemplateId, TemplateMeta> =

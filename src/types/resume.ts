@@ -105,9 +105,24 @@ export const TEMPLATE_IDS = [
   // varies per template — see Scout research at
   // research/danish-cv-templates.md. Surface as `Dansk CV` in the
   // gallery filter.
+  //
+  // Initial trio (formel/tech/kreativ):
+  //   - aarhus    klassisk sidebar + foto, offentlig sektor / finans
+  //   - roskilde  ATS-clean single column, tech / startup
+  //   - odense    Scandi hybrid, marketing / kommunikation
+  //
+  // Industri-udvidelse (2026-05-04) — dækker resten af det danske
+  // arbejdsmarked: ufaglærte, faglærte håndværk, sundheds- og
+  // socialsektor:
+  //   - vejle          ufaglærte (lager, butik, rengøring, kantine)
+  //   - aalborg        faglærte håndværker (el, vvs, mekaniker)
+  //   - frederiksberg  sundhed/social (SOSU, sygeplejerske, pædagog)
   "aarhus",
   "roskilde",
   "odense",
+  "vejle",
+  "aalborg",
+  "frederiksberg",
 ] as const;
 
 /** Identifier of the active visual template. Templates render the same

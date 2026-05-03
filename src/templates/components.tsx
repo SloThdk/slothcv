@@ -20,6 +20,7 @@
 "use client";
 
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   bulletGlyph,
   elementStyle,
@@ -349,10 +350,19 @@ function BulletList({
 // ---------- Section renderers ----------
 
 export function SummaryBody({ section, data }: SectionProps<SummarySection>) {
+  const { t } = useLanguage();
   if (!section.body.trim()) {
+    // Empty-state fallback. Same translation key as the generic
+    // Placeholder helper (`placeholder.summary.empty`) so the EN/DA
+    // copy stays consistent regardless of which empty-state path the
+    // body hit. Uses italic neutral-400 inline rather than the small
+    // Placeholder helper because Summary's prose is bigger (0.95em
+    // vs 0.85em) — keeping the empty fallback at the SAME size as
+    // the future filled prose stops the section visually shrinking
+    // the moment the user starts typing.
     return (
       <p className="text-[0.95em] text-neutral-400 italic">
-        Add a short summary to introduce yourself.
+        {t("placeholder.summary.empty")}
       </p>
     );
   }
@@ -378,7 +388,7 @@ export function ExperienceBody({
 }: SectionProps<ExperienceSection>) {
   const { t } = useLanguage();
   if (section.items.length === 0)
-    return <Placeholder text="No experience yet." />;
+    return <Placeholder tKey="placeholder.experience.empty" />;
   // Body-level drag wrapper. Lets the user move the WHOLE list of
   // experience items as one block (without the section title).
   // Item-level data-element-ids inside still win on direct hits, so
@@ -468,7 +478,7 @@ export function EducationBody({
 }: SectionProps<EducationSection>) {
   const { t } = useLanguage();
   if (section.items.length === 0)
-    return <Placeholder text="No education yet." />;
+    return <Placeholder tKey="placeholder.education.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -560,7 +570,7 @@ export function SkillsBody({
   data,
 }: SectionProps<SkillsSection>) {
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No skills yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.skills.empty" />;
 
   // Group skills by category, preserving first-seen order.
   const groups = new Map<string, typeof items>();
@@ -730,7 +740,7 @@ export function LanguagesBody({
   data,
 }: SectionProps<LanguagesSection>) {
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No languages yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.languages.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -808,7 +818,7 @@ export function ProjectsBody({
 }: SectionProps<ProjectsSection>) {
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No projects yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.projects.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -899,7 +909,7 @@ export function CertificationsBody({
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
-    return <Placeholder text="No certifications yet." />;
+    return <Placeholder tKey="placeholder.certifications.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -988,7 +998,7 @@ export function CertificationsBody({
 export function AwardsBody({ section, data }: SectionProps<AwardsSection>) {
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No awards yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.awards.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -1056,7 +1066,7 @@ export function PublicationsBody({
 }: SectionProps<PublicationsSection>) {
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No publications yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.publications.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -1138,7 +1148,7 @@ export function VolunteerBody({
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0)
-    return <Placeholder text="No volunteer experience yet." />;
+    return <Placeholder tKey="placeholder.volunteer.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -1209,7 +1219,7 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
   // useLanguage `t` translator function in this scope.
   const { t } = useLanguage();
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No talks yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.talks.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div
@@ -1281,7 +1291,7 @@ export function TalksBody({ section, design, data }: SectionProps<TalksSection>)
 
 export function HobbiesBody({ section, data }: SectionProps<HobbiesSection>) {
   const items = section.items.filter((i) => i.visible && i.text.trim());
-  if (items.length === 0) return <Placeholder text="No hobbies yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.hobbies.empty" />;
   // Hobbies render as a single inline list — drag offset applies to the
   // whole paragraph since splitting individual hobbies would create too
   // many tiny drag targets for not enough payoff.
@@ -1310,12 +1320,12 @@ export function ReferencesBody({
         className={`${dragClass} text-[0.95em] italic text-neutral-700`}
         style={elementStyle(data, id)}
       >
-        References available on request.
+        {t("references.onRequest")}
       </p>
     );
   }
   const items = section.items.filter((i) => i.visible);
-  if (items.length === 0) return <Placeholder text="No references yet." />;
+  if (items.length === 0) return <Placeholder tKey="placeholder.references.empty" />;
   // Note: this is the MULTI-item branch. The onRequest branch above
   // already has its own body-id on the single <p>; both paths share
   // the same `section.<sid>.body` slot in elementOverrides so toggling
@@ -1349,7 +1359,7 @@ export function ReferencesBody({
                 data={data}
                 fieldId={`${id}.role`}
                 value={r.role}
-                placeholder="Role"
+                placeholder={t("form.placeholder.refRole")}
               />
               <span className="cv-aux-field">
                 {" · "}
@@ -1357,7 +1367,7 @@ export function ReferencesBody({
                   data={data}
                   fieldId={`${id}.company`}
                   value={r.company}
-                  placeholder="Company"
+                  placeholder={t("form.placeholder.refCompany")}
                 />
               </span>
             </div>
@@ -1395,7 +1405,7 @@ export function CustomBody({
     (b) => b.visible && b.text.trim().length > 0,
   );
   if (!hasBody && !hasItems)
-    return <Placeholder text="Empty custom section." />;
+    return <Placeholder tKey="placeholder.custom.empty" />;
   const bodyId = `section.${section.id}.body`;
   return (
     <div>
@@ -1468,8 +1478,19 @@ export function SectionBody({
 
 // ---------- Helpers ----------
 
-function Placeholder({ text }: { text: string }) {
-  return <p className="text-[0.85em] italic text-neutral-300">{text}</p>;
+/**
+ * Placeholder — empty-state hint shown inside a section body when the
+ * user has no items yet. Accepts a translation key so the text flips
+ * with the active language (was hardcoded English before, which broke
+ * the Danish-template language contract — empty Danish CV showed "No
+ * experience yet." on top of a Danish "Erhvervserfaring" heading).
+ *
+ * The component itself calls `useLanguage()` so every callsite stays
+ * a one-liner without per-Body t() boilerplate.
+ */
+function Placeholder({ tKey }: { tKey: TranslationKey }) {
+  const { t } = useLanguage();
+  return <p className="text-[0.85em] italic text-neutral-300">{t(tKey)}</p>;
 }
 
 /**

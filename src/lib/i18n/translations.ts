@@ -109,6 +109,82 @@ export const TRANSLATIONS = {
   // there (the panes scroll, the page doesn't).
   "common.backToTop": { en: "Back to top", da: "Tilbage til toppen" },
 
+  // ─── Section-body empty-state placeholders ─────────────────────────
+  // Surfaced inside each <Body> renderer in templates/components.tsx
+  // when the user's section has no items (or an empty summary). These
+  // text fragments DID render in the live preview so they MUST flip to
+  // Danish on Danish templates — earlier they were hardcoded English
+  // and showed "No experience yet." on a CV titled "Erhvervserfaring",
+  // which broke the language contract on every Danish template.
+  "placeholder.summary.empty": {
+    en: "Add a short summary to introduce yourself.",
+    da: "Tilføj en kort beskrivelse af dig selv.",
+  },
+  "placeholder.experience.empty": {
+    en: "No experience yet.",
+    da: "Ingen erhvervserfaring endnu.",
+  },
+  "placeholder.education.empty": {
+    en: "No education yet.",
+    da: "Ingen uddannelse endnu.",
+  },
+  "placeholder.skills.empty": {
+    en: "No skills yet.",
+    da: "Ingen kompetencer endnu.",
+  },
+  "placeholder.languages.empty": {
+    en: "No languages yet.",
+    da: "Ingen sprog endnu.",
+  },
+  "placeholder.projects.empty": {
+    en: "No projects yet.",
+    da: "Ingen projekter endnu.",
+  },
+  "placeholder.certifications.empty": {
+    en: "No certifications yet.",
+    da: "Ingen certifikater endnu.",
+  },
+  "placeholder.awards.empty": {
+    en: "No awards yet.",
+    da: "Ingen priser endnu.",
+  },
+  "placeholder.publications.empty": {
+    en: "No publications yet.",
+    da: "Ingen publikationer endnu.",
+  },
+  "placeholder.volunteer.empty": {
+    en: "No volunteer experience yet.",
+    da: "Intet frivilligt arbejde endnu.",
+  },
+  "placeholder.talks.empty": {
+    en: "No talks yet.",
+    da: "Ingen foredrag endnu.",
+  },
+  "placeholder.hobbies.empty": {
+    en: "No hobbies yet.",
+    da: "Ingen fritidsinteresser endnu.",
+  },
+  "placeholder.references.empty": {
+    en: "No references yet.",
+    da: "Ingen referencer endnu.",
+  },
+  "placeholder.custom.empty": {
+    en: "Empty custom section.",
+    da: "Tom brugerdefineret sektion.",
+  },
+  // Dansk konventionel formulering når brugeren toggle'r "fås ved
+  // henvendelse" — matcher det vi anbefalede i Aarhus' template-comment
+  // (research/danish-cv-templates.md §1).
+  "references.onRequest": {
+    en: "References available on request.",
+    da: "Referencer kan oplyses ved henvendelse.",
+  },
+  // Reference-item-felter — brugt som placeholder når feltet er tomt.
+  // role + company eksisterer allerede som form.placeholder.* keys
+  // (genbruges nedenfor); disse to surfaced som hardkodet engelsk.
+  "form.placeholder.refRole": { en: "Role", da: "Rolle" },
+  "form.placeholder.refCompany": { en: "Company", da: "Virksomhed" },
+
   // ─── /new — template-picker landing for "+ New CV" ────────────────
   // Shown when a signed-in user clicks "+ New CV" from the dashboard.
   // Lets them browse the full gallery before any DB row is created;

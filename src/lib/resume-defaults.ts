@@ -690,6 +690,56 @@ export function defaultDesignForTemplate(
         headerStyle: "titlecase",
         photo: { enabled: true, shape: "circle", position: "top-left" },
       };
+
+    // ── Service / detailhandel / transport (2026-05-04) ───────────────
+    case "helsingor":
+      return {
+        ...base,
+        // Terracotta — værre than orange, varmere end navy. Reads as
+        // "håndværket bag kaffe og keramik" snarere end corporate.
+        accentColor: "#B45309", // amber-700 / clay
+        secondaryColor: "#92400E",
+        pageBg: "#FBF8F3", // cream — café-vegetær feel
+        textColor: "#3F2E1A",
+        // Lora for headings — blødt serif-register som matcher den
+        // håndværker-æstetik specialty-coffee og fine-dining
+        // kommunikere. Inter på body for læsbarhed.
+        titleFont: "Lora",
+        bodyFont: "Inter",
+        headerStyle: "titlecase",
+        photo: { enabled: true, shape: "circle", position: "top-left" },
+      };
+    case "silkeborg":
+      return {
+        ...base,
+        // Navy — store retail-kæder bruger ofte enten navy eller rød.
+        // Navy reads tilforladeligt og er mere alsidigt end rødt
+        // (rødt tipper for tæt på Føtex / Bilka brand-identity).
+        accentColor: "#1E40AF", // blue-800
+        secondaryColor: "#475569",
+        pageBg: "#FFFFFF",
+        textColor: "#0F172A",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        photo: { enabled: true, shape: "square", position: "top-right" },
+      };
+    case "aabenraa":
+      return {
+        ...base,
+        // Sort + gul — som et vejskilt. Templatet displays kørekort-
+        // kategorier som visuelle badges der minder om motorvejs-
+        // skilte; sort-på-hvid med gult som accent matcher det
+        // industrielle register transport-jobs har.
+        accentColor: "#1A1A1A",
+        secondaryColor: "#525252",
+        pageBg: "#FFFFFF",
+        textColor: "#0A0A0A",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        photo: { enabled: true, shape: "square", position: "top-left" },
+      };
   }
 }
 

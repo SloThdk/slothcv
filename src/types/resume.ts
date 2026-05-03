@@ -123,6 +123,13 @@ export const TEMPLATE_IDS = [
   "vejle",
   "aalborg",
   "frederiksberg",
+  // ── Service / detailhandel / transport-udvidelse (2026-05-04) ─────
+  // Tre yderligere danske templates til at fange det service-tunge
+  // jobmarked: café/hotel/restaurant, big-box detailhandel
+  // (Bauhaus / Jysk / Føtex / Bilka), og transport/chauffør.
+  "helsingor",
+  "silkeborg",
+  "aabenraa",
 ] as const;
 
 /** Identifier of the active visual template. Templates render the same

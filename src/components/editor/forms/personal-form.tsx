@@ -18,6 +18,7 @@ import { useEditorStore } from "@/lib/store/editor";
 import { defaultPersonalLink, newId } from "@/lib/resume-defaults";
 import { uploadResumePhoto } from "@/lib/profile";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export function PersonalForm() {
       // need an extra ref to remember the prior URL.
       URL.revokeObjectURL(localUrl);
       setPersonal({ photoUrl: undefined });
-      toast.error(e instanceof Error ? e.message : t("personal.toastUploadFailed"));
+      toast.error(translateError(e, t, "personal.toastUploadFailed"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

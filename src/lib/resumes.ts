@@ -13,6 +13,7 @@ import { createClient } from "./supabase/client";
 import { collectResumeStoragePaths } from "./cv-storage-cleanup";
 import { defaultResumeData, newId } from "./resume-defaults";
 import { parseResumeData } from "./schemas/resume";
+import { TranslatableError } from "./translatable-error";
 import { sampleResumeData } from "@/templates/sample-data";
 import type { ResumeData, Section, TemplateId } from "@/types/resume";
 
@@ -39,10 +40,14 @@ export const MAX_CVS_PER_USER = 10;
 /**
  * Sentinel error class for the cap rejection. Lets the dashboard pattern-
  * match without parsing strings: `if (e instanceof CvLimitReachedError) …`.
+ *
+ * Extends TranslatableError so `translateError()` resolves it to the
+ * user's current language automatically — `e.message` falls back to the
+ * raw key for non-i18n consumers (logs, error reporters).
  */
-export class CvLimitReachedError extends Error {
+export class CvLimitReachedError extends TranslatableError {
   constructor(public readonly limit: number = MAX_CVS_PER_USER) {
-    super(`You can have at most ${limit} CVs per account.`);
+    super("errors.cvLimitReached", { n: limit });
     this.name = "CvLimitReachedError";
   }
 }
@@ -147,7 +152,7 @@ export async function createResume(template?: TemplateId): Promise<string> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   // Choose a template to seed from. Default = berlin (the most generic
   // populated layout) when no explicit template was picked.
@@ -169,7 +174,8 @@ export async function createResume(template?: TemplateId): Promise<string> {
     // friendly upgrade-or-delete message instead of a raw Postgres string.
     const limitErr = detectLimitError(error?.message);
     if (limitErr) throw limitErr;
-    throw new Error(error?.message ?? "Could not create CV.");
+    if (error?.message) throw new Error(error.message);
+    throw new TranslatableError("errors.couldNotCreateCv");
   }
   return data.id;
 }
@@ -304,7 +310,7 @@ export async function deleteResume(id: string): Promise<void> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   // Compute paths to delete — this whole block is best-effort. If the
   // env var is missing or any read fails, we skip cleanup and proceed
@@ -381,7 +387,7 @@ export async function deleteAllResumes(): Promise<number> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   // Capture every storage path referenced by ANY of the user's rows
   // BEFORE the bulk delete fires. After the delete completes, no row
@@ -432,14 +438,15 @@ export async function duplicateResume(id: string): Promise<void> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
   // Read source first; RLS guarantees we only see our own rows.
   const { data: src, error: readErr } = await supabase
     .from("resumes")
     .select("title, data")
     .eq("id", id)
     .single();
-  if (readErr || !src) throw new Error(readErr?.message ?? "CV not found.");
+  if (readErr?.message) throw new Error(readErr.message);
+  if (!src) throw new TranslatableError("errors.cvNotFound");
 
   const { error: insertErr } = await supabase.from("resumes").insert({
     user_id: user.id,
@@ -479,12 +486,12 @@ export async function duplicateAsVariant(
   options?: { snapshot?: ResumeData },
 ): Promise<string> {
   const trimmed = variantLabel.trim().slice(0, 80);
-  if (!trimmed) throw new Error("Variant label can't be empty.");
+  if (!trimmed) throw new TranslatableError("errors.variantLabelEmpty");
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   // Read source first to learn its parent (if any) and (if no snapshot
   // was supplied) to clone its content. Title is always read from DB —
@@ -495,7 +502,8 @@ export async function duplicateAsVariant(
     .select("title, data, parent_id")
     .eq("id", sourceId)
     .single();
-  if (readErr || !src) throw new Error(readErr?.message ?? "CV not found.");
+  if (readErr?.message) throw new Error(readErr.message);
+  if (!src) throw new TranslatableError("errors.cvNotFound");
 
   // Flatten variant-of-variant: the new variant points at the top-level
   // master, not at a sibling variant. If the source was itself a master
@@ -521,14 +529,15 @@ export async function duplicateAsVariant(
   if (insertErr || !ins) {
     const limitErr = detectLimitError(insertErr?.message);
     if (limitErr) throw limitErr;
-    throw new Error(insertErr?.message ?? "Could not create variant.");
+    if (insertErr?.message) throw new Error(insertErr.message);
+    throw new TranslatableError("errors.couldNotCreateVariant");
   }
   return ins.id;
 }
 
 export async function renameResume(id: string, title: string): Promise<void> {
   const trimmed = title.trim().slice(0, 120);
-  if (!trimmed) throw new Error("Title can't be empty.");
+  if (!trimmed) throw new TranslatableError("errors.titleEmpty");
   const supabase = createClient();
   const { error } = await supabase
     .from("resumes")
@@ -557,7 +566,7 @@ export async function renameVariantLabel(
   label: string,
 ): Promise<void> {
   const trimmed = label.trim().slice(0, 80);
-  if (!trimmed) throw new Error("Variant label can't be empty.");
+  if (!trimmed) throw new TranslatableError("errors.variantLabelEmpty");
   const supabase = createClient();
   const { error } = await supabase
     .from("resumes")

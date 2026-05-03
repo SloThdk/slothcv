@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import { deleteResume, renameResume } from "@/lib/resumes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
     try {
       await renameResume(resumeId, title);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("settings.cvTitleSavingFailed"));
+      toast.error(translateError(e, t, "settings.cvTitleSavingFailed"));
     } finally {
       setSavingTitle(false);
     }
@@ -63,7 +64,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
       toast.success(t("dashboard.toastDeleted"));
       router.push("/dashboard");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("dashboard.toastDeleteFailed"));
+      toast.error(translateError(e, t, "dashboard.toastDeleteFailed"));
     }
   }
 
@@ -72,7 +73,7 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
     try {
       await exportPdf(data, title || "resume");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("settings.exportPdfFailed"));
+      toast.error(translateError(e, t, "settings.exportPdfFailed"));
     } finally {
       setExporting(false);
     }

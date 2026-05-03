@@ -45,11 +45,11 @@ import {
   groupResumesByMaster,
   renameResume,
   renameVariantLabel,
-  CvLimitReachedError,
   MAX_CVS_PER_USER,
   type ResumeRow,
 } from "@/lib/resumes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import type { TemplateId } from "@/types/resume";
 import { TEMPLATES_BY_ID } from "@/templates/registry";
 
@@ -128,15 +128,10 @@ function DashboardInner() {
         const id = await createResume(requestedTemplate);
         router.replace(`/editor?id=${id}`);
       } catch (e) {
-        if (e instanceof CvLimitReachedError) {
-          // Don't loop the auto-create — show the dashboard with a clear
-          // banner so the user can free a slot by deleting another CV.
-          toast.error(e.message);
-        } else {
-          toast.error(
-            e instanceof Error ? e.message : t("dashboard.toastNewFailed"),
-          );
-        }
+        // CvLimitReachedError is a TranslatableError; translateError
+        // resolves it to the localized "You can have at most {n} CVs"
+        // copy automatically — no special branch needed.
+        toast.error(translateError(e, t, "dashboard.toastNewFailed"));
         // Drop the query string so a retry click on "New CV" doesn't re-loop.
         router.replace("/dashboard");
         autoCreateFiredRef.current = false;
@@ -148,9 +143,7 @@ function DashboardInner() {
     try {
       setResumes(await listResumes());
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : t("dashboard.toastRefreshFailed"),
-      );
+      toast.error(translateError(e, t, "dashboard.toastRefreshFailed"));
     }
   }
 
@@ -206,9 +199,7 @@ function DashboardInner() {
       );
       await refresh();
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : t("dashboard.toastDeleteAllFailed"),
-      );
+      toast.error(translateError(e, t, "dashboard.toastDeleteAllFailed"));
     } finally {
       setBusy(false);
     }
@@ -231,9 +222,7 @@ function DashboardInner() {
       toast.success(t("dashboard.toastDeleted"));
       await refresh();
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : t("dashboard.toastDeleteFailed"),
-      );
+      toast.error(translateError(e, t, "dashboard.toastDeleteFailed"));
     }
   }
 
@@ -243,13 +232,9 @@ function DashboardInner() {
       toast.success(t("dashboard.toastDuplicated"));
       await refresh();
     } catch (e) {
-      if (e instanceof CvLimitReachedError) {
-        toast.error(e.message);
-      } else {
-        toast.error(
-          e instanceof Error ? e.message : t("dashboard.toastDuplicateFailed"),
-        );
-      }
+      // CvLimitReachedError → translated cap copy; plain Errors fall
+      // through to e.message; nothing → translated fallback.
+      toast.error(translateError(e, t, "dashboard.toastDuplicateFailed"));
     }
   }
 
@@ -310,9 +295,7 @@ function DashboardInner() {
       toast.success(t("dashboard.toastRenamed"));
       await refresh();
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : t("dashboard.toastRenameFailed"),
-      );
+      toast.error(translateError(e, t, "dashboard.toastRenameFailed"));
     }
   }
 
@@ -336,13 +319,8 @@ function DashboardInner() {
       toast.success(t("dashboard.toastVariantCreated"));
       await refresh();
     } catch (e) {
-      if (e instanceof CvLimitReachedError) {
-        toast.error(e.message);
-      } else {
-        toast.error(
-          e instanceof Error ? e.message : t("dashboard.toastVariantFailed"),
-        );
-      }
+      // CvLimitReachedError → translated cap copy via TranslatableError.
+      toast.error(translateError(e, t, "dashboard.toastVariantFailed"));
     }
   }
 

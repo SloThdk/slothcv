@@ -49,10 +49,10 @@ import { TemplatePreview } from "@/components/editor/template-preview";
 import {
   createResume,
   listResumes,
-  CvLimitReachedError,
   MAX_CVS_PER_USER,
 } from "@/lib/resumes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import { EASE, staggerContainer, staggerItem } from "@/lib/motion";
 import type { TemplateId } from "@/types/resume";
 
@@ -107,11 +107,10 @@ function NewCvPage() {
       // created a CV (it would just sit there confused).
       router.replace(`/editor?id=${newId}`);
     } catch (e) {
-      if (e instanceof CvLimitReachedError) {
-        toast.error(e.message);
-      } else {
-        toast.error(e instanceof Error ? e.message : t("new.toastFailed"));
-      }
+      // CvLimitReachedError is a TranslatableError — translateError
+      // resolves it (and any other thrown TranslatableError) to the
+      // localized copy. Plain Errors fall through to e.message.
+      toast.error(translateError(e, t, "new.toastFailed"));
       setCreatingId(null);
     }
   }

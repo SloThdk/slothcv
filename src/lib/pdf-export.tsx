@@ -58,6 +58,7 @@
 "use client";
 
 import { useEditorStore } from "@/lib/store/editor";
+import { TranslatableError } from "@/lib/translatable-error";
 import type { ResumeData } from "@/types/resume";
 
 /** A4 / Letter / Legal sizes in millimetres. Same source-of-truth the
@@ -129,9 +130,7 @@ export async function exportPdf(
     '[data-pdf-page-content="true"]',
   );
   if (!innerEl) {
-    throw new Error(
-      "PDF export: page content not found. Open the editor preview first.",
-    );
+    throw new TranslatableError("errors.pdfPageNotFound");
   }
 
   // Neutralise any in-progress editor interaction so the printed

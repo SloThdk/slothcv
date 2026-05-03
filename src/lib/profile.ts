@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "./supabase/client";
+import { TranslatableError } from "./translatable-error";
 
 export interface Profile {
   id: string;
@@ -42,7 +43,7 @@ export async function updateMyProfile(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
   const { error } = await supabase
     .from("profiles")
     .update(patch)
@@ -62,17 +63,17 @@ export async function updateMyProfile(
  */
 export async function uploadResumePhoto(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Photo must be an image file.");
+    throw new TranslatableError("errors.photoMustBeImage");
   }
   const MAX_BYTES = 2 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
-    throw new Error("Photo must be 2 MB or smaller.");
+    throw new TranslatableError("errors.photoTooLarge");
   }
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   const ext = mimeToExt(file.type);
   const path = `${user.id}/cv-${Date.now()}.${ext}`;
@@ -104,17 +105,17 @@ export async function uploadResumePhoto(file: File): Promise<string> {
  */
 export async function uploadAvatar(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Avatar must be an image file.");
+    throw new TranslatableError("errors.avatarMustBeImage");
   }
   const MAX_BYTES = 2 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
-    throw new Error("Avatar must be 2 MB or smaller.");
+    throw new TranslatableError("errors.avatarTooLarge");
   }
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   // Sniff the extension from the MIME type — never trust the original
   // filename which could carry .php / .html etc.
@@ -150,17 +151,17 @@ export async function uploadAvatar(file: File): Promise<string> {
  */
 export async function uploadCustomElementImage(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Image must be an image file.");
+    throw new TranslatableError("errors.imageMustBeImage");
   }
   const MAX_BYTES = 5 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
-    throw new Error("Image must be 5 MB or smaller.");
+    throw new TranslatableError("errors.imageTooLarge");
   }
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
 
   const ext = mimeToExt(file.type);
   // `el-` prefix so we can tell custom-element images apart from avatar /
@@ -205,7 +206,7 @@ export async function removeAvatar(): Promise<void> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
+  if (!user) throw new TranslatableError("errors.notSignedIn");
   // List then delete — Storage doesn't have a "delete by prefix" primitive
   // so we enumerate the folder first.
   const { data: files, error: listErr } = await supabase.storage
@@ -233,7 +234,7 @@ export async function removeAvatar(): Promise<void> {
  */
 export async function changePassword(newPassword: string): Promise<void> {
   if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters.");
+    throw new TranslatableError("errors.passwordTooShort");
   }
   const supabase = createClient();
   const { error } = await supabase.auth.updateUser({ password: newPassword });

@@ -42,6 +42,7 @@ import {
 } from "@/lib/store/editor";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { translateError } from "@/lib/translatable-error";
 import { SaveIndicator } from "@/components/editor/save-indicator";
 import { SectionList } from "@/components/editor/section-list";
 import { DesignTab } from "@/components/editor/design-tab";
@@ -505,9 +506,7 @@ function SaveNowButton({ resumeId }: { resumeId: string | null }) {
           await flushPendingSave();
           toast.success(t("save.savedNow"));
         } catch (e) {
-          toast.error(
-            e instanceof Error ? e.message : t("save.error"),
-          );
+          toast.error(translateError(e, t, "save.error"));
         }
       }}
       title={t("save.saveNow")}

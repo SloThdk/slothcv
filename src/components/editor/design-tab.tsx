@@ -99,6 +99,41 @@ export function DesignTab() {
   const { t } = useLanguage();
   const confirm = useConfirm();
 
+  // Ref + flash state for the "click on page background → jump here"
+  // affordance. Wired up by preview.tsx: a background click fires
+  // `slothcv:open-design-tab`; editor/page.tsx switches the active tab
+  // to Design, and we scroll the BackgroundQuickPicker row into view
+  // and pulse a ring around it for ~1.4 s so the user notices where
+  // their click landed. Without the ring the tab-switch alone reads
+  // as "the panel jumped" which is more disorienting than helpful.
+  const pageBgRef = useRef<HTMLDivElement>(null);
+  const [bgFlash, setBgFlash] = useState(false);
+  useEffect(() => {
+    function onOpen() {
+      // Two RAFs: first lets React commit the tab switch (so DesignTab
+      // is mounted + sized before we ask the browser to scroll to a
+      // child of it), second lets the layout settle so the smooth
+      // scroll lands on the final position rather than chasing it.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          pageBgRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          setBgFlash(true);
+          // Match the flash duration to two pulse cycles of the ring
+          // animation so the ring fades in, fades out, and the highlight
+          // class is removed all at once — no half-faded leftover state.
+          window.setTimeout(() => setBgFlash(false), 1400);
+        });
+      });
+    }
+    window.addEventListener("slothcv:open-design-tab", onOpen);
+    return () => {
+      window.removeEventListener("slothcv:open-design-tab", onOpen);
+    };
+  }, []);
+
   /** Reset using the CURRENT template's factory design — Aurora goes
    *  back to dark/mint, Eclipse to amber/black, etc. The user stays on
    *  whatever template they picked; only the design values within that
@@ -176,6 +211,19 @@ export function DesignTab() {
 
   return (
     <div className="space-y-5">
+      {/* Inline keyframes for the page-bg flash. Co-located with the
+          consumer so globals.css stays untouched. The animation pulses
+          a soft accent ring on the BackgroundQuickPicker wrapper for
+          ~1.4 s after a background click, confirming "your click
+          landed HERE". prefers-reduced-motion users get an animation
+          collapsed to ~0 ms by the global guard in globals.css. */}
+      <style>{`
+        @keyframes slothcv-bg-flash {
+          0%, 100% { box-shadow: 0 0 0 0 transparent; }
+          50%      { box-shadow: 0 0 0 3px var(--color-accent); }
+        }
+        .slothcv-bg-flash { animation: slothcv-bg-flash 0.7s ease-in-out 2; }
+      `}</style>
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-subtle">
           Design controls. Each group has its own Reset; the global one
@@ -221,10 +269,19 @@ export function DesignTab() {
             })
           }
         />
-        <BackgroundQuickPicker
-          value={design.pageBg}
-          onApply={(c) => setDesign({ pageBg: c })}
-        />
+        <div
+          ref={pageBgRef}
+          // `bg-flash` (defined in globals.css) pulses a soft accent
+          // ring on the wrapper for ~1.4 s. Scroll-margin keeps the
+          // smooth-scroll target from butting against the panel edge
+          // when the row is near the top or bottom.
+          className={`scroll-mt-4 scroll-mb-4 rounded-lg ${bgFlash ? "slothcv-bg-flash" : ""}`}
+        >
+          <BackgroundQuickPicker
+            value={design.pageBg}
+            onApply={(c) => setDesign({ pageBg: c })}
+          />
+        </div>
       </Section>
 
       <Section title={t("design.color")} onReset={() => onResetGroup("color")}>

@@ -139,33 +139,40 @@ function EditorInner() {
   }, [reset]);
 
   // Click-to-jump from the live preview.
-  //   - `slothcv:jump-to-section` → switch to Content tab + expand the row
-  //     (the section list listens separately for the expand part). This
-  //     also clears any pending "restore" target since the user explicitly
-  //     navigated to a section by clicking it.
-  //   - `slothcv:open-design-tab` is intentionally NOT listened for here.
-  //     Background clicks no longer force-switch to Design — they just
-  //     deselect, and the deselect-restore effect below sends the user
-  //     back to wherever they were working. (The Design tab is one click
-  //     away in the tab bar; surprising tab-switches aren't worth it.)
+  //   - `slothcv:jump-to-section` → Content tab + expand the row.
+  //     SectionList listens separately for the expand part.
+  //   - `slothcv:open-design-tab` → Design tab. Fired by preview.tsx on
+  //     a click on the empty page background. Design-tab listens for
+  //     the same event to scroll the Page-background preset row into
+  //     view and highlight it briefly.
+  // Both clear `prevTabBeforeSelectionRef` so the deselect-restore
+  // effect below doesn't immediately yank the user back to the tab
+  // they were on before clicking — explicit navigation wins.
   useEffect(() => {
     function onJump(e: Event) {
       const detail = (e as CustomEvent<{ id: string }>).detail;
       if (!detail?.id) return;
       setTab("content");
       setMobilePane("edit");
-      // Explicit nav clears the "where to send you back" memory — the
-      // user has chosen a new home and any pending custom-element
-      // selection is stale from their POV.
       prevTabBeforeSelectionRef.current = null;
       // Persist the intent in the store so SectionList can pick it up
       // when it (re)mounts. Avoids the previous race where the window
       // event fired before SectionList had attached its listener.
       requestJumpToSection(detail.id);
     }
+    function onOpenDesign() {
+      setTab("design");
+      setMobilePane("edit");
+      // Same nav-clear contract as onJump — without this the
+      // deselect-restore effect would overwrite our setTab once
+      // selectedElementId settles back to null.
+      prevTabBeforeSelectionRef.current = null;
+    }
     window.addEventListener("slothcv:jump-to-section", onJump);
+    window.addEventListener("slothcv:open-design-tab", onOpenDesign);
     return () => {
       window.removeEventListener("slothcv:jump-to-section", onJump);
+      window.removeEventListener("slothcv:open-design-tab", onOpenDesign);
     };
   }, [requestJumpToSection]);
 

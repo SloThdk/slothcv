@@ -53,7 +53,7 @@ export const TRANSLATIONS = {
     da: "Gratis CV-bygger, ingen mørke mønstre",
   },
   "landing.headlineA": { en: "Beautiful CVs.", da: "Smukke CV'er." },
-  "landing.headlineB": { en: "Truly free.", da: "Helt gratis." },
+  "landing.headlineB": { en: "Free up to 10 CVs.", da: "Gratis op til 10 CV'er." },
   "landing.body": {
     en: "Pick a template, fill it in, and download a vector PDF. No watermark, no $1-trial-into-$30/month, no signup wall to export. Your work auto-saves the second you stop typing.",
     da: "Vælg en skabelon, udfyld den, og hent en vektor-PDF. Intet vandmærke, ingen $1-prøveperiode-til-$30/måned, ingen tilmeldingsmur for at hente. Dit arbejde gemmes automatisk det øjeblik du holder pause.",
@@ -73,8 +73,8 @@ export const TRANSLATIONS = {
   },
   "features.watermarkTitle": { en: "No watermark, ever", da: "Aldrig nogen vandmærker" },
   "features.watermarkBody": {
-    en: "Free is free. No upsell modals, no surprise charges, no trial trap.",
-    da: "Gratis er gratis. Ingen opsalgs-modaler, ingen overraskelses-gebyrer, ingen prøveperiode-fælde.",
+    en: "No surprise charges, no trial trap. Up to 10 CVs per account stays free.",
+    da: "Ingen overraskelses-gebyrer, ingen prøveperiode-fælde. Op til 10 CV'er per konto er gratis.",
   },
 
   "templates.title": { en: "Templates to start from", da: "Skabeloner at starte fra" },

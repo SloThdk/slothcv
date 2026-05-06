@@ -96,6 +96,16 @@ export default function TermsPage(): JSX.Element {
           </p>
         </Section>
 
+        <Section title={isDa ? "Fremtidig prissætning" : "Future pricing"}>
+          <p>
+            {isDa
+              ? "SlothCV er gratis i dag. Jeg forbeholder mig retten til at introducere betalte tiers i fremtiden for at dække omkostninger når brugen vokser. Hvis jeg introducerer betaling, vil de eksisterende gratis-funktioner — op til 10 CV'er per konto, vektor-PDF-eksport, ingen vandmærker — forblive gratis for konti oprettet inden den dato, uden tvungen migration. Eventuelle nye funktioner (fx ubegrænsede CV'er, AI-assisteret skrivning, premium-skabeloner) kan kræve en betalt plan. Du kan altid eksportere alle dine CV'er som PDF og slette din konto med ét klik via "
+              : "SlothCV is free today. I reserve the right to introduce paid tiers in the future to cover costs as usage grows. If I introduce payment, the existing free features — up to 10 CVs per account, vector PDF export, no watermarks — will remain free for accounts created before that date, with no forced migration. Any new features (e.g. unlimited CVs, AI-assisted writing, premium templates) may require a paid plan. You can always export all your CVs as PDF and delete your account with one click via "}
+            <Link href="/account" className="underline underline-offset-4">/account</Link>
+            {isDa ? "." : "."}
+          </p>
+        </Section>
+
         <Section title={isDa ? "Ansvarsfraskrivelse" : "Liability"}>
           <p>
             {isDa

@@ -74,9 +74,9 @@ const PUBLIC_AVATARS_PATH_PREFIX = "/storage/v1/object/public/avatars/";
  *                    rows may not match `ResumeData`.
  * @param userId      `auth.uid()` of the row's owner — used as the
  *                    folder prefix filter.
- * @param supabaseUrl Project URL, e.g.
- *                    `https://putgpmxijypjsrwbupyk.supabase.co`. The
- *                    caller usually reads this from
+ * @param supabaseUrl Supabase project URL in the canonical shape
+ *                    `https://<project-ref>.supabase.co`. The caller
+ *                    usually reads this from
  *                    `process.env.NEXT_PUBLIC_SUPABASE_URL`. Pass an
  *                    empty string to disable cleanup gracefully (used
  *                    in test / SSR contexts where env is missing).
@@ -119,7 +119,9 @@ export function collectResumeStoragePaths(
     // Public-bucket avatars path only. Query string + hash on the URL
     // are ignored implicitly because we look at `pathname`.
     if (!parsed.pathname.startsWith(PUBLIC_AVATARS_PATH_PREFIX)) return;
-    const bucketRelative = parsed.pathname.slice(PUBLIC_AVATARS_PATH_PREFIX.length);
+    const bucketRelative = parsed.pathname.slice(
+      PUBLIC_AVATARS_PATH_PREFIX.length,
+    );
     // Caller's own folder only.
     if (!bucketRelative.startsWith(`${userId}/`)) return;
     const filename = bucketRelative.slice(userId.length + 1);

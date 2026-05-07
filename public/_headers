@@ -1,0 +1,93 @@
+# Cloudflare Pages headers config for slothcv.pages.dev.
+#
+# This file applies HTTP headers to every response Cloudflare Pages emits.
+# Pages has no per-request middleware on a static export, so this file is
+# the only place to control caching + security headers — getting it right
+# matters because there's no second chance later in the request lifecycle.
+#
+# ─── Caching ──────────────────────────────────────────────────────────
+# By default Pages serves HTML with `Cache-Control: public, max-age=0,
+# must-revalidate` — browsers DO store a cached copy and merely revalidate
+# before reuse. Some real-world conditions (iOS Safari with the page open
+# in a tab, browsers under aggressive battery / data-saving) skip the
+# revalidation or accept a stale 304, and the user sees an old layout for
+# hours after a fresh deploy. Setting `no-store` on HTML guarantees no
+# browser ever serves a cached copy without round-tripping. CSS / JS get
+# `immutable` because Next.js hashes their filenames in the build output.
+#
+# ─── Security headers ─────────────────────────────────────────────────
+# The CSP allows Supabase (REST + Realtime + Storage) for runtime auth
+# and CV persistence, plus the same-origin self for everything else. No
+# Stripe, no Turnstile, no third-party analytics — slothcv has no payment
+# flow and no consented tracking, so the policy is intentionally narrower
+# than the philipsloth-portfolio CSP.
+#
+# `'unsafe-inline'` on `script-src` is required because Next.js's
+# static-export hydration emits inline `<script>` tags without a nonce
+# (CF Pages has no per-request middleware to mint one). The threat
+# model accepts this: SlothCV's user input is a structured CV form,
+# never raw HTML or markdown, so the application surface that could
+# inject a malicious inline script doesn't exist. Worker-src allows
+# blob: because the PDF render uses a web worker spawned from a Blob URL.
+#
+# `Cross-Origin-Opener-Policy` is set to `same-origin-allow-popups` (not
+# the stricter `same-origin`) because the Google OAuth flow opens a
+# pop-up and the strict variant breaks the OAuth callback's
+# `window.opener` reference. Auth callbacks in slothcv land on the same
+# origin so the popups variant is the right balance.
+
+# All HTML — never cache, full security headers.
+/*
+  Cache-Control: public, max-age=0, no-store, must-revalidate
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Cross-Origin-Resource-Policy: same-origin
+
+# Hashed Next.js bundles — cache forever; the hash changes on rebuild.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Public static assets — daily cache with revalidation.
+/icons/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/images/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# === Robotted-out auth surface ===
+# Auth callbacks, dashboard, and editor are not crawlable. The HTTP
+# header below is a defense-in-depth third layer alongside the meta
+# robots tag in the HTML and the robots.txt disallow rules — older
+# crawlers honour HTTP headers but skip body parsing, so the header
+# is the most reliable signal that reaches archival bots.
+/auth/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/dashboard
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/dashboard/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/editor
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/editor/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+# /debug-templates is a developer-only template-render audit page (see
+# the docstring in src/app/debug-templates/page.tsx) that should not
+# appear in search results or any AI training corpus. It currently
+# ships in the build because it doubles as a quick visual QA tool;
+# noindex headers + the matching robots.txt disallow keep it out of
+# crawler indexes regardless.
+/debug-templates
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/debug-templates/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet

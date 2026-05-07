@@ -60,7 +60,13 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 API = "https://api.supabase.com/v1"
-DEFAULT_PROJECT_REF = "putgpmxijypjsrwbupyk"  # slothcv prod
+# Default project ref for the SlothCV production Supabase. Read from the
+# `SUPABASE_PROJECT_REF` env var, NOT a hard-coded literal — that way a fork
+# can run this script against its own project without editing source, and a
+# public repo doesn't ship the operator's project ref. The CI deploy and the
+# operator's local dev shell both export this variable from their respective
+# secret stores; absent the env var, the script exits with a clear error.
+DEFAULT_PROJECT_REF = os.environ.get("SUPABASE_PROJECT_REF", "")
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = PROJECT_DIR / "supabase" / "templates"
 

@@ -1,0 +1,9 @@
+{
+  "//": "Template Claude Code MCP server map. Copy to `.mcp.json` and replace `<your-supabase-project-ref>` with the project ref from your own Supabase dashboard (visible in the URL: https://supabase.com/dashboard/project/<project_ref>, or via `supabase status`). The Supabase MCP exposes the project's tables / migrations / edge functions to the AI agent during development; it requires the AI runtime to OAuth to Supabase the first time it's used. `.mcp.json` is gitignored so each contributor wires up their own project.",
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=<your-supabase-project-ref>"
+    }
+  }
+}

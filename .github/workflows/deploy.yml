@@ -45,18 +45,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 22
-        uses: actions/setup-node@v4
+      # Bun is the canonical package manager for slothcv (per
+      # start_local_server.bat and the bun.lock at repo root). The
+      # earlier `actions/setup-node@v4` with `cache: npm` step
+      # implicitly required a tracked `package-lock.json`, which
+      # contradicted the bun-canonical posture and broke the deploy
+      # when package-lock.json got correctly gitignored alongside
+      # yarn.lock and pnpm-lock.yaml. Switching to `oven-sh/setup-bun`
+      # resolves both: bun is the actual build tool, and
+      # `bun install --frozen-lockfile` enforces the same "lockfile
+      # and package.json must agree" production-correct discipline
+      # that `npm ci` provides.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "22"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        # `npm ci` enforces a clean install from package-lock.json —
-        # it fails if package.json and the lockfile disagree, which
-        # is the production-correct posture (no surprise version drift
-        # between local dev and the deployed bundle).
-        run: npm ci
+        # `--frozen-lockfile` fails if bun.lock and package.json
+        # disagree — the bun equivalent of `npm ci`.
+        run: bun install --frozen-lockfile
 
       - name: Build static export
         # next build with `output: 'export'` writes the static site to
@@ -67,7 +75,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
-        run: npm run build
+        run: bun run build
 
       - name: Deploy to Cloudflare Pages
         # cloudflare/wrangler-action keeps wrangler version-pinned to

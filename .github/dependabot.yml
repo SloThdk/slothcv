@@ -1,0 +1,54 @@
+# Dependabot — weekly grouped dependency updates.
+#
+# Groups keep PR noise low: a Next-ecosystem bump arrives as one PR, not
+# six. Wrangler / @opennextjs / Supabase each get their own group so the
+# blast radius of a regressing bump is one rollback, not "the whole
+# weekly batch is blocked on one bad bump."
+#
+# Bun: dependabot reads bun.lock under the `npm` ecosystem (GitHub added
+# bun-lockfile support in late 2024). When dependabot opens a PR it
+# updates package.json + bun.lock together; CI runs `bun install
+# --frozen-lockfile` so a stale lockfile fails fast at the install step.
+#
+# Schedule: Monday 06:00 Europe/Copenhagen. Same cadence as slothbox so
+# the two repos surface their weekly batch in the same morning window
+# rather than scattering attention across the week.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Copenhagen
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      next:
+        patterns: ["next", "@next/*", "eslint-config-next"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*"]
+      supabase:
+        patterns: ["@supabase/*"]
+      dnd:
+        patterns: ["@dnd-kit/*"]
+      cloudflare:
+        patterns: ["wrangler", "@opennextjs/*"]
+      types:
+        patterns: ["@types/*"]
+      lint:
+        patterns: ["eslint", "eslint-*", "@eslint/*"]
+    labels: ["deps", "auto"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Copenhagen
+    open-pull-requests-limit: 5
+    labels: ["deps", "ci"]

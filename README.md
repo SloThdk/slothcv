@@ -33,9 +33,9 @@
 >    **v0.5**. Until then, the RLS claim is verified by manual audits and the
 >    migration-level review trail, not continuously.
 >
-> Use this build for portfolio review and personal CV creation. Treat
-> tavshedspligt-class material with the same caveat any v0.1 deserves until v1.0
-> ships. Full posture in [`SECURITY.md`](SECURITY.md).
+> Use this build for portfolio review and personal CV creation. Apply
+> the caveat any v0.1 deserves until v1.0 ships. Full posture in
+> [`SECURITY.md`](SECURITY.md).
 
 ---
 
@@ -617,10 +617,8 @@ milestones; see this README's release-status table above for feature scope.
 SlothCV's data plane runs exclusively in EU regions — the reference
 deployment uses an EU-region Supabase project, and Cloudflare Pages serves
 the static bundle from the edge nearest the visitor (the only data path
-that crosses regions is the user's own browser to Supabase EU). For users
-subject to GDPR, Danish Bogføringsloven, or any sector-specific
-confidentiality regime (`tavshedspligt`, attorney-client privilege, medical
-confidentiality), this matters: data does not transit US-jurisdiction
+that crosses regions is the user's own browser to Supabase EU). For
+users subject to GDPR this matters: data does not transit US-jurisdiction
 infrastructure where Schrems II compliance is contested.
 
 This is checked into the configuration, not a marketing claim. Supabase's

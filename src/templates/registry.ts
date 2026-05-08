@@ -1,13 +1,17 @@
 /**
- * Template registry — single source of truth for which templates exist and
- * what they look like in the picker.
+ * Template registry — single source of truth for which templates exist
+ * and what they look like in the picker.
  *
- * Each template ships:
- *   - `<id>/index.tsx`    — DOM renderer used in the live editor preview
- *   - `<id>/pdf.tsx`      — react-pdf renderer used by the export pipeline
+ * Each template ships as a single flat `<id>.tsx` under `src/templates/`
+ * — a React component that renders the CV as DOM. The PDF export reuses
+ * that same component via `window.print()`; there is no separate
+ * react-pdf renderer per template (an earlier iteration tried that path
+ * and ran into subpixel font drift; the current single-source-of-truth
+ * approach is documented in `src/lib/pdf-export.tsx`).
  *
- * Adding a template = add an entry below + the two components. The Templates
- * tab in the editor reads this list to render the gallery.
+ * Adding a template = create `src/templates/<id>.tsx` + add an entry
+ * to the list below. The Templates tab in the editor reads this list
+ * to render the gallery.
  */
 
 import type { TemplateId } from "@/types/resume";
@@ -149,21 +153,24 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "geist",
     name: "Geist",
-    blurb: "Vercel-flavored. Tight grid, monospace metrics column, frontend-dev native.",
+    blurb:
+      "Vercel-flavored. Tight grid, monospace metrics column, frontend-dev native.",
     thumbGradient: "from-neutral-50 to-neutral-100",
     swatch: { primary: "#000000", bg: "#fafafa" },
   },
   {
     id: "notion",
     name: "Notion",
-    blurb: "Friendly geometric sans, soft gray cards, callout-style section heads.",
+    blurb:
+      "Friendly geometric sans, soft gray cards, callout-style section heads.",
     thumbGradient: "from-stone-50 to-stone-100",
     swatch: { primary: "#37352f", bg: "#fbfbfa" },
   },
   {
     id: "linear",
     name: "Linear",
-    blurb: "Editorial dark cream. JetBrains Mono dates, indigo accent, engineering polish.",
+    blurb:
+      "Editorial dark cream. JetBrains Mono dates, indigo accent, engineering polish.",
     thumbGradient: "from-stone-100 to-indigo-50",
     swatch: { primary: "#5e6ad2", bg: "#f8f7f4" },
   },
@@ -178,35 +185,40 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "obsidian",
     name: "Obsidian",
-    blurb: "Pure black. White serif name, electric purple accent, power-user aesthetic.",
+    blurb:
+      "Pure black. White serif name, electric purple accent, power-user aesthetic.",
     thumbGradient: "from-neutral-950 to-purple-950",
     swatch: { primary: "#a78bfa", bg: "#0a0a0a" },
   },
   {
     id: "carbon",
     name: "Carbon",
-    blurb: "Dark grey IBM Plex Mono. Structured grid, enterprise engineering vibe.",
+    blurb:
+      "Dark grey IBM Plex Mono. Structured grid, enterprise engineering vibe.",
     thumbGradient: "from-stone-900 to-stone-800",
     swatch: { primary: "#0f62fe", bg: "#161616" },
   },
   {
     id: "midnight",
     name: "Midnight",
-    blurb: "Navy + gold accent. EB Garamond serif throughout, old-money executive.",
+    blurb:
+      "Navy + gold accent. EB Garamond serif throughout, old-money executive.",
     thumbGradient: "from-blue-950 to-amber-900",
     swatch: { primary: "#d4af37", bg: "#0a1628" },
   },
   {
     id: "onyx",
     name: "Onyx",
-    blurb: "Black with magenta-cyan gradient mesh accent. Designer's dark mode.",
+    blurb:
+      "Black with magenta-cyan gradient mesh accent. Designer's dark mode.",
     thumbGradient: "from-zinc-950 to-fuchsia-950",
     swatch: { primary: "#e879f9", bg: "#09090b" },
   },
   {
     id: "graphite",
     name: "Graphite",
-    blurb: "Charcoal sidebar with off-white body. Architect / industrial design feel.",
+    blurb:
+      "Charcoal sidebar with off-white body. Architect / industrial design feel.",
     thumbGradient: "from-stone-700 to-stone-100",
     swatch: { primary: "#44403c", bg: "#fafaf9" },
   },
@@ -214,7 +226,8 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "geneva",
     name: "Geneva",
-    blurb: "Banking. Wide right sidebar with KPI tiles, narrow main with prose.",
+    blurb:
+      "Banking. Wide right sidebar with KPI tiles, narrow main with prose.",
     thumbGradient: "from-slate-100 to-blue-50",
     swatch: { primary: "#1e3a8a", bg: "#ffffff" },
   },
@@ -228,14 +241,16 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "frankfurt",
     name: "Frankfurt",
-    blurb: "Heavy black sidebar with photo. Strong sans serif, German engineering.",
+    blurb:
+      "Heavy black sidebar with photo. Strong sans serif, German engineering.",
     thumbGradient: "from-neutral-900 to-neutral-200",
     swatch: { primary: "#171717", bg: "#fafafa" },
   },
   {
     id: "singapore",
     name: "Singapore",
-    blurb: "Vertical right sidebar with rotated section accents, Asian-flavored design.",
+    blurb:
+      "Vertical right sidebar with rotated section accents, Asian-flavored design.",
     thumbGradient: "from-red-50 to-yellow-50",
     swatch: { primary: "#dc2626", bg: "#fffbeb" },
   },
@@ -250,35 +265,40 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "bento",
     name: "Bento",
-    blurb: "Asymmetric 6-cell CSS grid. Modern web feel for creatives + designers.",
+    blurb:
+      "Asymmetric 6-cell CSS grid. Modern web feel for creatives + designers.",
     thumbGradient: "from-pink-50 to-orange-50",
     swatch: { primary: "#ea580c", bg: "#ffffff" },
   },
   {
     id: "mosaic",
     name: "Mosaic",
-    blurb: "Many small tile sections, colored backgrounds per section. Marketing native.",
+    blurb:
+      "Many small tile sections, colored backgrounds per section. Marketing native.",
     thumbGradient: "from-cyan-50 to-pink-50",
     swatch: { primary: "#0891b2", bg: "#ffffff" },
   },
   {
     id: "dashboard",
     name: "Dashboard",
-    blurb: "Skill bars + KPI tiles + metric callouts. Sales / operations / data roles.",
+    blurb:
+      "Skill bars + KPI tiles + metric callouts. Sales / operations / data roles.",
     thumbGradient: "from-emerald-50 to-blue-50",
     swatch: { primary: "#059669", bg: "#ffffff" },
   },
   {
     id: "atlas",
     name: "Atlas",
-    blurb: "World-map stylized layout. Pin-style location markers, travel / journalist.",
+    blurb:
+      "World-map stylized layout. Pin-style location markers, travel / journalist.",
     thumbGradient: "from-sky-50 to-amber-50",
     swatch: { primary: "#0369a1", bg: "#fefdf8" },
   },
   {
     id: "heidelberg",
     name: "Heidelberg",
-    blurb: "Humanities. Triple-column dense, EB Garamond, footnote-style hanging citations.",
+    blurb:
+      "Humanities. Triple-column dense, EB Garamond, footnote-style hanging citations.",
     thumbGradient: "from-amber-50 to-stone-100",
     swatch: { primary: "#7c2d12", bg: "#fefdfb" },
   },
@@ -286,14 +306,16 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "boston",
     name: "Boston",
-    blurb: "STEM PhD. Computer Modern serif (LaTeX-flavored), publication-heavy, BibTeX feel.",
+    blurb:
+      "STEM PhD. Computer Modern serif (LaTeX-flavored), publication-heavy, BibTeX feel.",
     thumbGradient: "from-rose-50 to-stone-50",
     swatch: { primary: "#7f1d1d", bg: "#ffffff" },
   },
   {
     id: "stanford",
     name: "Stanford",
-    blurb: "Tech academia. Cardinal red accent, modern sans, mid-density academic.",
+    blurb:
+      "Tech academia. Cardinal red accent, modern sans, mid-density academic.",
     thumbGradient: "from-red-50 to-stone-50",
     swatch: { primary: "#8c1515", bg: "#ffffff" },
   },
@@ -301,21 +323,24 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "madison",
     name: "Madison",
-    blurb: "Wall Street. Conservative two-column, navy + gold, results-first executive.",
+    blurb:
+      "Wall Street. Conservative two-column, navy + gold, results-first executive.",
     thumbGradient: "from-blue-100 to-amber-50",
     swatch: { primary: "#1e3a8a", bg: "#ffffff" },
   },
   {
     id: "mayfair",
     name: "Mayfair",
-    blurb: "London consulting. Cream paper, deep burgundy accent, italic Tiempos serif.",
+    blurb:
+      "London consulting. Cream paper, deep burgundy accent, italic Tiempos serif.",
     thumbGradient: "from-rose-50 to-stone-100",
     swatch: { primary: "#7e1d1d", bg: "#fdfaf6" },
   },
   {
     id: "davos",
     name: "Davos",
-    blurb: "Strategy / board. Wide spacing, all-caps headers, very minimal exec.",
+    blurb:
+      "Strategy / board. Wide spacing, all-caps headers, very minimal exec.",
     thumbGradient: "from-slate-50 to-zinc-100",
     swatch: { primary: "#0c0a09", bg: "#fafaf9" },
   },
@@ -323,21 +348,24 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "atelier",
     name: "Atelier",
-    blurb: "Fashion / art. Cream paper, Caslon serif + Helvetica mix, painterly accents.",
+    blurb:
+      "Fashion / art. Cream paper, Caslon serif + Helvetica mix, painterly accents.",
     thumbGradient: "from-stone-100 to-rose-50",
     swatch: { primary: "#451a03", bg: "#fdf6e3" },
   },
   {
     id: "studio",
     name: "Studio",
-    blurb: "Magazine spread. Oversized name, large hero image area, photographer / director.",
+    blurb:
+      "Magazine spread. Oversized name, large hero image area, photographer / director.",
     thumbGradient: "from-neutral-100 to-neutral-50",
     swatch: { primary: "#0a0a0a", bg: "#fafafa" },
   },
   {
     id: "canvas",
     name: "Canvas",
-    blurb: "Off-white textured background, watercolor accents. Illustrator / painter native.",
+    blurb:
+      "Off-white textured background, watercolor accents. Illustrator / painter native.",
     thumbGradient: "from-blue-50 to-emerald-50",
     swatch: { primary: "#0e7490", bg: "#fcfbf7" },
   },
@@ -345,14 +373,16 @@ export const TEMPLATES: TemplateMeta[] = [
   {
     id: "scrubs",
     name: "Scrubs",
-    blurb: "Medical. Clinical clean white, structured for licenses + residencies + CME.",
+    blurb:
+      "Medical. Clinical clean white, structured for licenses + residencies + CME.",
     thumbGradient: "from-cyan-50 to-emerald-50",
     swatch: { primary: "#0e7490", bg: "#ffffff" },
   },
   {
     id: "founder",
     name: "Founder",
-    blurb: "Pitch-deck inspired. Hero quote + Currently / Previously / Press pillars.",
+    blurb:
+      "Pitch-deck inspired. Hero quote + Currently / Previously / Press pillars.",
     thumbGradient: "from-violet-50 to-orange-50",
     swatch: { primary: "#6d28d9", bg: "#ffffff" },
   },

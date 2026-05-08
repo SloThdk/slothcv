@@ -6,11 +6,11 @@
 
 ## Budgets
 
-| Route       | Path          | Performance | Accessibility | Best Practices | SEO  |
-|-------------|---------------|------------:|--------------:|---------------:|-----:|
-| Landing     | `/`           |        ≥ 95 |          ≥ 95 |           ≥ 90 | ≥ 90 |
-| Dashboard   | `/dashboard/` |        ≥ 95 |          ≥ 95 |           ≥ 90 | ≥ 90 |
-| Editor      | `/editor/`    |        ≥ 85 |          ≥ 95 |           ≥ 90 | ≥ 90 |
+| Route     | Path          | Performance | Accessibility | Best Practices |  SEO |
+| --------- | ------------- | ----------: | ------------: | -------------: | ---: |
+| Landing   | `/`           |        ≥ 95 |          ≥ 95 |           ≥ 90 | ≥ 90 |
+| Dashboard | `/dashboard/` |        ≥ 95 |          ≥ 95 |           ≥ 90 | ≥ 90 |
+| Editor    | `/editor/`    |        ≥ 85 |          ≥ 95 |           ≥ 90 | ≥ 90 |
 
 The gate (`scripts/perf_gate.py`) enforces these in BOTH desktop and
 mobile profiles. Editor is held to 85 because the route mounts a
@@ -23,20 +23,22 @@ axis got<want` for every drop AND exits 1.
 
 ## Bundle shape (target)
 
-| Asset class                     | Initial  | Lazy / on-demand                        |
-|---------------------------------|----------|-----------------------------------------|
-| Framework + react-dom           | ~140 KB  | —                                       |
-| Editor shell                    | ~280 KB  | —                                       |
-| Active template only            | ~5-15 KB | other 43 templates load when picked     |
-| `@react-pdf/renderer` (~480 KB) | —        | loads on first **Export PDF** click     |
-| Font WOFF2 — 6 preloaded        | ~180 KB  | other 24 fonts load when picked         |
+| Asset class              | Initial  | Lazy / on-demand                     |
+| ------------------------ | -------- | ------------------------------------ |
+| Framework + react-dom    | ~140 KB  | —                                    |
+| Editor shell             | ~280 KB  | —                                    |
+| Active template only     | ~5-15 KB | other ~60 templates load when picked |
+| Font WOFF2 — 6 preloaded | ~180 KB  | other 24 fonts load when picked      |
 
-No HTML on the deployed site references the 1.44 MB `react-pdf` chunk
-synchronously — `pdf-export.tsx` always reaches it through `await
-import("@react-pdf/renderer")` so the cost is paid only by users who
-click Export.
+PDF export adds zero JS weight at runtime — it triggers the browser's
+native print engine via `window.print()` rather than rasterising or
+re-rendering the DOM through a third-party PDF library. The earlier
+`@react-pdf/renderer` and `html2canvas-pro` paths were removed
+because both produced subpixel font drift on the CV layout (rationale
+captured in `src/lib/pdf-export.tsx`).
 
 After the lazy-renderer rework (2026-04-27):
+
 - 59% of the JS chunk dir (≈2.7 MB / 4.6 MB) is now lazy — it lives in
   the `out/_next/static/chunks/` folder but is not script-tagged from
   any HTML.
@@ -78,6 +80,7 @@ python scripts/perf_gate.py --profile desktop
 ```
 
 Exit codes:
+
 - `0` — every route met every budget on both profiles
 - `1` — at least one BREACH OR Lighthouse failed
 - `2` — bad CLI usage / missing `npx`
@@ -91,7 +94,8 @@ front, which is why landing+dashboard+editor all reference roughly the
 same shell chunks. What we CAN split:
 
 - **`next/dynamic`** chunks load on demand from JS — works fine.
-  This is how every template + react-pdf gets deferred.
+  This is how every template gets deferred (one chunk per template,
+  pulled in only when the user picks it).
 - **Routes that import a heavy file ONLY through dynamic()** — fine.
 - **Routes that statically import a heavy file** — that file ends up
   bundled into the shared shell chunk and ships everywhere. Watch for
@@ -110,11 +114,12 @@ caller pulls in on demand.
    heavy global dep landed in the shell (look for new
    `@something-large` imports in `src/lib/` or `src/components/`).
    `npx next build --analyze` (or just `du -sh
-   out/_next/static/chunks/*.js | sort -rn | head`) tells you which
+out/_next/static/chunks/*.js | sort -rn | head`) tells you which
    chunk grew.
 2. **Performance dropped on editor only** — editor-specific dep
    regressed. Most likely candidate: a new editor tab statically
-   importing react-pdf or another formerly-lazy module. Check
+   importing a formerly-lazy template module or pulling in a heavy
+   library that the rest of the app doesn't see. Check
    `src/components/editor/*` git history.
 3. **A11y dropped** — shipped a new component without proper ARIA /
    alt text / semantic HTML. Run `axe` against the live site to find

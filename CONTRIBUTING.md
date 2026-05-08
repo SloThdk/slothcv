@@ -43,11 +43,21 @@ Access Token (`sbp_*`) — see the script's docstring for usage.
 - [ ] **Discuss large changes in an issue first.** Significant work
       thrown away because the design isn't a fit is bad for everyone.
 - [ ] `bun run typecheck` passes
-- [ ] `bun run lint` passes
-- [ ] `bun run test` passes (including any new tests added)
+- [ ] `bun run lint` passes (12 pre-existing
+      `react-hooks/set-state-in-effect` warnings in editor components are
+      tracked separately; new warnings outside that set are PR blockers)
+- [ ] `bun run build` passes (the deploy gate uses the same build step)
 - [ ] `gitleaks detect --no-git --redact` is clean
 - [ ] Commits follow [Conventional Commits](https://www.conventionalcommits.org)
       (e.g. `feat(editor): add drag-to-reorder for hobby section`)
+
+> **A note on testing.** The v0.1 build does not yet ship an automated
+> test suite. The v0.5 milestone introduces a cross-user RLS isolation
+> test (the one referenced under "Auth + RLS + storage rules" below)
+> plus per-component unit tests for the editor's auto-save +
+> debouncer. Until then, PRs that touch the auth / RLS / storage path
+> need a manual exercise note in the description: which scenarios you
+> ran locally, which user pairs you tested, what you observed.
 
 ---
 
@@ -66,29 +76,36 @@ Hard rules:
 
 1. **The `service_role` key never reaches the browser.** It bypasses
    RLS by design and is server-only. PRs that put it behind a
-   `NEXT_PUBLIC_*` env var will be auto-closed.
-2. **RLS-changing migrations require a paired test.** Any migration
-   that modifies a policy on `resumes`, `auth.identities`, or any
-   `storage.*` table needs to include or update a cross-user isolation
-   test — that test is what guarantees "user A cannot read user B's
-   CV" continues to hold across schema changes.
+   `NEXT_PUBLIC_*` env var will be closed during maintainer review.
+2. **RLS-changing migrations require a maintainer review with a
+   manual cross-user exercise note.** Any migration that modifies a
+   policy on `resumes`, `auth.identities`, or any `storage.*` table
+   needs the PR description to spell out what cross-user scenarios
+   the contributor exercised locally (e.g. "user A creates CV X;
+   user B opens X's UUID directly via the supabase-js client → 0
+   rows returned"). The v0.5 automated cross-user isolation test
+   replaces this manual note when it lands; until then, the manual
+   exercise is the gate.
 3. **No new external dependencies on the auth or data path** without a
    maintainer review of the dependency's license, audit history, and
-   maintenance velocity. Supabase + `@react-pdf/renderer` are the
-   approved entries; new additions need justification.
+   maintenance velocity. Supabase is the approved entry; PDF rendering
+   uses the browser's native print engine with no third-party PDF
+   library at runtime. New additions need justification.
 
 ---
 
 ## Code style
 
-- **TypeScript:** Prettier + ESLint. `bun run format` runs both.
+- **TypeScript:** ESLint via `bun run lint`. Prettier is not yet wired
+  in as a project script; if you want auto-formatting locally, run
+  `bunx prettier --write .` against your changed files. The v0.5
+  milestone wires Prettier into a pre-commit hook + a `bun run format`
+  script.
 - **SQL migrations:** lowercase keywords, snake_case identifiers, one
   statement per migration block, an explanatory comment block at the
   top of every file documenting the trade-offs.
 - **Python scripts:** PEP 8, type hints where they aid readability, no
   `print` for debugging — use `logging` so script callers can filter.
-
-The pre-commit hook (if installed) runs the formatters. CI fails on diff.
 
 ---
 

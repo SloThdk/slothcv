@@ -210,38 +210,45 @@ bundle. Every page is HTML + bundled JS pre-rendered at build time.
 
 ## Quick start
 
+> **Most visitors should use the live service at <https://slothcv.pages.dev>** — that's where to actually build a CV. Sign in with a magic-link or "Continue with Google", pick a template, edit, export the PDF. The steps below are for developers who want to fork, self-host, or inspect the build locally.
+
 ### Try the live deployment
 
-The reference deployment is at **<https://slothcv.pages.dev>** (EU-hosted
-Supabase region). Sign up with a magic-link or "Continue with Google", pick a
-template, edit, export.
+Open **<https://slothcv.pages.dev>**. Magic-link or Google sign-in, pick from ~60 templates, edit with live preview, export a vector PDF in your browser.
 
-### Or run it on your machine
+### Run it locally (for contribution / fork / self-host)
+
+**Prerequisites**
+
+- Bun 1.x. `bun.lock` is committed; `package-lock.json` and `pnpm-lock.yaml` are gitignored, so don't `npm install` against this repo — it would generate the wrong lockfile.
+- Your own Supabase project (free tier is enough). Local dev needs `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` from [Project Settings → API](https://supabase.com/dashboard/project/_/settings/api).
+- (Optional, only if you wire up Google OAuth) a Google Cloud OAuth Client ID + Client Secret with `https://localhost:3000/auth/google/callback` in the authorised redirect list. Magic-link works without this — Google sign-in returns a config error until the credentials are set.
+
+**Bring it up**
 
 ```bash
-# Bun is the canonical package manager. bun.lock is committed;
-# package-lock.json and pnpm-lock.yaml are gitignored.
-bun install
-
-# Copy the env template + fill in your own Supabase project's URL +
-# anon key. The service-role key is server-only — used by the Python
-# helpers under scripts/, never bundled into the browser.
+# Copy the env template, fill in YOUR Supabase project's URL + anon key.
+# The service-role key is server-only — used by the Python helpers
+# under scripts/, never bundled into the browser.
 cp .env.example .env.local
 
-# Dev server on http://localhost:3000
-bun run dev
+bun install
+bun run dev          # dev server on http://localhost:3000
 ```
 
-### Or provision your own Supabase project from scratch
+The page renders, magic-link auth works against your Supabase project, the editor + ~60 templates + PDF export all run client-side.
+
+### Provision a fresh Supabase project from scratch
+
+The Python helper does the full setup end-to-end via the Supabase Management API — creates the project, applies all 16 migrations, syncs the branded auth-mailer templates, configures Resend SMTP if a `RESEND_API_KEY` is provided.
 
 ```bash
-# Provision a fresh project + apply every migration end-to-end via the
-# Supabase Management API. Requires SUPABASE_PAT (sbp_*) from
-# https://supabase.com/dashboard/account/tokens.
+# Get a personal access token (sbp_*) from
+# https://supabase.com/dashboard/account/tokens
 SUPABASE_PAT=sbp_xxx python scripts/provision_supabase.py
 ```
 
-Or apply migrations to an existing project via the Supabase CLI:
+Or apply migrations to a project you already created via the Supabase CLI:
 
 ```bash
 supabase db push --db-url "postgresql://postgres:<PW>@db.<REF>.supabase.co:5432/postgres"

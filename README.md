@@ -17,12 +17,14 @@
 > Two things are deliberately deferred from v0.1 and matter for any visitor
 > evaluating whether to use this build live:
 >
-> 1. **The application code has not been independently audited.** Supabase Auth
->    (GoTrue) has run in Supabase production since 2020; Postgres row-level
->    security has shipped in Postgres core since 9.5 (2016). The SlothCV glue —
->    the editor's auto-save flow, the Cloudflare Pages Function that runs the
->    DIY Google OAuth handshake, the storage-cleanup cascades — has only been
->    internally reviewed. External app-pen-test is a hard gate for **v1.0**.
+> 1. **The application code has not been independently audited.** Supabase
+>    Auth (GoTrue) and the Postgres row-level-security engine are
+>    battle-tested upstream — GoTrue has run in Supabase production since
+>    2020, Postgres RLS shipped in 9.5 (2016) — but the SlothCV glue (the
+>    editor's auto-save flow, the Cloudflare Pages Function that runs the
+>    DIY Google OAuth handshake, the storage-cleanup cascades) has only
+>    been internally reviewed. External app-pen-test is a hard gate for
+>    **v1.0**.
 > 2. **There is no automated cross-user isolation test in CI yet.** RLS is
 >    enforced by Postgres on every CRUD policy (`auth.uid() = user_id`), and
 >    the gateway connects through PostgREST so the policies actually fire under

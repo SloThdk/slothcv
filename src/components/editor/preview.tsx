@@ -1432,7 +1432,10 @@ export function Preview() {
       <input
         ref={photoFileRef}
         type="file"
-        accept="image/*"
+        // Specific MIME list (NOT "image/*") so the OS picker
+        // filters SVG out before the upload — server-side allowlist
+        // + magic-byte sniff rejects it anyway.
+        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
         className="hidden"
         onChange={async (e) => {
           const file = e.target.files?.[0];

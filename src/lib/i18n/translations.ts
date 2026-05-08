@@ -1201,28 +1201,32 @@ export const TRANSLATIONS = {
     da: "Ikke logget ind.",
   },
   "errors.photoMustBeImage": {
-    en: "Photo must be an image file.",
-    da: "Foto skal være en billedfil.",
+    en: "Photo must be a PNG, JPEG, WebP, GIF, or AVIF image.",
+    da: "Foto skal være et PNG-, JPEG-, WebP-, GIF- eller AVIF-billede.",
   },
   "errors.photoTooLarge": {
     en: "Photo must be 2 MB or smaller.",
     da: "Foto må højst være 2 MB.",
   },
   "errors.avatarMustBeImage": {
-    en: "Avatar must be an image file.",
-    da: "Avatar skal være en billedfil.",
+    en: "Avatar must be a PNG, JPEG, WebP, GIF, or AVIF image.",
+    da: "Avatar skal være et PNG-, JPEG-, WebP-, GIF- eller AVIF-billede.",
   },
   "errors.avatarTooLarge": {
     en: "Avatar must be 2 MB or smaller.",
     da: "Avatar må højst være 2 MB.",
   },
   "errors.imageMustBeImage": {
-    en: "Image must be an image file.",
-    da: "Billede skal være en billedfil.",
+    en: "Image must be a PNG, JPEG, WebP, GIF, or AVIF file.",
+    da: "Billede skal være en PNG-, JPEG-, WebP-, GIF- eller AVIF-fil.",
   },
   "errors.imageTooLarge": {
     en: "Image must be 5 MB or smaller.",
     da: "Billede må højst være 5 MB.",
+  },
+  "errors.imageSignatureMismatch": {
+    en: "That file looks corrupted or doesn't match its image extension. Try re-saving it as PNG or JPEG and uploading again.",
+    da: "Den fil ser ud til at være beskadiget eller passer ikke til billedformatet. Gem den som PNG eller JPEG og prøv at uploade igen.",
   },
   "errors.couldNotCreateCv": {
     en: "Could not create CV.",

@@ -246,7 +246,12 @@ export function PersonalForm() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            // Specific MIME list (NOT "image/*") so the OS picker
+            // filters SVG out before the upload — server-side
+            // allowlist + magic-byte sniff rejects it anyway, but
+            // tightening the picker stops a legitimate user from
+            // even seeing the SVG-rejected error.
+            accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];

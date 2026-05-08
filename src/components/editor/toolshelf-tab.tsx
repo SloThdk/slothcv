@@ -1207,7 +1207,10 @@ function ImageControls({ element }: { element: ImageElement }) {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          // Specific MIME list (NOT "image/*") so the OS picker
+          // filters SVG out before the upload — server-side allowlist
+          // + magic-byte sniff rejects it anyway.
+          accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];

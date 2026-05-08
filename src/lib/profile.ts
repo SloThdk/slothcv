@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "./supabase/client";
+import type { TranslationKey } from "./i18n/translations";
 import { TranslatableError } from "./translatable-error";
 
 export interface Profile {
@@ -17,6 +18,140 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   updated_at: string;
+}
+
+// ─── Upload validation ─────────────────────────────────────────────
+//
+// Hard MIME allowlist. Earlier code used `file.type.startsWith("image/")`
+// which accepts ANY image MIME including `image/svg+xml`. SVG is XML
+// and can carry inline `<script>` / `<foreignObject>` / event handlers —
+// any viewer of a shared CV link who opens the photo URL on
+// `*.supabase.co` runs the script in supabase.co's origin. Real
+// stored-XSS surface against shared-CV viewers; closed by the
+// 2026-05-08 abuse-hardening pass.
+//
+// Allowlist matches `mimeToExt` below. Anything else — including SVG,
+// HEIC, BMP, TIFF, ICO — is rejected at the boundary regardless of
+// what the browser File.type claims.
+const ALLOWED_IMAGE_MIMES = new Set<string>([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
+/**
+ * Magic-byte signature check. Browsers set `File.type` from the file
+ * extension, so a renamed `evil.exe -> cv.png` walks past the MIME
+ * allowlist unchallenged. This sniff verifies the file's actual first
+ * bytes match its declared MIME — the format itself, not the filename.
+ *
+ * Signature reference (offsets are bytes from start unless noted):
+ *   PNG     89 50 4E 47 0D 0A 1A 0A             (8 bytes)
+ *   JPEG    FF D8 FF                            (3 bytes; any 4th)
+ *   GIF     GIF87a / GIF89a                     (6 bytes)
+ *   WebP    RIFF + WEBP at offset 8             (12 bytes)
+ *   AVIF    ftyp box at offset 4 + AVIF/AVIS/   (12+ bytes)
+ *           MIF1/MIAF/MSF1 brand at offset 8
+ *
+ * Returns true if the bytes look consistent with the declared MIME,
+ * false otherwise (caller surfaces a TranslatableError).
+ */
+function sniffImageMagicBytes(bytes: Uint8Array, mime: string): boolean {
+  // Tiny files can't carry a meaningful image signature. The smallest
+  // legitimate header we check is 8 bytes (PNG); reject anything below
+  // 12 bytes outright since it can't be any of the formats below.
+  if (bytes.length < 12) return false;
+
+  const startsWith = (sig: number[]): boolean =>
+    sig.every((v, i) => bytes[i] === v);
+
+  switch (mime) {
+    case "image/png":
+      return startsWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+    case "image/jpeg":
+      return startsWith([0xff, 0xd8, 0xff]);
+
+    case "image/gif":
+      // GIF87a or GIF89a — bytes 0..3 = "GIF8", byte 4 = '7' or '9',
+      // byte 5 = 'a'.
+      return (
+        startsWith([0x47, 0x49, 0x46, 0x38]) &&
+        (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+        bytes[5] === 0x61
+      );
+
+    case "image/webp":
+      // RIFF....WEBP — signature split across offsets 0..3 and 8..11.
+      return (
+        startsWith([0x52, 0x49, 0x46, 0x46]) &&
+        bytes[8] === 0x57 &&
+        bytes[9] === 0x45 &&
+        bytes[10] === 0x42 &&
+        bytes[11] === 0x50
+      );
+
+    case "image/avif": {
+      // ISO BMFF: bytes 0..3 = box size (big-endian), bytes 4..7 =
+      // 'ftyp', bytes 8..11 = major brand. AVIF can use any of these
+      // brands per the AV1 Image File Format spec — accept all of them
+      // because some encoders default to 'mif1' or 'miaf' even for
+      // single-image AVIFs.
+      const isFtyp =
+        bytes[4] === 0x66 && // 'f'
+        bytes[5] === 0x74 && // 't'
+        bytes[6] === 0x79 && // 'y'
+        bytes[7] === 0x70; //   'p'
+      if (!isFtyp) return false;
+      const brand = String.fromCharCode(
+        bytes[8] ?? 0,
+        bytes[9] ?? 0,
+        bytes[10] ?? 0,
+        bytes[11] ?? 0,
+      );
+      return (
+        brand === "avif" ||
+        brand === "avis" ||
+        brand === "mif1" ||
+        brand === "miaf" ||
+        brand === "msf1"
+      );
+    }
+
+    default:
+      // Unknown MIME — fail closed. This branch is unreachable while
+      // the caller filters against ALLOWED_IMAGE_MIMES first; defence
+      // in depth in case the function is ever called from elsewhere.
+      return false;
+  }
+}
+
+/**
+ * Validate that `file` is one of our allowed image types AND that its
+ * actual bytes match the claimed MIME. Throws a TranslatableError on
+ * any failure so the caller can surface a localised message.
+ *
+ * Sliced to the first 64 bytes for the sniff — every signature we
+ * check fits in 12 bytes; reading more is wasted work on a 5 MB image.
+ */
+async function validateImageUpload(
+  file: File,
+  notImageError: TranslationKey,
+  signatureMismatchError: TranslationKey = "errors.imageSignatureMismatch",
+): Promise<void> {
+  if (!ALLOWED_IMAGE_MIMES.has(file.type)) {
+    throw new TranslatableError(notImageError);
+  }
+  // Read the first 64 bytes only — every magic-byte signature we
+  // check fits in 12 bytes. Reading the whole 5 MB image just to look
+  // at the first 12 bytes wastes bandwidth on slow connections.
+  const headBuf = await file.slice(0, 64).arrayBuffer();
+  const head = new Uint8Array(headBuf);
+  if (!sniffImageMagicBytes(head, file.type)) {
+    throw new TranslatableError(signatureMismatchError);
+  }
 }
 
 /** Fetch the current user's profile row. Returns null if not signed in. */
@@ -62,9 +197,10 @@ export async function updateMyProfile(
  * Returns the public URL.
  */
 export async function uploadResumePhoto(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new TranslatableError("errors.photoMustBeImage");
-  }
+  // Hard MIME allowlist + magic-byte sniff. SVG (XML/JS-capable) is
+  // explicitly excluded. See validateImageUpload for the full
+  // rationale.
+  await validateImageUpload(file, "errors.photoMustBeImage");
   const MAX_BYTES = 2 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
     throw new TranslatableError("errors.photoTooLarge");
@@ -104,9 +240,9 @@ export async function uploadResumePhoto(file: File): Promise<string> {
  *     keeps a malicious user from blowing up the Storage quota.
  */
 export async function uploadAvatar(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new TranslatableError("errors.avatarMustBeImage");
-  }
+  // Hard MIME allowlist + magic-byte sniff. SVG (XML/JS-capable) is
+  // explicitly excluded.
+  await validateImageUpload(file, "errors.avatarMustBeImage");
   const MAX_BYTES = 2 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
     throw new TranslatableError("errors.avatarTooLarge");
@@ -150,9 +286,9 @@ export async function uploadAvatar(file: File): Promise<string> {
  * `customElement.url` via `updateCustomElement`.
  */
 export async function uploadCustomElementImage(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new TranslatableError("errors.imageMustBeImage");
-  }
+  // Hard MIME allowlist + magic-byte sniff. SVG (XML/JS-capable) is
+  // explicitly excluded.
+  await validateImageUpload(file, "errors.imageMustBeImage");
   const MAX_BYTES = 5 * 1024 * 1024;
   if (file.size > MAX_BYTES) {
     throw new TranslatableError("errors.imageTooLarge");

@@ -57,10 +57,10 @@ watermark / signup wall / trial trap of any kind.
 
 | Path                    | Auth?  | Purpose                                                       |
 | ----------------------- | ------ | ------------------------------------------------------------- |
-| `/`                     | public | Landing — hero + template gallery preview                     |
-| `/templates`            | public | Browse all ~60 templates                                      |
+| `/`                     | public | Landing — hero + the full template gallery (clickable)        |
 | `/login`                | public | Magic-link email + "Continue with Google"                     |
 | `/signup`               | public | Magic-link signup with provider-mixing guidance               |
+| `/new`                  | auth   | Pick a template + name a new CV                                |
 | `/auth/callback`        | public | Supabase magic-link / OAuth code exchange (PKCE)              |
 | `/auth/google/init`     | public | Cloudflare Function — starts the DIY Google OAuth flow        |
 | `/auth/google/callback` | public | Cloudflare Function — exchanges code, validates state + nonce |

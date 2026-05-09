@@ -68,7 +68,7 @@ export function PersonalForm() {
     try {
       const url = await uploadResumePhoto(file);
       // Swap to the persistent URL. React diffs the <img src> attribute
-      // and the browser only refetches if it differs, the local blob URL
+      // and the browser only refetches if it differs; the local blob URL
       // is no longer needed once the server has the file.
       setPersonal({ photoUrl: url });
       URL.revokeObjectURL(localUrl);

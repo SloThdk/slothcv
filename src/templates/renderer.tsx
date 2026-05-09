@@ -94,7 +94,7 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateComponentProps>> = {
   manhattan: lazyTemplate(() => import("./manhattan"), "ManhattanTemplate"),
   cambridge: lazyTemplate(() => import("./cambridge"), "CambridgeTemplate"),
   blank: lazyTemplate(() => import("./blank"), "BlankTemplate"),
-  // ── Mid-2026 expansion: 30 new templates ──────────────
+  // ── Mid-2026 expansion: 30 new templates ──────────────────────────
   helvetica: lazyTemplate(() => import("./helvetica"), "HelveticaTemplate"),
   geist: lazyTemplate(() => import("./geist"), "GeistTemplate"),
   notion: lazyTemplate(() => import("./notion"), "NotionTemplate"),

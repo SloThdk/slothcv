@@ -49,7 +49,7 @@ export const TEMPLATE_IDS = [
   "manhattan",
   "cambridge",
   "blank",
-  // ── Mid-2026 expansion (30 new templates) ─────────────
+  // ── Mid-2026 expansion (30 new templates) ─────────────────────────
   // Modern minimalist
   "helvetica",
   "geist",

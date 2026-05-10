@@ -16,6 +16,38 @@
 
 import type { TemplateId } from "@/types/resume";
 
+/** Design controls in the Design tab. Templates can hide controls that
+ *  they don't honor in their render — keeps the Design tab honest about
+ *  what actually changes the preview. Adding a new control: extend this
+ *  union, wire it in design-tab.tsx behind an `isHidden(key)` check.
+ *
+ *  Currently-tracked dead controls (hidden globally because no template
+ *  reads the corresponding `design.*` field):
+ *    - "dividerStyle" — the `<Divider />` component exists but no
+ *      template imports it, so the design.dividerStyle picker had no
+ *      effect anywhere. Hidden globally until at least one template
+ *      adopts <Divider /> under its section headers.
+ */
+export type DesignControlKey =
+  | "typography"
+  | "fontScale"
+  | "letterSpacing"
+  | "headerStyle"
+  | "dividerStyle"
+  | "bulletStyle"
+  | "skillBarStyle"
+  | "sidebarWidth"
+  | "pageMargin"
+  | "photo"
+  | "watermark";
+
+/** Controls that no template honors today — hidden globally regardless
+ *  of which template is active. Move an entry out of here the moment a
+ *  template starts consuming the corresponding design field. */
+export const GLOBALLY_HIDDEN_CONTROLS: ReadonlySet<DesignControlKey> = new Set([
+  "dividerStyle",
+]);
+
 export interface TemplateMeta {
   id: TemplateId;
   /** Display name shown in the picker. */
@@ -35,6 +67,12 @@ export interface TemplateMeta {
    *  untouched. The filter UI surfaces this as "Alle / English / Dansk
    *  CV" pill-tabs above the gallery. */
   language?: "en" | "da";
+  /** Design controls this template doesn't honor. The Design tab hides
+   *  them when this template is active. Each entry must correspond to
+   *  a real architectural gap (the template's render code doesn't read
+   *  the matching design.<field>) — adding a control here without
+   *  fixing it is honest, but the real fix is wiring it through. */
+  hiddenDesignControls?: ReadonlyArray<DesignControlKey>;
 }
 
 export const TEMPLATES: TemplateMeta[] = [

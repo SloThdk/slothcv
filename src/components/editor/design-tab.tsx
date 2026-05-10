@@ -36,7 +36,11 @@ import { FONT_GROUPS, FONT_NAMES } from "@/lib/fonts/registry";
 import { defaultDesignForTemplate } from "@/lib/resume-defaults";
 import { DESIGN_HINT, designLabel } from "@/lib/design-labels";
 import { TEMPLATE_IDS, type TemplateId } from "@/types/resume";
-import { TEMPLATES_BY_ID } from "@/templates/registry";
+import {
+  TEMPLATES_BY_ID,
+  GLOBALLY_HIDDEN_CONTROLS,
+  type DesignControlKey,
+} from "@/templates/registry";
 import { RotateCcw } from "lucide-react";
 
 // Pre-compute every template's palette + font pair so the
@@ -106,6 +110,18 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const template = useEditorStore((s) => s.data.meta.template);
   const { t } = useLanguage();
   const confirm = useConfirm();
+
+  // Capability check: each Design control is wrapped in `isHidden(key)`
+  // so a template that doesn't honor it (e.g. dividerStyle on every
+  // current template) doesn't show a dead picker. Two layers:
+  //   - GLOBALLY_HIDDEN_CONTROLS: controls no template honors (declared
+  //     centrally in registry.ts so the dead set is one source of truth)
+  //   - TEMPLATES_BY_ID[id].hiddenDesignControls: per-template gaps
+  const isHidden = (key: DesignControlKey): boolean => {
+    if (GLOBALLY_HIDDEN_CONTROLS.has(key)) return true;
+    const perTemplate = TEMPLATES_BY_ID[template]?.hiddenDesignControls;
+    return perTemplate ? perTemplate.includes(key) : false;
+  };
 
   // Ref + flash state for the "click on page background → jump here"
   // affordance. Wiring: preview.tsx dispatches an event; editor/page.tsx
@@ -374,6 +390,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
         />
       </Section>
 
+      {!isHidden("typography") && (
       <Section title={t("design.typography")} onReset={() => onResetGroup("typography")}>
         {/* Title font drives every <h1>/<h2> and section heading the
             templates have. Body font drives paragraphs + labels.
@@ -416,13 +433,16 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           value={design.lineSpacing}
           onChange={(v) => setDesign({ lineSpacing: v })}
         />
+        {!isHidden("letterSpacing") && (
         <ChipRow
           label="Letter spacing"
           value={design.letterSpacing}
           options={["tight", "normal", "wide"] as LetterSpacing[]}
           onChange={(v) => setDesign({ letterSpacing: v })}
         />
+        )}
       </Section>
+      )}
 
       <Section title={t("design.layout")} onReset={() => onResetGroup("layout")}>
         {/* Layout chip is honored by Scratch (the blank-canvas template) and
@@ -444,14 +464,16 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           For other templates, pick a different template in the Templates tab to
           change layout.
         </p>
-        <SliderRow
-          label={`Sidebar width (${Math.round(design.sidebarWidth * 100)}%)`}
-          min={0.25}
-          max={0.4}
-          step={0.01}
-          value={design.sidebarWidth}
-          onChange={(v) => setDesign({ sidebarWidth: v })}
-        />
+        {!isHidden("sidebarWidth") && (
+          <SliderRow
+            label={`Sidebar width (${Math.round(design.sidebarWidth * 100)}%)`}
+            min={0.25}
+            max={0.4}
+            step={0.01}
+            value={design.sidebarWidth}
+            onChange={(v) => setDesign({ sidebarWidth: v })}
+          />
+        )}
         <ChipRow
           label="Page margin"
           value={design.pageMargin}
@@ -589,19 +611,21 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           ] as HeaderStyle[]}
           onChange={(v) => setDesign({ headerStyle: v })}
         />
-        <ChipRow
-          label="Divider under each title"
-          hint={DESIGN_HINT.dividerStyle}
-          value={design.dividerStyle}
-          options={[
-            "none",
-            "line",
-            "dashed",
-            "dotted",
-            "accent-bar",
-          ] as DividerStyle[]}
-          onChange={(v) => setDesign({ dividerStyle: v })}
-        />
+        {!isHidden("dividerStyle") && (
+          <ChipRow
+            label="Divider under each title"
+            hint={DESIGN_HINT.dividerStyle}
+            value={design.dividerStyle}
+            options={[
+              "none",
+              "line",
+              "dashed",
+              "dotted",
+              "accent-bar",
+            ] as DividerStyle[]}
+            onChange={(v) => setDesign({ dividerStyle: v })}
+          />
+        )}
         <ChipRow
           label="Bullet glyph"
           hint={DESIGN_HINT.bulletStyle}
@@ -612,6 +636,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
       </Section>
 
       <Section title={t("design.specialty")}>
+        {!isHidden("skillBarStyle") && (
         <ChipRow
           label="Skill display"
           hint={DESIGN_HINT.skillBarStyle}
@@ -626,6 +651,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           ] as SkillBarStyle[]}
           onChange={(v) => setDesign({ skillBarStyle: v })}
         />
+        )}
         <ChipRow
           label="Language display"
           hint={DESIGN_HINT.languageStyle}

@@ -120,23 +120,39 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const [bgFlash, setBgFlash] = useState(false);
 
   // Photo scroll-to: when the user clicks the photo on the canvas, the
-  // editor sets pendingDesignScroll="photo" + switches to this tab. We
-  // mirror the pageBg effect: two RAFs to let layout commit and paints
-  // settle before scrolling, so the smooth-scroll lands on the final
-  // position rather than chasing it.
+  // editor sets pendingDesignScroll="photo" + switches to this tab.
+  //
+  // We can't use the same single-RAF + smooth-scroll pattern as pageBg
+  // because the FOTO section is way down the panel (~3.4k px from the
+  // top), so the panel re-paints during the smooth-scroll and the
+  // scroll lands mid-page (cohesive-palettes region). Two fixes:
+  //   1. behavior: "auto" — instant scroll, no chase
+  //   2. Retry on a setTimeout so the panel has fully committed its
+  //      layout (the FOTO Section can be deep enough that the first
+  //      RAF fires before it's measured)
   useEffect(() => {
     if (scrollTo !== "photo") return;
     let cancelled = false;
-    requestAnimationFrame(() => {
+    const tryScroll = (attempt: number) => {
+      if (cancelled) return;
+      const el = photoRef.current;
+      if (!el) {
+        if (attempt < 10) setTimeout(() => tryScroll(attempt + 1), 50);
+        return;
+      }
+      el.scrollIntoView({ behavior: "auto", block: "start" });
+      // Verify landed near top; if not (e.g. scroll container chose
+      // wrong ancestor), retry once after layout settles.
       requestAnimationFrame(() => {
         if (cancelled) return;
-        photoRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        const r = el.getBoundingClientRect();
+        if (r.top > 200 || r.top < 0) {
+          el.scrollIntoView({ behavior: "auto", block: "start" });
+        }
         onScrolled?.();
       });
-    });
+    };
+    requestAnimationFrame(() => tryScroll(0));
     return () => {
       cancelled = true;
     };

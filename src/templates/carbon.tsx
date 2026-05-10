@@ -62,9 +62,11 @@ const TEXT_PRIMARY = "var(--car-text)"; // textColor
 const TEXT_SECONDARY = "var(--car-secondary)"; // secondaryColor
 const TEXT_TERTIARY = "#8d8d8d"; // Carbon gray-50 — derived tertiary, not user-bound
 
-// Mono font stack — IBM Plex Mono first, JetBrains Mono fallback.
-const MONO =
-  "var(--font-ibm-plex-mono, 'IBM Plex Mono'), 'JetBrains Mono', monospace";
+// Mono font stack — body font wins, IBM Plex Mono fallback. The carbon
+// identity defaults to IBM Plex Mono via defaultDesignForTemplate; the
+// Design tab's body-font picker takes over from there.
+const MONO = "var(--car-body-font)";
+const MONO_TITLE = "var(--car-title-font)";
 
 export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
@@ -79,6 +81,8 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
     "--car-accent": design.accentColor,
     "--car-text": design.textColor,
     "--car-secondary": design.secondaryColor,
+    "--car-body-font": `${design.bodyFont || "IBM Plex Mono"}, 'JetBrains Mono', monospace`,
+    "--car-title-font": `${design.titleFont || "IBM Plex Mono"}, 'JetBrains Mono', monospace`,
   } as React.CSSProperties;
 
   return (

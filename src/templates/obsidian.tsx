@@ -111,8 +111,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text leading-[0.95]"
               style={{
                 color: OFF_WHITE,
-                fontFamily:
-                  "var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif",
+                fontFamily: `${design.titleFont || "Fraunces"}, 'Source Serif 4', serif`,
                 fontWeight: 400,
                 fontStyle: "italic",
                 fontSize: "4em",
@@ -128,7 +127,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-3 block w-fit cursor-text text-[0.9em] uppercase"
                 style={{
                   color: PURPLE,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: `${design.bodyFont || "Inter"}, sans-serif`,
                   fontWeight: 500,
                   letterSpacing: "0.18em",
                   ...elementStyle(data, "personal.headline"),

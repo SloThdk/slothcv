@@ -69,6 +69,7 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
   const CREAM_DIM = data.design.secondaryColor;
   const NAVY = data.design.pageBg;
   const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
+  const TITLE_SERIF = `${data.design.titleFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const visible = visibleSections(data);
 
   // Trust the user's design values. defaultDesignForTemplate("midnight")
@@ -92,7 +93,7 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mx-auto block w-fit cursor-text leading-[1.0]"
             style={{
               color: GOLD,
-              fontFamily: SERIF,
+              fontFamily: TITLE_SERIF,
               fontSize: "3em",
               fontWeight: 500,
               letterSpacing: "0.02em",
@@ -226,6 +227,7 @@ function MidnightSection({
 }) {
   const GOLD = data.design.accentColor;
   const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
+  const TITLE_SERIF = `${data.design.titleFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const titleId = `section.${section.id}.title`;
   return (
     <section
@@ -238,7 +240,7 @@ function MidnightSection({
         className="mb-2 inline-block cursor-text uppercase"
         style={{
           color: GOLD,
-          fontFamily: SERIF,
+          fontFamily: TITLE_SERIF,
           fontSize: "0.85em",
           fontWeight: 500,
           letterSpacing: "0.22em",
@@ -322,6 +324,7 @@ function MidnightExperience({
   const CREAM = data.design.textColor;
   const CREAM_DIM = data.design.secondaryColor;
   const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
+  const TITLE_SERIF = `${data.design.titleFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-4">
@@ -339,7 +342,7 @@ function MidnightExperience({
                 className="text-[1em]"
                 style={{
                   color: CREAM,
-                  fontFamily: SERIF,
+                  fontFamily: TITLE_SERIF,
                   fontWeight: 600,
                 }}
               >
@@ -399,6 +402,7 @@ function MidnightProjects({
   const CREAM = data.design.textColor;
   const CREAM_DIM = data.design.secondaryColor;
   const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
+  const TITLE_SERIF = `${data.design.titleFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-4">
@@ -416,7 +420,7 @@ function MidnightProjects({
                 className="text-[1em]"
                 style={{
                   color: CREAM,
-                  fontFamily: SERIF,
+                  fontFamily: TITLE_SERIF,
                   fontWeight: 600,
                 }}
               >
@@ -488,6 +492,7 @@ function MidnightEducation({
   const CREAM = data.design.textColor;
   const CREAM_DIM = data.design.secondaryColor;
   const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
+  const TITLE_SERIF = `${data.design.titleFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-2">
@@ -505,7 +510,7 @@ function MidnightEducation({
                 className="text-[1em]"
                 style={{
                   color: CREAM,
-                  fontFamily: SERIF,
+                  fontFamily: TITLE_SERIF,
                   fontWeight: 600,
                 }}
               >

@@ -117,8 +117,7 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="block w-fit cursor-text leading-[1.0]"
                 style={{
                   color: TEXT,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif",
+                  fontFamily: `${design.titleFont || "Fraunces"}, 'Source Serif 4', serif`,
                   fontSize: "3.4em",
                   fontWeight: 400,
                   letterSpacing: "-0.025em",
@@ -133,7 +132,7 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
                   className="mt-2 block w-fit cursor-text text-[0.95em]"
                   style={{
                     color: PINK,
-                    fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                    fontFamily: `${design.bodyFont || "Inter"}, sans-serif`,
                     fontWeight: 500,
                     letterSpacing: "0.02em",
                     ...elementStyle(data, "personal.headline"),

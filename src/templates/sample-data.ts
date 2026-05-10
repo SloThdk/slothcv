@@ -2315,8 +2315,13 @@ function education(it: {
 }
 
 function skills(names: string[], group: string): Section {
+  // Personas with multiple skill groups (e.g. austin: Web & Backend / Database
+  // & Cloud / 3D & Creative / Other) call this helper several times. The id
+  // must be unique per call or React flags a duplicate-key warning when the
+  // renderer maps over sections.
+  const slug = group.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return {
-    id: "sec-skl",
+    id: slug ? `sec-skl-${slug}` : "sec-skl",
     type: "skills",
     title: "Skills",
     visible: true,

@@ -120,8 +120,8 @@ export function AabenraaTemplate({ data, fixedSize, skipOverlay }: Props) {
               style={{
                 width: 90,
                 height: 90,
-                outline: "2px solid #F5F5F5",
-                outlineOffset: "2px",
+                // box-shadow (not outline) survives PDF export
+                boxShadow: "0 0 0 2px transparent, 0 0 0 4px #F5F5F5",
                 ...elementStyle(data, "personal.photo"),
               }}
             >

@@ -116,7 +116,8 @@ export function AtlasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-24 w-24 rounded-full object-cover"
-                style={{ outline: `2px solid ${SKY}` }}
+                // box-shadow (not outline) survives PDF export
+                style={{ boxShadow: `0 0 0 2px ${SKY}` }}
               />
             </div>
           )}

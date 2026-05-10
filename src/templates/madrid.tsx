@@ -61,8 +61,8 @@ export function MadridTemplate({ data, fixedSize, skipOverlay }: Props) {
                       : "h-24 w-24 rounded-full"
               }`}
               style={{
-                outline: "3px solid #ffffff",
-                outlineOffset: "0px",
+                // box-shadow (not outline) survives PDF export
+                boxShadow: "0 0 0 3px #ffffff",
                 ...elementStyle(data, "personal.photo"),
               }}
             >

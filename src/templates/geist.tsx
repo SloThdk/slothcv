@@ -105,7 +105,8 @@ export function GeistTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 rounded-md object-cover"
-                style={{ outline: `1px solid ${design.textColor}1a` }}
+                // box-shadow (not outline) survives PDF export
+                style={{ boxShadow: `0 0 0 1px ${design.textColor}1a` }}
               />
             </div>
           )}

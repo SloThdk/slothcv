@@ -122,7 +122,8 @@ export function DashboardTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 rounded-full object-cover"
-                style={{ outline: `2px solid ${EMERALD}` }}
+                // box-shadow (not outline) survives PDF export
+                style={{ boxShadow: `0 0 0 2px ${EMERALD}` }}
               />
             </div>
           )}

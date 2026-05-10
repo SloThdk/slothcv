@@ -129,7 +129,8 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="space-y-4 rounded-sm p-4"
             style={{
               background: NAVY_PANEL,
-              outline: `0.5px solid ${GOLD}66`,
+              // box-shadow (not outline) survives PDF export
+              boxShadow: `0 0 0 0.5px ${GOLD}66`,
             }}
           >
             {/* Photo top, gold-outlined */}
@@ -146,7 +147,8 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
                   referrerPolicy="no-referrer"
                   draggable={false}
                   className="h-24 w-24 rounded-sm object-cover"
-                  style={{ outline: `1px solid ${GOLD}` }}
+                  // box-shadow (not outline) survives PDF export
+                  style={{ boxShadow: `0 0 0 1px ${GOLD}` }}
                 />
               </div>
             )}

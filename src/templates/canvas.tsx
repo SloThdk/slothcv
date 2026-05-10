@@ -145,7 +145,8 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-24 w-24 rounded-full object-cover"
-                style={{ outline: `2px solid ${CYAN}55`, outlineOffset: "3px" }}
+                // box-shadow (not outline) survives PDF export
+                style={{ boxShadow: `0 0 0 3px transparent, 0 0 0 5px ${CYAN}55` }}
               />
             </div>
           )}

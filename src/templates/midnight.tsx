@@ -132,8 +132,9 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
                 draggable={false}
                 className="mx-auto h-24 w-24 rounded-full object-cover"
                 style={{
-                  outline: `1px solid ${GOLD}`,
-                  outlineOffset: "3px",
+                  // box-shadow (not outline) so the photo border survives
+                  // window.print() PDF export — outline is screen-only.
+                  boxShadow: `0 0 0 3px transparent, 0 0 0 4px ${GOLD}`,
                 }}
               />
             </div>

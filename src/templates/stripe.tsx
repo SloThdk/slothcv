@@ -117,8 +117,8 @@ export function StripeTemplate({ data, fixedSize, skipOverlay }: Props) {
                 draggable={false}
                 className="h-20 w-20 rounded-full object-cover"
                 style={{
-                  outline: `2px solid ${INDIGO}33`,
-                  outlineOffset: "2px",
+                  // box-shadow (not outline) survives PDF export
+                  boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${INDIGO}33`,
                 }}
               />
             </div>

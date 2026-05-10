@@ -265,19 +265,27 @@ export function elementStyle(
  * default — typically `${design.accentColor}66` for accent-tinted
  * outlines, but templates can pass a darker hex for editorial styles.
  *
- * Width 0 = no border (returns `outline: "none"`). Use `outlineOffset`
- * separately when you want a visual gap between the photo edge and
- * the border (Berlin's signature "ring with breathing room").
+ * Width 0 = no border (returns empty box-shadow).
+ *
+ * Implementation: returns a `boxShadow` (not `outline`) because CSS
+ * `outline` is screen-only — print media doesn't paint it, so the
+ * window.print() PDF export drops the photo border. Box-shadow
+ * stacks two layers: a transparent ring of width = offset (2px) to
+ * create the visual gap between photo edge and ring, then a solid
+ * ring of width = offset+borderWidth in the actual color. Both
+ * shadows render on screen AND in print, keeping the editor preview
+ * and the exported PDF visually identical.
  */
 export function photoBorderStyle(
   design: GlobalDesign,
   fallbackColor: string,
-): { outline: string; outlineOffset: string } {
+): { boxShadow: string } {
   const w = design.photo.borderWidth ?? 2;
+  if (w <= 0) return { boxShadow: "none" };
   const c = design.photo.borderColor?.trim() || fallbackColor;
+  const offset = 2;
   return {
-    outline: w > 0 ? `${w}px solid ${c}` : "none",
-    outlineOffset: w > 0 ? "2px" : "0",
+    boxShadow: `0 0 0 ${offset}px transparent, 0 0 0 ${offset + w}px ${c}`,
   };
 }
 

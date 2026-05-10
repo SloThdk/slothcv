@@ -143,8 +143,9 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
                   draggable={false}
                   className="h-24 w-24 rounded-2xl object-cover"
                   style={{
-                    outline: `2px solid ${PINK}66`,
-                    outlineOffset: "2px",
+                    // box-shadow (not outline) so the photo border survives
+                    // window.print() PDF export — outline is screen-only.
+                    boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${PINK}66`,
                   }}
                 />
               </div>

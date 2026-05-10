@@ -82,7 +82,8 @@ export function ZurichTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-24 w-24 rounded-sm object-cover"
-                style={{ outline: `1.5px solid ${SLATE}` }}
+                // box-shadow (not outline) survives PDF export
+                style={{ boxShadow: `0 0 0 1.5px ${SLATE}` }}
               />
             </div>
           )}

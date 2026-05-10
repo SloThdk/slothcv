@@ -53,15 +53,19 @@ interface Props {
   skipOverlay?: boolean;
 }
 
-// Hardcoded core palette — Graphite identity.
-const PAGE = "#fafaf9";
-const CHARCOAL = "#44403c";
-const TEXT_BODY = "#292524";
-const TEXT_SIDEBAR = "#fafaf9";
-const TEXT_SIDEBAR_DIM = "#d6d3d1";
+// CSS-var indirection so the Design-tab pickers drive every Graphite
+// surface. GraphiteTemplate sets the vars on a wrapper at render time;
+// these consts resolve to var() references that read data.design.*.
+// defaultDesignForTemplate("graphite") seeds the original Onest +
+// stone-gray identity on first template select; pickers own it after.
+const PAGE = "var(--gra-page)";
+const CHARCOAL = "var(--gra-accent)";
+const TEXT_BODY = "var(--gra-text)";
+const TEXT_SIDEBAR = "#fafaf9"; // derived sidebar ink — kept hardcoded
+const TEXT_SIDEBAR_DIM = "#d6d3d1"; // derived sidebar muted
 
-const SANS = "var(--font-onest, 'Onest'), Inter, sans-serif";
-const SERIF = "var(--font-source-serif-4, 'Source Serif 4'), 'EB Garamond', serif";
+const SANS = "var(--gra-body-font)";
+const SERIF = "var(--gra-title-font)";
 const MONO =
   "var(--font-jetbrains-mono, 'JetBrains Mono'), 'IBM Plex Mono', monospace";
 
@@ -79,12 +83,26 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
   const sidebar = visible.filter((s) => SIDEBAR_TYPES.has(s.type));
   const main = visible.filter((s) => !SIDEBAR_TYPES.has(s.type));
 
+  const paletteVars = {
+    "--gra-page": design.pageBg,
+    "--gra-accent": design.accentColor,
+    "--gra-text": design.textColor,
+    "--gra-body-font": `${design.bodyFont || "Onest"}, Inter, sans-serif`,
+    "--gra-title-font": `${design.titleFont || "Source Serif 4"}, 'EB Garamond', serif`,
+    "--gra-text-22": `${design.textColor}22`,
+    "--gra-text-77": `${design.textColor}77`,
+    "--gra-text-88": `${design.textColor}88`,
+    "--gra-text-99": `${design.textColor}99`,
+    "--gra-text-aa": `${design.textColor}aa`,
+  } as React.CSSProperties;
+
   // Trust the user's design values. defaultDesignForTemplate("graphite")
   // seeds the initial palette (PAGE + TEXT_BODY); the Design tab's pickers
   // control page bg + text color directly from there. Earlier a `themed`
   // override clobbered picker dispatches every render.
   return (
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+     <div style={paletteVars}>
       {/* Main grid — sidebar on left at 35%, body at 65%. The sidebar is a
           colored block with rounded corners — sits AS a card on the page,
           not bleeding to the page edge (cleaner across export formats). */}
@@ -135,7 +153,7 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
           <header
             data-section-id="personal"
             className="mb-7 cursor-pointer pb-4"
-            style={{ borderBottom: `1px solid ${TEXT_BODY}22` }}
+            style={{ borderBottom: `1px solid var(--gra-text-22)` }}
           >
             <h1
               data-element-id="personal.name"
@@ -156,7 +174,7 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
                 data-element-id="personal.headline"
                 className="mt-1 block w-fit cursor-text text-[0.95em] uppercase"
                 style={{
-                  color: `${TEXT_BODY}aa`,
+                  color: `var(--gra-text-aa)`,
                   fontFamily: MONO,
                   fontWeight: 400,
                   letterSpacing: "0.14em",
@@ -183,6 +201,7 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
           </div>
         </div>
       </div>
+     </div>
     </TemplateFrame>
   );
 }
@@ -566,7 +585,7 @@ function GraphiteMainSection({
       </h2>
       <div
         className="mb-3 h-px w-full"
-        style={{ background: `${TEXT_BODY}22` }}
+        style={{ background: `var(--gra-text-22)` }}
       />
       <BodySectionContent section={section} design={design} data={data} />
       <SectionActions section={section} />
@@ -643,7 +662,7 @@ function BodyExperience({
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
-                  <span style={{ color: `${TEXT_BODY}99`, fontWeight: 400 }}>
+                  <span style={{ color: `var(--gra-text-99)`, fontWeight: 400 }}>
                     {" · "}
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
@@ -652,7 +671,7 @@ function BodyExperience({
               <span
                 className="text-[0.78em]"
                 style={{
-                  color: `${TEXT_BODY}88`,
+                  color: `var(--gra-text-88)`,
                   fontFamily: MONO,
                 }}
               >
@@ -667,7 +686,7 @@ function BodyExperience({
             {it.location && (
               <div
                 className="text-[0.82em] italic"
-                style={{ color: `${TEXT_BODY}77`, fontFamily: SERIF }}
+                style={{ color: `var(--gra-text-77)`, fontFamily: SERIF }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
@@ -729,7 +748,7 @@ function BodyProjects({
                   it.name
                 )}
                 {it.role && (
-                  <span style={{ color: `${TEXT_BODY}99`, fontWeight: 400 }}>
+                  <span style={{ color: `var(--gra-text-99)`, fontWeight: 400 }}>
                     {" · "}
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
@@ -739,7 +758,7 @@ function BodyProjects({
                 <span
                   className="text-[0.78em]"
                   style={{
-                    color: `${TEXT_BODY}88`,
+                    color: `var(--gra-text-88)`,
                     fontFamily: MONO,
                   }}
                 >
@@ -755,7 +774,7 @@ function BodyProjects({
             {it.techStack && (
               <div
                 className="text-[0.82em]"
-                style={{ color: `${TEXT_BODY}88`, fontFamily: MONO }}
+                style={{ color: `var(--gra-text-88)`, fontFamily: MONO }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
@@ -808,14 +827,14 @@ function BodyEducation({
               </span>
               <span
                 className="ml-2 text-[0.85em] italic"
-                style={{ color: `${TEXT_BODY}99`, fontFamily: SERIF }}
+                style={{ color: `var(--gra-text-99)`, fontFamily: SERIF }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
               className="text-[0.78em]"
-              style={{ color: `${TEXT_BODY}88`, fontFamily: MONO }}
+              style={{ color: `var(--gra-text-88)`, fontFamily: MONO }}
             >
               {formatDateRange(
                 it.startDate,

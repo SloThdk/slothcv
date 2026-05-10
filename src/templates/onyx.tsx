@@ -52,18 +52,21 @@ interface Props {
   skipOverlay?: boolean;
 }
 
-// Hardcoded core palette — Onyx identity.
-const BLACK = "#09090b";
-const PINK = "#e879f9"; // fuchsia-400
-const TEXT = "#fafafa";
-const TEXT_DIM = "#a1a1aa"; // zinc-400
+// CSS-var indirection so every Design-tab picker drives the Onyx
+// surface. OnyxTemplate sets these vars on a wrapper at render time;
+// the consts resolve to var() references that read data.design.*.
+// defaultDesignForTemplate("onyx") seeds the original #09090b / #e879f9
+// / #fafafa identity on first template select.
+const BLACK = "var(--ony-page)";
+const PINK = "var(--ony-accent)";
+const TEXT = "var(--ony-text)";
+const TEXT_DIM = "var(--ony-secondary)";
 
-// The gradient mesh is the soul of this template — applied as a stacked
-// pair of radial-gradients on a wrapper div that sits under the content.
-// Transparent stops + low opacity = the colored "bleed" without obscuring
-// the body type.
+// The gradient mesh is the soul of this template — uses the accent
+// alpha 33 for the primary radial. Cyan and violet stops stay
+// hardcoded as derived identity (they're decorative, not user-bound).
 const MESH_BG = `
-  radial-gradient(at 20% 20%, ${PINK}33 0%, transparent 45%),
+  radial-gradient(at 20% 20%, var(--ony-accent-33) 0%, transparent 45%),
   radial-gradient(at 80% 80%, #06b6d433 0%, transparent 50%),
   radial-gradient(at 50% 0%, #a78bfa1f 0%, transparent 35%)
 `;
@@ -76,8 +79,20 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
   // the initial palette (BLACK page, TEXT ink); the Design tab's pickers
   // control page bg + text color directly from there. Earlier a `themed`
   // override clobbered picker dispatches every render.
+  const paletteVars = {
+    "--ony-page": design.pageBg,
+    "--ony-accent": design.accentColor,
+    "--ony-text": design.textColor,
+    "--ony-secondary": design.secondaryColor,
+    "--ony-accent-14": `${design.accentColor}14`,
+    "--ony-accent-33": `${design.accentColor}33`,
+    "--ony-accent-55": `${design.accentColor}55`,
+    "--ony-accent-66": `${design.accentColor}66`,
+  } as React.CSSProperties;
+
   return (
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+     <div style={paletteVars}>
       {/* Gradient mesh layer — sits absolutely behind everything. */}
       <div
         aria-hidden
@@ -93,7 +108,7 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
         <header
           data-section-id="personal"
           className="mb-10 cursor-pointer pb-5"
-          style={{ borderBottom: `1px solid ${PINK}33` }}
+          style={{ borderBottom: `1px solid var(--ony-accent-33)` }}
         >
           <div className="flex items-end justify-between gap-6">
             <div className="flex-1">
@@ -145,7 +160,7 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
                   style={{
                     // box-shadow (not outline) so the photo border survives
                     // window.print() PDF export — outline is screen-only.
-                    boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${PINK}66`,
+                    boxShadow: `0 0 0 2px transparent, 0 0 0 4px var(--ony-accent-66)`,
                   }}
                 />
               </div>
@@ -162,6 +177,7 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
           })}
         </div>
       </div>
+     </div>
     </TemplateFrame>
   );
 }
@@ -196,7 +212,7 @@ function OnyxContact({ data }: { data: ResumeData }) {
       {items.map((it, i) => (
         <span key={it.id}>
           {i > 0 && (
-            <span className="mx-2" style={{ color: `${PINK}66` }}>
+            <span className="mx-2" style={{ color: `var(--ony-accent-66)` }}>
               ◆
             </span>
           )}
@@ -537,8 +553,8 @@ function OnyxSkills({
                   data-element-id={id}
                   className="cursor-grab rounded-full px-2.5 py-0.5 text-[0.82em]"
                   style={{
-                    background: `${PINK}14`,
-                    border: `1px solid ${PINK}55`,
+                    background: `var(--ony-accent-14)`,
+                    border: `1px solid var(--ony-accent-55)`,
                     color: TEXT,
                     ...elementStyle(data, id),
                   }}

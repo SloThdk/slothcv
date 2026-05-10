@@ -54,11 +54,16 @@ interface Props {
   skipOverlay?: boolean;
 }
 
-// Hardcoded core palette. These three values define the Obsidian identity —
-// flipping any of them lands you in a different template.
-const BLACK = "#0a0a0a";
-const PURPLE = "#a78bfa";
-const OFF_WHITE = "#e5e5e5";
+// CSS-var indirection so the Design-tab pickers drive every Obsidian
+// surface. ObsidianTemplate sets --obs-page / --obs-accent / --obs-text
+// (and their alpha-suffix variants) on a wrapper div at render time;
+// these consts then resolve to var() references that pick up whatever
+// data.design.* is currently set to. defaultDesignForTemplate("obsidian")
+// seeds the original #0a0a0a / #a78bfa / #e5e5e5 identity on first
+// template select; from there the pickers own it.
+const BLACK = "var(--obs-page)";
+const PURPLE = "var(--obs-accent)";
+const OFF_WHITE = "var(--obs-text)";
 
 export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
@@ -72,12 +77,32 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
   // seeds the initial palette and the Design tab's pickers control bg +
   // text from there. The earlier `themed` override clobbered picker
   // dispatches on every render.
+  // CSS-var palette (full alphas pre-computed) so every nested element
+  // can use var(--obs-accent), var(--obs-text-77), etc. without prop-
+  // drilling. The bare names cover full-opacity usages; the alpha-
+  // suffix vars cover the `${X}NN` hex-with-alpha patterns that can't
+  // mix with var() at the CSS-string level.
+  const paletteVars = {
+    "--obs-page": design.pageBg,
+    "--obs-accent": design.accentColor,
+    "--obs-text": design.textColor,
+    "--obs-accent-22": `${design.accentColor}22`,
+    "--obs-accent-55": `${design.accentColor}55`,
+    "--obs-accent-66": `${design.accentColor}66`,
+    "--obs-text-66": `${design.textColor}66`,
+    "--obs-text-77": `${design.textColor}77`,
+    "--obs-text-88": `${design.textColor}88`,
+    "--obs-text-99": `${design.textColor}99`,
+    "--obs-text-aa": `${design.textColor}aa`,
+  } as React.CSSProperties;
+
   return (
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+     <div style={paletteVars}>
       <header
         data-section-id="personal"
         className="mb-12 cursor-pointer pb-6"
-        style={{ borderBottom: `1px solid ${PURPLE}22` }}
+        style={{ borderBottom: `1px solid var(--obs-accent-22)` }}
       >
         <div className="flex items-end justify-between gap-6">
           <div className="flex-1">
@@ -130,7 +155,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
                 style={{
                   // box-shadow (not outline) so the photo border survives
                   // window.print() PDF export — outline is screen-only.
-                  boxShadow: `0 0 0 3px transparent, 0 0 0 4.5px ${PURPLE}66`,
+                  boxShadow: `0 0 0 3px transparent, 0 0 0 4.5px var(--obs-accent-66)`,
                 }}
               />
             </div>
@@ -146,6 +171,7 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
           );
         })}
       </div>
+     </div>
     </TemplateFrame>
   );
 }
@@ -173,14 +199,14 @@ function ObsidianContact({ data }: { data: ResumeData }) {
     <div
       className="mt-4 text-[0.85em]"
       style={{
-        color: `${OFF_WHITE}99`,
+        color: `var(--obs-text-99)`,
         fontFamily: "var(--font-inter, 'Inter'), sans-serif",
       }}
     >
       {items.map((it, i) => (
         <span key={it.id}>
           {i > 0 && (
-            <span className="mx-2" style={{ color: `${PURPLE}55` }}>
+            <span className="mx-2" style={{ color: `var(--obs-accent-55)` }}>
               ◆
             </span>
           )}
@@ -328,7 +354,7 @@ function ObsidianExperience({
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                 {it.company && (
-                  <span style={{ color: `${OFF_WHITE}aa`, fontStyle: "normal" }}>
+                  <span style={{ color: `var(--obs-text-aa)`, fontStyle: "normal" }}>
                     {" — "}
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.company`} value={it.company} placeholder="Company" />
                   </span>
@@ -337,7 +363,7 @@ function ObsidianExperience({
               <span
                 className="text-[0.78em]"
                 style={{
-                  color: `${OFF_WHITE}77`,
+                  color: `var(--obs-text-77)`,
                   fontFamily: "var(--font-inter, 'Inter'), sans-serif",
                 }}
               >
@@ -352,7 +378,7 @@ function ObsidianExperience({
             {it.location && (
               <div
                 className="text-[0.82em]"
-                style={{ color: `${OFF_WHITE}66` }}
+                style={{ color: `var(--obs-text-66)` }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
               </div>
@@ -415,7 +441,7 @@ function ObsidianProjects({
                   it.name
                 )}
                 {it.role && (
-                  <span style={{ color: `${OFF_WHITE}99`, fontWeight: 400 }}>
+                  <span style={{ color: `var(--obs-text-99)`, fontWeight: 400 }}>
                     {" · "}
                     <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.role`} value={it.role} placeholder="Role" />
                   </span>
@@ -424,7 +450,7 @@ function ObsidianProjects({
               {(it.startDate || it.endDate || it.current) && (
                 <span
                   className="text-[0.78em]"
-                  style={{ color: `${OFF_WHITE}77` }}
+                  style={{ color: `var(--obs-text-77)` }}
                 >
                   {formatDateRange(
                     it.startDate,
@@ -438,7 +464,7 @@ function ObsidianProjects({
             {it.techStack && (
               <div
                 className="text-[0.82em]"
-                style={{ color: `${OFF_WHITE}77` }}
+                style={{ color: `var(--obs-text-77)` }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.techStack`} value={it.techStack} placeholder="Tech stack" />
               </div>
@@ -492,14 +518,14 @@ function ObsidianEducation({
               </span>
               <span
                 className="ml-2 text-[0.85em]"
-                style={{ color: `${OFF_WHITE}99` }}
+                style={{ color: `var(--obs-text-99)` }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.institution`} value={it.institution} placeholder="Institution" />
               </span>
             </div>
             <span
               className="text-[0.78em]"
-              style={{ color: `${OFF_WHITE}77` }}
+              style={{ color: `var(--obs-text-77)` }}
             >
               {formatDateRange(
                 it.startDate,
@@ -555,7 +581,7 @@ function ObsidianSkills({
               return (
                 <span key={s.id}>
                   {i > 0 && (
-                    <span style={{ color: `${PURPLE}55` }} className="mr-3">
+                    <span style={{ color: `var(--obs-accent-55)` }} className="mr-3">
                       ◆
                     </span>
                   )}
@@ -608,7 +634,7 @@ function ObsidianCerts({
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.name`} value={c.name} placeholder="Name" />
               </span>
               {c.issuer && (
-                <span style={{ color: `${OFF_WHITE}88` }}>
+                <span style={{ color: `var(--obs-text-88)` }}>
                   {" · "}
                   <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.issuer`} value={c.issuer} placeholder="Issuer" />
                 </span>
@@ -617,7 +643,7 @@ function ObsidianCerts({
             {c.date && (
               <span
                 className="text-[0.82em]"
-                style={{ color: `${OFF_WHITE}77` }}
+                style={{ color: `var(--obs-text-77)` }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${c.id}.date`} value={c.date} placeholder="Date" />
               </span>

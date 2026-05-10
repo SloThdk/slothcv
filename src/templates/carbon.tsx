@@ -51,12 +51,16 @@ interface Props {
   skipOverlay?: boolean;
 }
 
-// IBM Carbon Design System tokens. Hardcoded because Carbon = IBM identity.
-const SURFACE = "#161616"; // Carbon gray-100 (dark surface)
-const BLUE = "#0f62fe"; // Carbon blue-60 (interactive primary)
-const TEXT_PRIMARY = "#f4f4f4"; // Carbon gray-10 (text on dark)
-const TEXT_SECONDARY = "#c6c6c6"; // Carbon gray-30
-const TEXT_TERTIARY = "#8d8d8d"; // Carbon gray-50
+// CSS-var indirection so every Design-tab picker drives Carbon's
+// surfaces. CarbonTemplate sets the vars on a wrapper at render time;
+// the consts resolve to var() references that pick up data.design.*.
+// defaultDesignForTemplate("carbon") seeds the original IBM Carbon
+// tokens on first template select; pickers own it from there.
+const SURFACE = "var(--car-page)"; // pageBg
+const BLUE = "var(--car-accent)"; // accentColor
+const TEXT_PRIMARY = "var(--car-text)"; // textColor
+const TEXT_SECONDARY = "var(--car-secondary)"; // secondaryColor
+const TEXT_TERTIARY = "#8d8d8d"; // Carbon gray-50 — derived tertiary, not user-bound
 
 // Mono font stack — IBM Plex Mono first, JetBrains Mono fallback.
 const MONO =
@@ -70,8 +74,16 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
   // seeds the initial palette (SURFACE + TEXT_PRIMARY); the Design tab's
   // pickers control page bg + text color directly from there. Earlier a
   // `themed` override clobbered picker dispatches every render.
+  const paletteVars = {
+    "--car-page": design.pageBg,
+    "--car-accent": design.accentColor,
+    "--car-text": design.textColor,
+    "--car-secondary": design.secondaryColor,
+  } as React.CSSProperties;
+
   return (
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+     <div style={paletteVars}>
       <header
         data-section-id="personal"
         className="mb-8 cursor-pointer pb-4"
@@ -137,6 +149,7 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
           );
         })}
       </div>
+     </div>
     </TemplateFrame>
   );
 }

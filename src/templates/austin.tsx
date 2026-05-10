@@ -44,11 +44,17 @@ import {
 } from "./shared";
 import type { ResumeData, Section } from "@/types/resume";
 
-const BG = "#0c1410";
-const INK = "#e8ece9";
-const INK_SOFT = "#b6c1bb";
+// CSS-var indirection so every Design-tab picker drives the visual.
+// AustinTemplate sets these vars on a wrapper at render time; the
+// consts resolve to var() references that read data.design.*. The
+// derived identity colors (mint-line, pill-bg, pill-border, dotted-rule,
+// ink-mute) stay hardcoded because they're palette-relative tints
+// that aren't exposed as user-editable design fields.
+const BG = "var(--aus-page)";
+const INK = "var(--aus-text)";
+const INK_SOFT = "var(--aus-secondary)";
 const INK_MUTE = "#7c8a83";
-const MINT = "#4ee6a8";
+const MINT = "var(--aus-accent)";
 const MINT_LINE = "rgba(78, 230, 168, 0.35)";
 const PILL_BG = "#1a2520";
 const PILL_BORDER = "rgba(78, 230, 168, 0.18)";
@@ -79,6 +85,13 @@ export function AustinTemplate({ data, fixedSize, skipOverlay }: Props) {
   const sidebar = visible.filter((s) => SIDEBAR_TYPES.has(s.type));
   const main = visible.filter((s) => !SIDEBAR_TYPES.has(s.type));
 
+  const paletteVars = {
+    "--aus-page": design.pageBg,
+    "--aus-accent": design.accentColor,
+    "--aus-text": design.textColor,
+    "--aus-secondary": design.secondaryColor,
+  } as React.CSSProperties;
+
   // Pass the user's design through untouched. The Austin defaults set by
   // defaultDesignForTemplate("austin") seed the user's data with the
   // template's signature palette (charcoal + mint + ink); from there the
@@ -92,6 +105,7 @@ export function AustinTemplate({ data, fixedSize, skipOverlay }: Props) {
       fixedSize={fixedSize}
       skipOverlay={skipOverlay}
     >
+     <div style={paletteVars}>
       {/* Header: name + role + contact (left, 1fr) | round photo (right).
           Canonical CSS: .header { grid-template-columns: 1fr auto; gap: 10mm }
           The role uses 0.32em letter-spacing — wide enough to feel like a
@@ -191,6 +205,7 @@ export function AustinTemplate({ data, fixedSize, skipOverlay }: Props) {
           ))}
         </div>
       </div>
+     </div>
     </TemplateFrame>
   );
 }

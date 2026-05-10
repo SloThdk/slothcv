@@ -1060,12 +1060,22 @@ export function Preview() {
           // element-tagged node inside a section-tagged ancestor.
           // Also clear custom-element selection so the inspector closes.
           selectElement(null);
-          const sectionEl = drag.el?.closest("[data-section-id]");
-          const sid = sectionEl?.getAttribute("data-section-id");
-          if (sid) {
-            window.dispatchEvent(
-              new CustomEvent(JUMP_EVENT, { detail: { id: sid } }),
-            );
+          // Special case: personal.photo routes to the Design tab + scrolls
+          // to the FOTO section (which holds border colour, shape, position,
+          // width). The content tab has no per-element controls for the
+          // photo — its design controls are the meaningful surface.
+          const elementId = drag.el?.getAttribute("data-element-id") ||
+            drag.el?.closest("[data-element-id]")?.getAttribute("data-element-id");
+          if (elementId === "personal.photo") {
+            window.dispatchEvent(new CustomEvent("slothcv:open-design-photo"));
+          } else {
+            const sectionEl = drag.el?.closest("[data-section-id]");
+            const sid = sectionEl?.getAttribute("data-section-id");
+            if (sid) {
+              window.dispatchEvent(
+                new CustomEvent(JUMP_EVENT, { detail: { id: sid } }),
+              );
+            }
           }
         } else if (drag.kind === "section") {
           selectElement(null);

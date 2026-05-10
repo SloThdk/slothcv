@@ -188,11 +188,22 @@ function EditorInner() {
       // DesignTab clears this back to null via onScrolled.
       setPendingDesignScroll("pageBg");
     }
+    function onOpenDesignPhoto() {
+      setTab("design");
+      setMobilePane("edit");
+      prevTabBeforeSelectionRef.current = null;
+      setPendingDesignScroll("photo");
+    }
     window.addEventListener("slothcv:jump-to-section", onJump);
     window.addEventListener("slothcv:open-design-tab", onOpenDesign);
+    window.addEventListener("slothcv:open-design-photo", onOpenDesignPhoto);
     return () => {
       window.removeEventListener("slothcv:jump-to-section", onJump);
       window.removeEventListener("slothcv:open-design-tab", onOpenDesign);
+      window.removeEventListener(
+        "slothcv:open-design-photo",
+        onOpenDesignPhoto,
+      );
     };
   }, [requestJumpToSection]);
 
@@ -219,24 +230,10 @@ function EditorInner() {
       // Only snapshot the FIRST time selection appears — if the user
       // selects element A then element B without deselecting in between,
       // we still want to remember the tab from BEFORE A.
-      if (
-        prevTabBeforeSelectionRef.current === null &&
-        tab !== "add" &&
-        tab !== "design"
-      ) {
+      if (prevTabBeforeSelectionRef.current === null && tab !== "add") {
         prevTabBeforeSelectionRef.current = tab;
       }
-      // Photo selection sends the user straight to the Design tab and
-      // scrolls to the FOTO section (which carries the border-colour
-      // picker, photo shape, position, etc.). Other element selections
-      // open the Inspector ("add" tab) as before.
-      if (selectedElementId === "personal.photo") {
-        if (tab !== "design") {
-          setTab("design");
-          setMobilePane("edit");
-        }
-        setPendingDesignScroll("photo");
-      } else if (tab !== "add") {
+      if (tab !== "add") {
         setTab("add");
         setMobilePane("edit");
       }

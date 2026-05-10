@@ -83,7 +83,7 @@ function EditorInner() {
   // is "pageBg" exactly when DesignTab mounts → scroll fires on the
   // very first render. DesignTab calls back via onScrolled to clear.
   const [pendingDesignScroll, setPendingDesignScroll] = useState<
-    "pageBg" | null
+    "pageBg" | "photo" | null
   >(null);
   const handleDesignScrolled = useCallback(
     () => setPendingDesignScroll(null),
@@ -219,10 +219,24 @@ function EditorInner() {
       // Only snapshot the FIRST time selection appears — if the user
       // selects element A then element B without deselecting in between,
       // we still want to remember the tab from BEFORE A.
-      if (prevTabBeforeSelectionRef.current === null && tab !== "add") {
+      if (
+        prevTabBeforeSelectionRef.current === null &&
+        tab !== "add" &&
+        tab !== "design"
+      ) {
         prevTabBeforeSelectionRef.current = tab;
       }
-      if (tab !== "add") {
+      // Photo selection sends the user straight to the Design tab and
+      // scrolls to the FOTO section (which carries the border-colour
+      // picker, photo shape, position, etc.). Other element selections
+      // open the Inspector ("add" tab) as before.
+      if (selectedElementId === "personal.photo") {
+        if (tab !== "design") {
+          setTab("design");
+          setMobilePane("edit");
+        }
+        setPendingDesignScroll("photo");
+      } else if (tab !== "add") {
         setTab("add");
         setMobilePane("edit");
       }

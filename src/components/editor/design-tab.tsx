@@ -96,7 +96,7 @@ const ACCENT_PRESETS = [
  *  the empty page background. DesignTab acts on it on its very first
  *  render so the scroll fires on click 1, not click 2. */
 export interface DesignTabProps {
-  scrollTo?: "pageBg" | null;
+  scrollTo?: "pageBg" | "photo" | null;
   onScrolled?: () => void;
 }
 
@@ -116,7 +116,32 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   // the listener only registers AFTER the tab switch — too late for
   // the first event. The prop-driven path fires on the same render.
   const pageBgRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
   const [bgFlash, setBgFlash] = useState(false);
+
+  // Photo scroll-to: when the user clicks the photo on the canvas, the
+  // editor sets pendingDesignScroll="photo" + switches to this tab. We
+  // mirror the pageBg effect: two RAFs to let layout commit and paints
+  // settle before scrolling, so the smooth-scroll lands on the final
+  // position rather than chasing it.
+  useEffect(() => {
+    if (scrollTo !== "photo") return;
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        photoRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        onScrolled?.();
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [scrollTo, onScrolled]);
+
   useEffect(() => {
     if (scrollTo !== "pageBg") return;
     // Two RAFs: first lets React commit the layout (so the picker has
@@ -429,7 +454,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
         )}
       </Section>
 
-      <Section title={t("design.photo")} onReset={() => onResetGroup("photo")}>
+      <Section title={t("design.photo")} onReset={() => onResetGroup("photo")} sectionRef={photoRef}>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -670,6 +695,7 @@ function Section({
   title,
   children,
   onReset,
+  sectionRef,
 }: {
   title: string;
   children: React.ReactNode;
@@ -677,9 +703,16 @@ function Section({
    *  in the section header. Resets only the values inside this group
    *  back to the current template's factory defaults. */
   onReset?: () => void;
+  /** Optional ref attached to the section's outer div so the editor can
+   *  scroll to this section in response to a canvas-side click (e.g.
+   *  clicking the photo jumps to the FOTO section). */
+  sectionRef?: React.Ref<HTMLDivElement>;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-3">
+    <div
+      ref={sectionRef}
+      className="rounded-lg border border-border bg-surface p-3"
+    >
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
           {title}

@@ -115,6 +115,8 @@ export function sampleResumeData(template: TemplateId): ResumeData {
       return cambridgePersona();
     case "blank":
       return blankPersona();
+    case "austin":
+      return austinPersona();
     // ── Mid-2026 expansion: map each new template to the
     //    category-appropriate existing persona so the gallery shows
     //    genuinely distinct content per industry-fit, not Sam Carter
@@ -1610,6 +1612,125 @@ function berlinPersona(): ResumeData {
         { name: "Danish", proficiency: "C1", level: 4 },
         { name: "German", proficiency: "B1", level: 2 },
       ]),
+    ],
+  };
+}
+
+/**
+ * Austin — fictional full-stack-and-3D-generalist persona for the dark-mode
+ * developer template. US-style address + phone, example.com links per the
+ * project's anti-real-data rule (see file header). Content + section order
+ * mirrors the canonical PhilipSlothCV source so the gallery card reads as
+ * a real dev CV: Profile + Experience in the main column, Personal Info +
+ * four skill groups + Education in the sidebar (in that order).
+ */
+function austinPersona(): ResumeData {
+  const shell = buildShell("austin", {
+    accentColor: "#4ee6a8",
+    layout: "sidebar-left",
+    headerStyle: "uppercase",
+    photo: { enabled: true, shape: "circle", position: "top-right" },
+  });
+  return {
+    ...shell,
+    personal: {
+      fullName: "Marcus Hayes",
+      headline: "Full-stack Developer & 3D Generalist",
+      email: "marcus.hayes@example.com",
+      phone: "+1 (512) 555-0142",
+      location: "1234 Congress Avenue, Austin, TX 78701",
+      photoUrl: "/sample-photos/austin.jpg",
+      links: [
+        {
+          id: "au-port",
+          label: "Portfolio: marcus-hayes.example.com",
+          url: "https://example.com/marcus-hayes",
+        },
+        {
+          id: "au-link",
+          label: "LinkedIn: linkedin.com/in/marcus-hayes-cv",
+          url: "https://example.com/in/marcus-hayes-cv",
+        },
+      ],
+    },
+    // Section order matters: main filter picks summary+experience in array
+    // order; sidebar filter picks custom+skills+education in array order.
+    // Keeping summary→experience first then sidebar pieces mirrors the
+    // canonical CV's reading order.
+    sections: [
+      summary(
+        "Full-stack developer and 3D generalist focused on building things that actually work — from frontend to backend to deployment. No excuses, just results.\n\nI work freelance shipping end-to-end web products, and I publish open-source Blender addons on the side. Picked up multi-agent AI orchestration in 2024 — cron-driven pipelines with scoped permissions and security rails built into every action.",
+      ),
+      experience(
+        {
+          role: "Freelance Full-stack Developer",
+          company: "marcus-hayes.example.com",
+          location: "Austin, TX",
+          start: "2023-09",
+          end: "",
+          current: true,
+          bullets: [
+            "End-to-end ownership of digital products — from architecture and data model through deployment and what comes after launch. I pick the right stack for the problem and ship work that holds up in production.",
+          ],
+        },
+        {
+          role: "Blender Market Creator",
+          company: "example.com/creators/marcushayes",
+          location: "Remote",
+          start: "2021-06",
+          end: "",
+          current: true,
+          bullets: [
+            "Six Python-based Blender addons published — a node-vault, batch renderer, geometry-to-Python exporter, and three custom pie menus. Deep grip on the Blender Python API and production rendering pipelines.",
+          ],
+        },
+        {
+          role: "AI Pipeline Project",
+          company: "Independent project",
+          location: "Remote",
+          start: "2024-01",
+          end: "",
+          current: true,
+          bullets: [
+            "Multi-agent AI orchestration with Claude and other LLMs that fit the job. Cron-driven pipelines, heartbeat-monitored agents, scoped permissions and security rails built into every action — guardrails by design, not bolted on. Shipped production work across addons, websites and backend integrations through custom workflows that hold up under real use. Real customers, real revenue — not only portfolio demos.",
+          ],
+        },
+      ),
+      // Personal Info — rendered by the austin template as dotted
+      // Label/Value rows. Format must be "Label: Value" per line so the
+      // template's InfoRows parser can split correctly.
+      {
+        id: "sec-personal-info",
+        type: "custom",
+        title: "Personal Info",
+        body: "Born: Mar 14, 1998\nAge: 27\nNationality: American",
+        items: [],
+        visible: true,
+      },
+      skills(
+        ["Next.js", "React", "TypeScript", "Node.js", "GraphQL", "REST API", "Tailwind"],
+        "Web & Backend",
+      ),
+      skills(
+        ["PostgreSQL", "MongoDB", "Supabase", "Firebase", "Redis", "Prisma", "Docker", "Vercel", "Cloudflare"],
+        "Database & Cloud",
+      ),
+      skills(
+        ["Blender", "Three.js", "3D Modeling", "Texturing", "Rendering", "Animation"],
+        "3D & Creative",
+      ),
+      skills(
+        ["C#", "Python", "Stripe", "Resend", "GitHub", "UI/UX"],
+        "Other",
+      ),
+      education({
+        institution: "University of Texas at Austin",
+        degree: "B.S.",
+        field: "Computer Science",
+        location: "Austin, TX",
+        start: "2017",
+        end: "2021",
+      }),
     ],
   };
 }

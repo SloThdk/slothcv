@@ -89,6 +89,26 @@ export function defaultDesignForTemplate(
       return base;
 
     // ── Distinct early templates ───────────────────────────────────────
+    // Austin — 1:1 port of the PhilipSlothCV canonical source
+    // (C:/Users/phili/Sync/PhilipSlothCV/style.css). Charcoal-green page
+    // #0c1410, ink #e8ece9, mint accent #4ee6a8 with a dimmer #38a87a for
+    // the bottom-left "CV" watermark at 85 % opacity. Inter throughout.
+    case "austin":
+      return {
+        ...base,
+        accentColor: "#4ee6a8",
+        secondaryColor: "#b6c1bb",
+        pageBg: "#0c1410",
+        textColor: "#e8ece9",
+        titleFont: "Inter",
+        bodyFont: "Inter",
+        headerStyle: "uppercase",
+        skillBarStyle: "pills",
+        photo: { enabled: true, shape: "circle", position: "top-right" },
+        watermarkText: "CV",
+        watermarkPosition: "bottom-left",
+        watermarkColor: "#38a87a",
+      };
     case "aurora":
       return {
         ...base,

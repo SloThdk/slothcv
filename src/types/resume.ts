@@ -130,6 +130,8 @@ export const TEMPLATE_IDS = [
   "helsingor",
   "silkeborg",
   "aabenraa",
+  // US developer pool.
+  "austin",
 ] as const;
 
 /** Identifier of the active visual template. Templates render the same

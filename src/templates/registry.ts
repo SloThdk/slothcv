@@ -501,6 +501,15 @@ export const TEMPLATES: TemplateMeta[] = [
     swatch: { primary: "#1A1A1A", bg: "#FFFFFF" },
     language: "da",
   },
+  // ── US developer pool ────────────────────────────────────────────
+  {
+    id: "austin",
+    name: "Austin",
+    blurb:
+      "Dark-mode developer CV. Charcoal page, mint accent, chip-style skill groups, round photo top-right, big 'CV' wordmark. For full-stack devs, 3D generalists, indie hackers.",
+    thumbGradient: "from-slate-900 to-emerald-900",
+    swatch: { primary: "#4ee6a8", bg: "#0c1410" },
+  },
 ];
 
 export const TEMPLATES_BY_ID: Record<TemplateId, TemplateMeta> =

@@ -132,6 +132,24 @@ export function TemplateFrame({
           }
         `}</style>
       )}
+      {/* Universal font-picker enforcement. TemplateFrame already sets
+          fontFamily: design.bodyFont on the root style so body text that
+          inherits gets the user's bodyFont. Many templates hardcode their
+          h1/h2/h3 fontFamily inline ("Inter", "Fraunces", IBM Plex Mono,
+          etc.) which makes the Design-tab title-font picker silently dead
+          on those templates. The rule below forces every heading inside
+          the rendered template body to use --cv-title-font (set on the
+          root by frame style.{cs} 72), but excludes the Toolshelf custom-
+          element layer so user-added shapes keep their own font selection.
+          !important is necessary to win against the templates' inline
+          style attribute — they're not removed because the CSS-var path
+          would still fall back to the template default when the user
+          hasn't customised, preserving each template's visual identity. */}
+      <style>{`
+        .slothcv-page-hover :is(h1, h2, h3):not([data-element-id^="custom"]) {
+          font-family: var(--cv-title-font) !important;
+        }
+      `}</style>
       {children}
       <Watermark design={design} data={data} />
       {!skipOverlay && <ToolshelfOverlay data={data} />}

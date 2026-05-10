@@ -1064,12 +1064,18 @@ export function Preview() {
           // to the FOTO section (which holds border colour, shape, position,
           // width). The content tab has no per-element controls for the
           // photo — its design controls are the meaningful surface.
-          const elementId = drag.el?.getAttribute("data-element-id") ||
-            drag.el?.closest("[data-element-id]")?.getAttribute("data-element-id");
-          if (elementId === "personal.photo") {
-            window.dispatchEvent(new CustomEvent("slothcv:open-design-photo"));
+          if (drag.id === "personal.photo") {
+            window.dispatchEvent(
+              new CustomEvent("slothcv:open-design-photo"),
+            );
           } else {
-            const sectionEl = drag.el?.closest("[data-section-id]");
+            // Re-resolve the element from the DOM via its element id
+            // (drag carries the id but not the node) so we can walk up
+            // to the section.
+            const wrap = document.querySelector(
+              `[data-element-id="${drag.id}"]`,
+            );
+            const sectionEl = wrap?.closest("[data-section-id]");
             const sid = sectionEl?.getAttribute("data-section-id");
             if (sid) {
               window.dispatchEvent(

@@ -162,7 +162,8 @@ export function AustinTemplate({ data, fixedSize, skipOverlay }: Props) {
               style={{
                 width: "38mm",
                 height: "38mm",
-                border: `1px solid ${MINT_LINE}`,
+                // design.photo.borderColor override (Design → Photo → Border)
+                border: `1px solid ${design.photo.borderColor || MINT_LINE}`,
               }}
             />
           </div>

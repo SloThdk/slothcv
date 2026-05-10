@@ -152,9 +152,8 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
                 draggable={false}
                 className="h-24 w-24 rounded-full object-cover"
                 style={{
-                  // box-shadow (not outline) so the photo border survives
-                  // window.print() PDF export — outline is screen-only.
-                  boxShadow: `0 0 0 3px transparent, 0 0 0 4.5px var(--obs-accent-66)`,
+                  // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                  boxShadow: `0 0 0 3px transparent, 0 0 0 4.5px ${design.photo.borderColor || "var(--obs-accent-66)"}`,
                 }}
               />
             </div>

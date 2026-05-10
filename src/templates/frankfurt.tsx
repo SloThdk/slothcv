@@ -94,8 +94,8 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-32 w-full object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 1px ${SIDEBAR_MUTED}` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 1px ${design.photo.borderColor || SIDEBAR_MUTED}` }}
               />
             </div>
           )}

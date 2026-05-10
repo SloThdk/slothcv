@@ -116,8 +116,10 @@ export function AtlasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-24 w-24 rounded-full object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 2px ${SKY}` }}
+                // box-shadow + design.photo.borderColor override so users can
+                // recolor the ring via Design → Photo → Border. Falls back to
+                // the template's SKY when no override is set.
+                style={{ boxShadow: `0 0 0 2px ${design.photo.borderColor || SKY}` }}
               />
             </div>
           )}

@@ -136,8 +136,8 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 1px ${BLUE}` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 1px ${design.photo.borderColor || BLUE}` }}
               />
             </div>
           )}

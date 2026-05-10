@@ -131,8 +131,8 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
               referrerPolicy="no-referrer"
               draggable={false}
               className="h-20 w-20 rounded-2xl object-cover"
-              // box-shadow (not outline) survives PDF export
-              style={{ boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${VIOLET}33` }}
+              // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+              style={{ boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${design.photo.borderColor || (VIOLET + "33")}` }}
             />
           </div>
         )}

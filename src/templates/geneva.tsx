@@ -134,8 +134,8 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 rounded-sm object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 1.5px ${NAVY}` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 1.5px ${design.photo.borderColor || NAVY}` }}
               />
             </div>
           )}

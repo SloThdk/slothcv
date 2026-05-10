@@ -95,8 +95,8 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-16 w-16 rounded-full object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 2px ${PAGE_TINT}` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 2px ${design.photo.borderColor || PAGE_TINT}` }}
               />
             </div>
           )}

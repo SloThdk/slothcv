@@ -85,8 +85,8 @@ export function TokyoTemplate({ data, fixedSize, skipOverlay }: Props) {
                     : "h-20 w-20 rounded-full"
             }`}
             style={{
-              // box-shadow (not outline) survives PDF export
-              boxShadow: `0 0 0 2px ${design.accentColor}66`,
+              // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+              boxShadow: `0 0 0 2px ${design.photo.borderColor || (design.accentColor + "66")}`,
               ...elementStyle(data, "personal.photo"),
             }}
           >

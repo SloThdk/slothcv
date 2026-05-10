@@ -145,8 +145,8 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-24 w-24 rounded-full object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 3px transparent, 0 0 0 5px ${CYAN}55` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 3px transparent, 0 0 0 5px ${design.photo.borderColor || (CYAN + "55")}` }}
               />
             </div>
           )}

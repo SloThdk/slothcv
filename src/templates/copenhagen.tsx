@@ -86,8 +86,8 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 rounded-full object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 1px ${design.textColor}1a` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 1px ${design.photo.borderColor || (design.textColor + "1a")}` }}
               />
             </div>
           )}

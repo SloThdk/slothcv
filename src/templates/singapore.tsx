@@ -140,8 +140,8 @@ export function SingaporeTemplate({ data, fixedSize, skipOverlay }: Props) {
                   referrerPolicy="no-referrer"
                   draggable={false}
                   className="h-24 w-24 object-cover"
-                  // box-shadow (not outline) survives PDF export
-                  style={{ boxShadow: `0 0 0 2px ${RED}` }}
+                  // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                  style={{ boxShadow: `0 0 0 2px ${design.photo.borderColor || RED}` }}
                 />
               </div>
             )}

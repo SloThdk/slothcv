@@ -111,8 +111,8 @@ export function HelveticaTemplate({ data, fixedSize, skipOverlay }: Props) {
                 referrerPolicy="no-referrer"
                 draggable={false}
                 className="h-20 w-20 rounded-sm object-cover"
-                // box-shadow (not outline) survives PDF export
-                style={{ boxShadow: `0 0 0 0.5px ${design.textColor}33` }}
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                style={{ boxShadow: `0 0 0 0.5px ${design.photo.borderColor || (design.textColor + "33")}` }}
               />
             </div>
           )}

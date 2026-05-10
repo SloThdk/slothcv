@@ -116,8 +116,8 @@ export function AalborgTemplate({ data, fixedSize, skipOverlay }: Props) {
                 width: 90,
                 height: 90,
                 flexShrink: 0,
-                // box-shadow (not outline) survives PDF export
-                boxShadow: "0 0 0 2px transparent, 0 0 0 4px rgba(255,255,255,0.3)",
+                // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                boxShadow: `0 0 0 2px transparent, 0 0 0 4px ${design.photo.borderColor || "rgba(255,255,255,0.3)"}`,
                 ...elementStyle(data, "personal.photo"),
               }}
             >

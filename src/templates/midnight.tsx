@@ -54,20 +54,21 @@ interface Props {
   skipOverlay?: boolean;
 }
 
-// Hardcoded core palette — Midnight identity. The whole template breaks if
-// you swap any of these.
-const NAVY = "#0a1628";
-const GOLD = "#d4af37";
-const CREAM = "#e8e3d8";
-const CREAM_DIM = "#bdb6a8";
-
-// Garamond stack — EB Garamond first (free), Source Serif 4 fallback,
-// generic serif last.
-const SERIF =
-  "var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif";
+// Midnight identity — pulled from the user's design at render time so
+// every Design-tab picker (accent / text / secondary / page bg / body
+// font) drives the rendering. defaultDesignForTemplate("midnight")
+// seeds the original palette (#0a1628 navy, #d4af37 gold, #e8e3d8 cream,
+// EB Garamond) on first template select; from there the pickers own it.
+// Each function below reads from data.design.* via a small alias block
+// so existing `${GOLD}` etc. references keep working without churn.
 
 export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const NAVY = data.design.pageBg;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const visible = visibleSections(data);
 
   // Trust the user's design values. defaultDesignForTemplate("midnight")
@@ -155,6 +156,9 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
 }
 
 function MidnightContact({ data }: { data: ResumeData }) {
+  const GOLD = data.design.accentColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const { personal } = data;
   const items: { id: string; label: string; href?: string }[] = [];
   if (personal.email)
@@ -220,6 +224,8 @@ function MidnightSection({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const titleId = `section.${section.id}.title`;
   return (
     <section
@@ -263,6 +269,8 @@ function MidnightBody({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const CREAM = data.design.textColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   switch (section.type) {
     case "summary": {
       const id = `section.${section.id}.body`;
@@ -310,6 +318,10 @@ function MidnightExperience({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-4">
@@ -383,6 +395,10 @@ function MidnightProjects({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-4">
@@ -468,6 +484,10 @@ function MidnightEducation({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div className="space-y-2">
@@ -525,6 +545,10 @@ function MidnightSkills({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   if (items.length === 0) return null;
   // Old-money CVs don't do chip clusters. Render as italicized comma-list.
@@ -578,6 +602,10 @@ function MidnightCerts({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const CREAM_DIM = data.design.secondaryColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const items = section.items.filter((i) => i.visible);
   return (
     <div
@@ -626,6 +654,8 @@ function MidnightFallback({
   design: GlobalDesign;
   data: ResumeData;
 }) {
+  const CREAM = data.design.textColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   if ("body" in section && (section as { body?: string }).body) {
     const id = `section.${section.id}.body`;
     return (
@@ -674,6 +704,9 @@ function MidnightBullets({
   sectionId: string;
   design: GlobalDesign;
 }) {
+  const GOLD = data.design.accentColor;
+  const CREAM = data.design.textColor;
+  const SERIF = `${data.design.bodyFont || "EB Garamond"}, 'Source Serif 4', serif`;
   const list = visibleBullets(bullets);
   if (list.length === 0) return null;
   // Honour the user's bulletStyle choice exactly. Earlier code force-

@@ -68,17 +68,12 @@ export function ObsidianTemplate({ data, fixedSize, skipOverlay }: Props) {
   // user can still set design.textColor through the Design tab and it will
   // flow through to body text via the inline styles below — but the page
   // background and the giant italic name color are intentionally fixed.
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: BLACK,
-      textColor: OFF_WHITE,
-    },
-  };
-
+  // Trust the user's design values — defaultDesignForTemplate("obsidian")
+  // seeds the initial palette and the Design tab's pickers control bg +
+  // text from there. The earlier `themed` override clobbered picker
+  // dispatches on every render.
   return (
-    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+    <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
         className="mb-12 cursor-pointer pb-6"

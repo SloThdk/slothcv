@@ -66,17 +66,12 @@ export function CarbonTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
   const visible = visibleSections(data);
 
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: SURFACE,
-      textColor: TEXT_PRIMARY,
-    },
-  };
-
+  // Trust the user's design values. defaultDesignForTemplate("carbon")
+  // seeds the initial palette (SURFACE + TEXT_PRIMARY); the Design tab's
+  // pickers control page bg + text color directly from there. Earlier a
+  // `themed` override clobbered picker dispatches every render.
   return (
-    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+    <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <header
         data-section-id="personal"
         className="mb-8 cursor-pointer pb-4"

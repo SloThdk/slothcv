@@ -8,11 +8,12 @@
  *   The canonical source ships as raw HTML+CSS at a fixed A4 scale.
  *   Slothcv's editor renders the same component at a scaled-down
  *   preview, so the template uses em units (relative to the slothcv
- *   base) but the color palette and proportional ratios are locked
- *   to the source. A user editing this template can still change the
- *   accent color etc. via the design panel; the template's `themed`
- *   override re-locks the three identity colors (page bg, ink, mint
- *   accent) so the gallery card always reads as Austin.
+ *   base). The Austin signature palette is seeded into the user's data
+ *   by defaultDesignForTemplate("austin"); from there the Design tab's
+ *   pickers control page bg / accent / text directly — no themed
+ *   override clobbering picker dispatches. Derived identity colors
+ *   below (mint-line, pill-bg, ink-mute) stay hardcoded since they
+ *   don't map to design fields.
  *
  * Palette (single source of truth — change them together or not at all):
  *   --bg          #0c1410   page background (cool charcoal-green)
@@ -78,22 +79,16 @@ export function AustinTemplate({ data, fixedSize, skipOverlay }: Props) {
   const sidebar = visible.filter((s) => SIDEBAR_TYPES.has(s.type));
   const main = visible.filter((s) => !SIDEBAR_TYPES.has(s.type));
 
-  // Override the user's design palette with the Austin identity. Page bg,
-  // accent, and text stay locked; everything else (fonts, per-element
-  // overrides via the inline editor) flows through normally.
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: BG,
-      accentColor: MINT,
-      textColor: INK,
-    },
-  };
-
+  // Pass the user's design through untouched. The Austin defaults set by
+  // defaultDesignForTemplate("austin") seed the user's data with the
+  // template's signature palette (charcoal + mint + ink); from there the
+  // Design tab's color pickers control everything. An earlier version
+  // locked pageBg/accentColor/textColor here via a `themed` override —
+  // that silently broke the Design tab's bg/accent/text pickers because
+  // the override clobbered the user's value on every render.
   return (
     <TemplateFrame
-      data={themed}
+      data={data}
       fixedSize={fixedSize}
       skipOverlay={skipOverlay}
     >

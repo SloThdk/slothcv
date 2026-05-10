@@ -70,17 +70,14 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
   const visible = visibleSections(data);
 
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: NAVY,
-      textColor: CREAM,
-    },
-  };
-
+  // Trust the user's design values. defaultDesignForTemplate("midnight")
+  // seeds the initial palette (NAVY page, CREAM ink); from there the
+  // Design tab's pickers control the page background and text color
+  // directly. The earlier `themed` override clobbered those picker
+  // dispatches on every render, making the bg/text controls visually
+  // dead — see the same comment in the other locked-palette templates.
   return (
-    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+    <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       {/* Wide outer padding — old-money CVs breathe. The TemplateFrame
           already applies the user's pageMargin; we add 24px more inside. */}
       <div style={{ paddingLeft: "24px", paddingRight: "24px" }}>

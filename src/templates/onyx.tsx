@@ -72,17 +72,12 @@ export function OnyxTemplate({ data, fixedSize, skipOverlay }: Props) {
   const { design, personal } = data;
   const visible = visibleSections(data);
 
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: BLACK,
-      textColor: TEXT,
-    },
-  };
-
+  // Trust the user's design values. defaultDesignForTemplate("onyx") seeds
+  // the initial palette (BLACK page, TEXT ink); the Design tab's pickers
+  // control page bg + text color directly from there. Earlier a `themed`
+  // override clobbered picker dispatches every render.
   return (
-    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+    <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       {/* Gradient mesh layer — sits absolutely behind everything. */}
       <div
         aria-hidden

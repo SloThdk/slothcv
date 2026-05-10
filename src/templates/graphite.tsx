@@ -79,17 +79,12 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
   const sidebar = visible.filter((s) => SIDEBAR_TYPES.has(s.type));
   const main = visible.filter((s) => !SIDEBAR_TYPES.has(s.type));
 
-  const themed: ResumeData = {
-    ...data,
-    design: {
-      ...design,
-      pageBg: PAGE,
-      textColor: TEXT_BODY,
-    },
-  };
-
+  // Trust the user's design values. defaultDesignForTemplate("graphite")
+  // seeds the initial palette (PAGE + TEXT_BODY); the Design tab's pickers
+  // control page bg + text color directly from there. Earlier a `themed`
+  // override clobbered picker dispatches every render.
   return (
-    <TemplateFrame data={themed} fixedSize={fixedSize} skipOverlay={skipOverlay}>
+    <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       {/* Main grid — sidebar on left at 35%, body at 65%. The sidebar is a
           colored block with rounded corners — sits AS a card on the page,
           not bleeding to the page edge (cleaner across export formats). */}

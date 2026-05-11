@@ -71,6 +71,18 @@ export function TemplateFrame({
     boxSizing: "border-box",
     "--cv-title-font": `var(--font-${slugFont(design.titleFont)}, ${design.titleFont}), system-ui, sans-serif`,
     "--cv-body-font": `var(--font-${slugFont(design.bodyFont)}, ${design.bodyFont}), system-ui, sans-serif`,
+    // Photo shape → border-radius mapping. Universal across every
+    // template via the CSS rule in the <style> block below. The four
+    // shapes the picker exposes: square (0), rounded (8px), circle (50%),
+    // arch (50% 50% 0 0 — the half-dome silhouette of a Roman arch).
+    "--cv-photo-radius":
+      design.photo.shape === "circle"
+        ? "50%"
+        : design.photo.shape === "rounded"
+          ? "8px"
+          : design.photo.shape === "arch"
+            ? "50% 50% 0 0"
+            : "0",
   };
 
   if (fixedSize) {
@@ -148,6 +160,14 @@ export function TemplateFrame({
       <style>{`
         .slothcv-page-hover :is(h1, h2, h3):not([data-element-id^="custom"]) {
           font-family: var(--cv-title-font) !important;
+        }
+        /* Photo shape → border-radius. Targets the <img> inside the
+           personal-photo wrapper across every template so the Design-tab
+           "Shape" picker (square / circle / rounded / arch) actually
+           drives the visual, regardless of which Tailwind rounded-*
+           utility class the template hardcoded on the img. */
+        .slothcv-page-hover [data-element-id="personal.photo"] img {
+          border-radius: var(--cv-photo-radius) !important;
         }
       `}</style>
       {children}

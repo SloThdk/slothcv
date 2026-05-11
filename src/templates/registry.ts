@@ -39,13 +39,24 @@ export type DesignControlKey =
   | "sidebarWidth"
   | "pageMargin"
   | "photo"
+  | "photoPosition"
   | "watermark";
 
 /** Controls that no template honors today — hidden globally regardless
  *  of which template is active. Move an entry out of here the moment a
- *  template starts consuming the corresponding design field. */
+ *  template starts consuming the corresponding design field.
+ *
+ *  - dividerStyle: no template imports <Divider /> (the component that
+ *    consumes design.dividerStyle).
+ *  - photoPosition: no template reads design.photo.position. Each
+ *    template's layout hard-codes the photo's slot (e.g. Berlin always
+ *    puts it sidebar-top, Aurora always top-right), so the picker would
+ *    dispatch state nothing reads. Re-positioning would require per-
+ *    template grid reflow logic, not a global override. Hide until at
+ *    least one template's layout is parameterised on photo.position. */
 export const GLOBALLY_HIDDEN_CONTROLS: ReadonlySet<DesignControlKey> = new Set([
   "dividerStyle",
+  "photoPosition",
 ]);
 
 export interface TemplateMeta {

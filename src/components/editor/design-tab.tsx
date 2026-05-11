@@ -515,19 +515,21 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
                 setDesign({ photo: { ...design.photo, shape: v } })
               }
             />
-            <ChipRow
-              label="Position"
-              value={design.photo.position}
-              options={[
-                "top-left",
-                "top-center",
-                "top-right",
-                "sidebar",
-              ] as PhotoPosition[]}
-              onChange={(v) =>
-                setDesign({ photo: { ...design.photo, position: v } })
-              }
-            />
+            {!isHidden("photoPosition") && (
+              <ChipRow
+                label="Position"
+                value={design.photo.position}
+                options={[
+                  "top-left",
+                  "top-center",
+                  "top-right",
+                  "sidebar",
+                ] as PhotoPosition[]}
+                onChange={(v) =>
+                  setDesign({ photo: { ...design.photo, position: v } })
+                }
+              />
+            )}
             {/* Border colour + width — both are independently controllable
                 so users can match the photo border to their personal
                 brand without first having to override accentColor. Empty

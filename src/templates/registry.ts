@@ -21,12 +21,8 @@ import type { TemplateId } from "@/types/resume";
  *  what actually changes the preview. Adding a new control: extend this
  *  union, wire it in design-tab.tsx behind an `isHidden(key)` check.
  *
- *  Currently-tracked dead controls (hidden globally because no template
- *  reads the corresponding `design.*` field):
- *    - "dividerStyle" — the `<Divider />` component exists but no
- *      template imports it, so the design.dividerStyle picker had no
- *      effect anywhere. Hidden globally until at least one template
- *      adopts <Divider /> under its section headers.
+ *  Adding a new control: extend the union here, wire it in design-tab.tsx
+ *  behind an `isHidden(key)` check.
  */
 export type DesignControlKey =
   | "typography"
@@ -46,8 +42,6 @@ export type DesignControlKey =
  *  of which template is active. Move an entry out of here the moment a
  *  template starts consuming the corresponding design field.
  *
- *  - dividerStyle: no template imports <Divider /> (the component that
- *    consumes design.dividerStyle).
  *  - photoPosition: no template reads design.photo.position. Each
  *    template's layout hard-codes the photo's slot (e.g. Berlin always
  *    puts it sidebar-top, Aurora always top-right), so the picker would
@@ -55,8 +49,16 @@ export type DesignControlKey =
  *    template grid reflow logic, not a global override. Hide until at
  *    least one template's layout is parameterised on photo.position. */
 export const GLOBALLY_HIDDEN_CONTROLS: ReadonlySet<DesignControlKey> = new Set([
-  "dividerStyle",
   "photoPosition",
+]);
+
+/** Templates that ACTUALLY apply design.dividerStyle under section
+ *  headers. The <Divider /> component in frame.tsx is the sole consumer
+ *  of design.dividerStyle, and only SectionHeader (also in frame.tsx)
+ *  renders <Divider /> — so the picker is live only on templates that
+ *  use SectionHeader. Re-audit by grepping for `SectionHeader\b`. */
+export const DIVIDER_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "scratch",
 ]);
 
 /** Templates that don't render a photo wrapper. The Design tab's entire
@@ -98,17 +100,75 @@ export const SIDEBAR_WIDTH_TEMPLATES: ReadonlySet<TemplateId> = new Set([
   "scratch",
 ]);
 
-/** Templates that don't render section titles through the shared
- *  EditableSectionTitle component, so design.headerStyle has no effect.
- *  Each of these renders headings with hardcoded chrome (e.g. copenhagen
- *  uses its own lowercase-tracked label markup). Re-audit via grep for
- *  "EditableSectionTitle" import. */
-export const NO_HEADER_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
-  "atlas",
-  "blank",
-  "copenhagen",
+/** Templates that ACTUALLY apply design.headerStyle to their section
+ *  titles. Earlier the registry tracked the inverse (NO_HEADER_STYLE_
+ *  TEMPLATES = 5 templates that didn't use EditableSectionTitle) which
+ *  was wrong: importing EditableSectionTitle doesn't imply honouring
+ *  headerStyle — the lens only stabilises the inline-edit element-id.
+ *  The actual style transform (uppercase / titlecase / underline / box /
+ *  accent-block) lives in two places: SectionHeader in frame.tsx
+ *  (handles all 5 styles) and transformHeader in shared.ts (handles
+ *  uppercase + titlecase only).
+ *
+ *  Positive list — every other template hardcodes its heading chrome
+ *  (Berlin's `text-base font-bold tracking-wider`, Oslo's
+ *  `uppercase tracking-[0.2em]`, Carbon's terminal `> $` prefix, etc.),
+ *  so showing the picker on them would be a dead lever.
+ *
+ *  Re-audit by grepping for `SectionHeader\b` (the frame component
+ *  that handles all 5 styles) and `transformHeader\(` (the helper
+ *  that handles uppercase + titlecase). */
+export const HEADER_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "scratch", // uses SectionHeader — all 5 styles honored
+  "helsinki", // calls transformHeader — uppercase + titlecase
+  "madrid", // calls transformHeader — uppercase + titlecase
+  "tokyo", // calls transformHeader — uppercase + titlecase
+]);
+
+/** Templates that DON'T honor design.bulletStyle. The bulletGlyph helper
+ *  in shared.ts is consumed by either: the shared SectionBody in
+ *  components.tsx (used by 34 templates), or directly by 12 templates
+ *  that hand-roll their own body renderer (aurora / cambridge / carbon
+ *  / eclipse / geist / graphite / linear / helvetica / obsidian /
+ *  midnight / onyx / stripe). The list below is the residue —
+ *  templates whose body renderers neither use SectionBody nor call
+ *  bulletGlyph, so picking a different bullet glyph in the Design tab
+ *  is a dead lever. Re-audit by grepping for `bulletGlyph\(` and
+ *  `SectionBody\b` and subtracting from TEMPLATE_IDS. */
+export const NO_BULLET_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atelier",
+  "boston",
+  "canvas",
+  "davos",
+  "founder",
+  "madison",
+  "mayfair",
+  "scrubs",
+  "stanford",
+  "studio",
+]);
+
+/** Templates whose own `case "skills"` renderer in their switch never
+ *  consults design.skillBarStyle. The shared SectionBody (used by 34
+ *  templates) DOES honour skillBarStyle for both bar and pills layouts,
+ *  but these 13 hand-roll the visualisation with a hardcoded style
+ *  (dashboard says so explicitly in a code comment: "Bypasses the
+ *  global skillBarStyle on purpose"). Re-audit by grepping for
+ *  `case "skills"` and `design.skillBarStyle`. */
+export const NO_SKILL_BAR_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "aurora",
+  "carbon",
+  "eclipse",
   "geist",
-  "vienna",
+  "graphite",
+  "helvetica",
+  "linear",
+  "madison",
+  "mayfair",
+  "midnight",
+  "obsidian",
+  "onyx",
+  "stripe",
 ]);
 
 /** Templates that render no body text at all (blank canvas / toolshelf).

@@ -41,7 +41,10 @@ import {
   GLOBALLY_HIDDEN_CONTROLS,
   NO_PHOTO_TEMPLATES,
   SIDEBAR_WIDTH_TEMPLATES,
-  NO_HEADER_STYLE_TEMPLATES,
+  HEADER_STYLE_TEMPLATES,
+  DIVIDER_STYLE_TEMPLATES,
+  NO_BULLET_STYLE_TEMPLATES,
+  NO_SKILL_BAR_STYLE_TEMPLATES,
   NO_TEXT_TEMPLATES,
   type DesignControlKey,
 } from "@/templates/registry";
@@ -154,9 +157,30 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
       // shape / border / position without first switching templates.
       if (NO_PHOTO_TEMPLATES.has(template) && !hasUploadedPhoto) return true;
     }
-    if (key === "headerStyle" && NO_HEADER_STYLE_TEMPLATES.has(template))
+    // headerStyle is a POSITIVE list — only 4 templates honour the
+    // picker (scratch + helsinki + madrid + tokyo). Every other
+    // template hardcodes its heading chrome via Tailwind class, so the
+    // picker is a dead lever there.
+    if (key === "headerStyle" && !HEADER_STYLE_TEMPLATES.has(template))
+      return true;
+    // dividerStyle is a POSITIVE list — only scratch consumes the
+    // <Divider /> component that reads design.dividerStyle.
+    if (key === "dividerStyle" && !DIVIDER_STYLE_TEMPLATES.has(template))
       return true;
     if (key === "sidebarWidth" && !SIDEBAR_WIDTH_TEMPLATES.has(template))
+      return true;
+    // bulletStyle dies on templates whose body renderers don't read
+    // bulletGlyph(design) at all (no SectionBody, no hand-rolled
+    // bulletGlyph call). Surface as an explicit negative list.
+    if (key === "bulletStyle" && NO_BULLET_STYLE_TEMPLATES.has(template))
+      return true;
+    // skillBarStyle dies on templates whose own `case "skills"` switch
+    // hardcodes the visualisation (bar / chip / radial-ring etc.) and
+    // never consults design.skillBarStyle.
+    if (
+      key === "skillBarStyle" &&
+      NO_SKILL_BAR_STYLE_TEMPLATES.has(template)
+    )
       return true;
     if (NO_TEXT_TEMPLATES.has(template)) {
       // Blank canvas templates render no body text — every typography

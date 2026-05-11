@@ -234,6 +234,13 @@ function CarbonSection({
       style={positionStyle(section)}
       className="group relative cursor-pointer break-inside-avoid rounded-sm p-1 -m-1"
     >
+      {/* Terminal-prompt visual `> $ ` glued to the editable section
+          title. Earlier this was a template-LITERAL string that wrapped
+          the JSX in backticks — the browser then rendered the raw
+          source text "> $<EditableSectionTitle...>" instead of the
+          component, so every section heading on Carbon shipped broken
+          for the user. Fix: split the static prompt prefix into a
+          non-editable span and let EditableSectionTitle render as JSX. */}
       <h2
         data-element-id={titleId}
         className="mb-3 inline-block cursor-text pb-0.5 text-[0.82em] uppercase"
@@ -246,7 +253,10 @@ function CarbonSection({
           ...elementStyle(data, titleId),
         }}
       >
-        {`> $<EditableSectionTitle sid={section.id} data={data}>{section.title}</EditableSectionTitle>`}
+        <span className="select-none opacity-70">{"> $ "}</span>
+        <EditableSectionTitle sid={section.id} data={data}>
+          {section.title}
+        </EditableSectionTitle>
       </h2>
       <CarbonBody section={section} design={design} data={data} />
       <SectionActions section={section} />

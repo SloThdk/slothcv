@@ -540,10 +540,22 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
                 Border
               </div>
               <div className="flex items-center gap-2">
+                {/* Swatch shows the EFFECTIVE border colour. When the user
+                    has not set design.photo.borderColor (the "auto" state),
+                    every template falls back to a colour derived from the
+                    palette — overwhelmingly design.accentColor (with or
+                    without an alpha suffix). Showing accentColor in the
+                    swatch matches what the user actually sees on the
+                    canvas; the earlier #000000 default was a lie that
+                    only resolved itself once the user touched the picker.
+                    Hex input still shows the empty "auto (accent)"
+                    placeholder so the data-state is honest. */}
                 <input
                   type="color"
                   aria-label="Photo border colour"
-                  value={(design.photo.borderColor || "#000000").slice(0, 7)}
+                  value={(
+                    design.photo.borderColor || design.accentColor || "#000000"
+                  ).slice(0, 7)}
                   onChange={(e) =>
                     setDesign({
                       photo: { ...design.photo, borderColor: e.target.value },

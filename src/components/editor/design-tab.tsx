@@ -39,6 +39,10 @@ import { TEMPLATE_IDS, type TemplateId } from "@/types/resume";
 import {
   TEMPLATES_BY_ID,
   GLOBALLY_HIDDEN_CONTROLS,
+  NO_PHOTO_TEMPLATES,
+  SIDEBAR_WIDTH_TEMPLATES,
+  NO_HEADER_STYLE_TEMPLATES,
+  NO_TEXT_TEMPLATES,
   type DesignControlKey,
 } from "@/templates/registry";
 import { RotateCcw } from "lucide-react";
@@ -108,17 +112,68 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const design = useEditorStore((s) => s.data.design);
   const setDesign = useEditorStore((s) => s.setDesign);
   const template = useEditorStore((s) => s.data.meta.template);
+  // Runtime signals — re-read from store so the Design tab reacts to
+  // user actions in real time. If a user uploads a photo on a template
+  // that doesn't render one by default, we still want to surface the
+  // photo controls so the choice (shape / border / position) isn't
+  // hidden behind a template switch. Symmetric on delete: clear the
+  // photoUrl on a NO_PHOTO_TEMPLATES template and the controls fold
+  // away again.
+  const hasUploadedPhoto = useEditorStore(
+    (s) => !!s.data.personal.photoUrl && s.data.personal.photoUrl.length > 0,
+  );
+  // A user dropping a custom text/image element onto a "blank" template
+  // doesn't unlock the global typography controls — custom elements
+  // carry their own font / colour state managed by the per-element
+  // inspector, not the global Design tab. Tracking customElements here
+  // would be misleading.
   const { t } = useLanguage();
   const confirm = useConfirm();
 
   // Capability check: each Design control is wrapped in `isHidden(key)`
-  // so a template that doesn't honor it (e.g. dividerStyle on every
-  // current template) doesn't show a dead picker. Two layers:
-  //   - GLOBALLY_HIDDEN_CONTROLS: controls no template honors (declared
-  //     centrally in registry.ts so the dead set is one source of truth)
-  //   - TEMPLATES_BY_ID[id].hiddenDesignControls: per-template gaps
+  // so a template that doesn't honor it doesn't show a dead picker.
+  // Five layers, in order:
+  //   1. GLOBALLY_HIDDEN_CONTROLS — controls no template honors today
+  //      (dividerStyle, photoPosition)
+  //   2. Architectural sets — templates declared as not-rendering a
+  //      whole category (NO_PHOTO_TEMPLATES, NO_HEADER_STYLE_TEMPLATES,
+  //      etc.) auto-hide the related control
+  //   3. Runtime override — if user data introduces the feature
+  //      (e.g. uploaded a photo on a NO_PHOTO_TEMPLATES template),
+  //      undo the architectural hide. Symmetric on delete.
+  //   4. TEMPLATES_BY_ID[id].hiddenDesignControls — per-template override
+  //      for one-off cases not covered by the architectural sets
+  //   5. Default: visible
   const isHidden = (key: DesignControlKey): boolean => {
     if (GLOBALLY_HIDDEN_CONTROLS.has(key)) return true;
+    if (key === "photo") {
+      // Show photo controls if EITHER the template renders a photo slot
+      // OR the user has uploaded a photo. The latter is the runtime
+      // "user added the feature" override Philip specified — without
+      // it, a user who uploads a headshot on Helsinki can't access
+      // shape / border / position without first switching templates.
+      if (NO_PHOTO_TEMPLATES.has(template) && !hasUploadedPhoto) return true;
+    }
+    if (key === "headerStyle" && NO_HEADER_STYLE_TEMPLATES.has(template))
+      return true;
+    if (key === "sidebarWidth" && !SIDEBAR_WIDTH_TEMPLATES.has(template))
+      return true;
+    if (NO_TEXT_TEMPLATES.has(template)) {
+      // Blank canvas templates render no body text — every typography
+      // and section-formatting control is dead on them. Custom elements
+      // dropped from the toolshelf carry their own font + colour state
+      // managed by the inspector, not the global Design tab.
+      if (
+        key === "typography" ||
+        key === "fontScale" ||
+        key === "letterSpacing" ||
+        key === "headerStyle" ||
+        key === "bulletStyle" ||
+        key === "skillBarStyle"
+      ) {
+        return true;
+      }
+    }
     const perTemplate = TEMPLATES_BY_ID[template]?.hiddenDesignControls;
     return perTemplate ? perTemplate.includes(key) : false;
   };
@@ -492,6 +547,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
         )}
       </Section>
 
+      {!isHidden("photo") && (
       <Section title={t("design.photo")} onReset={() => onResetGroup("photo")} sectionRef={photoRef}>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -610,21 +666,31 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           </>
         )}
       </Section>
+      )}
 
+      {/* Section-style box is hidden when ALL three sub-controls are
+          dead — happens on blank where there are no sections to style. */}
+      {!(
+        isHidden("headerStyle") &&
+        isHidden("dividerStyle") &&
+        isHidden("bulletStyle")
+      ) && (
       <Section title={t("design.sectionStyle")} onReset={() => onResetGroup("sections")}>
-        <ChipRow
-          label="Section title style"
-          hint={DESIGN_HINT.headerStyle}
-          value={design.headerStyle}
-          options={[
-            "uppercase",
-            "titlecase",
-            "underline",
-            "box",
-            "accent-block",
-          ] as HeaderStyle[]}
-          onChange={(v) => setDesign({ headerStyle: v })}
-        />
+        {!isHidden("headerStyle") && (
+          <ChipRow
+            label="Section title style"
+            hint={DESIGN_HINT.headerStyle}
+            value={design.headerStyle}
+            options={[
+              "uppercase",
+              "titlecase",
+              "underline",
+              "box",
+              "accent-block",
+            ] as HeaderStyle[]}
+            onChange={(v) => setDesign({ headerStyle: v })}
+          />
+        )}
         {!isHidden("dividerStyle") && (
           <ChipRow
             label="Divider under each title"
@@ -640,14 +706,17 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
             onChange={(v) => setDesign({ dividerStyle: v })}
           />
         )}
-        <ChipRow
-          label="Bullet glyph"
-          hint={DESIGN_HINT.bulletStyle}
-          value={design.bulletStyle}
-          options={["disc", "dash", "arrow", "square", "none"] as BulletStyle[]}
-          onChange={(v) => setDesign({ bulletStyle: v })}
-        />
+        {!isHidden("bulletStyle") && (
+          <ChipRow
+            label="Bullet glyph"
+            hint={DESIGN_HINT.bulletStyle}
+            value={design.bulletStyle}
+            options={["disc", "dash", "arrow", "square", "none"] as BulletStyle[]}
+            onChange={(v) => setDesign({ bulletStyle: v })}
+          />
+        )}
       </Section>
+      )}
 
       <Section title={t("design.specialty")}>
         {!isHidden("skillBarStyle") && (

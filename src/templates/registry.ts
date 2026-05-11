@@ -59,6 +59,62 @@ export const GLOBALLY_HIDDEN_CONTROLS: ReadonlySet<DesignControlKey> = new Set([
   "photoPosition",
 ]);
 
+/** Templates that don't render a photo wrapper. The Design tab's entire
+ *  FOTO section (show-photo toggle + shape + border) hides for these so
+ *  the user isn't pointed at controls that would dispatch state nothing
+ *  in the template reads. Audited via grep for data-element-id=
+ *  "personal.photo" — anything matching opts out of this set automatically.
+ *  When a template starts rendering the photo wrapper, remove it here. */
+export const NO_PHOTO_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atelier",
+  "blank",
+  "boston",
+  "cambridge",
+  "davos",
+  "eclipse",
+  "heidelberg",
+  "helsinki",
+  "mayfair",
+  "oslo",
+  "reykjavik",
+  "roskilde",
+  "scratch",
+  "scrubs",
+  "stanford",
+  "vienna",
+]);
+
+/** Templates that don't render a sidebar layout (or render it with a
+ *  hardcoded width). Only the templates listed below READ design.
+ *  sidebarWidth — everyone else hard-codes the column split or has a
+ *  single-column layout. Re-audit via grep for "design.sidebarWidth"
+ *  before edits. */
+export const SIDEBAR_WIDTH_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "aabenraa",
+  "aarhus",
+  "aurora",
+  "berlin",
+  "frederiksberg",
+  "scratch",
+]);
+
+/** Templates that don't render section titles through the shared
+ *  EditableSectionTitle component, so design.headerStyle has no effect.
+ *  Each of these renders headings with hardcoded chrome (e.g. copenhagen
+ *  uses its own lowercase-tracked label markup). Re-audit via grep for
+ *  "EditableSectionTitle" import. */
+export const NO_HEADER_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atlas",
+  "blank",
+  "copenhagen",
+  "geist",
+  "vienna",
+]);
+
+/** Templates that render no body text at all (blank canvas / toolshelf).
+ *  Typography + scale + letter-spacing pickers have nothing to act on. */
+export const NO_TEXT_TEMPLATES: ReadonlySet<TemplateId> = new Set(["blank"]);
+
 export interface TemplateMeta {
   id: TemplateId;
   /** Display name shown in the picker. */

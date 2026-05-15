@@ -399,3 +399,26 @@ export const FONT_NAMES: string[] = FONT_GROUPS.flatMap((g) => g.fonts);
 export const ALL_FONT_VARIABLE_CLASSES = Object.values(FONT_REGISTRY)
   .map((f) => f.variable)
   .join(" ");
+
+/** Just the Inter variable className. Applied on the root layout
+ *  alone so the landing page's CSS doesn't trigger the 30-font
+ *  @font-face cascade. Template-only fonts (Lora, EB_Garamond,
+ *  Fraunces, every other entry in FONT_REGISTRY) are gated to
+ *  `/editor` + `/new` + `/dashboard` via their respective segment
+ *  layouts — anywhere the user is actively editing a CV. Landing
+ *  page TemplatePreview cards render in Inter because `--font-…`
+ *  vars aren't defined in their scope, which the CSS chain
+ *  resolves by falling back to `--font-sans` (inherited Inter).
+ *  Result: landing's critical path drops from 8 woff2 files at
+ *  ~1.7 s each to 1, while editor/new/dashboard still mount with
+ *  the full font palette the user picks from. */
+export const LANDING_FONT_VARIABLE_CLASSES = FONT_REGISTRY.Inter.variable;
+
+/** Every font EXCEPT Inter — applied at the segment-layout level on
+ *  routes that need the template palette (`/editor`, `/new`,
+ *  `/dashboard`). Inter already lives on `<html>` via
+ *  LANDING_FONT_VARIABLE_CLASSES so we don't double-apply it. */
+export const NON_INTER_FONT_VARIABLE_CLASSES = Object.entries(FONT_REGISTRY)
+  .filter(([key]) => key !== "Inter")
+  .map(([, f]) => f.variable)
+  .join(" ");

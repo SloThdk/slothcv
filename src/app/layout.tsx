@@ -11,7 +11,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ThemeProvider } from "@/lib/theme/ThemeContext";
 import { ConfirmProvider } from "@/components/ui/confirm-modal";
 import { PromptProvider } from "@/components/ui/prompt-modal";
-import { ALL_FONT_VARIABLE_CLASSES } from "@/lib/fonts/registry";
+import { LANDING_FONT_VARIABLE_CLASSES } from "@/lib/fonts/registry";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
@@ -52,7 +52,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${ALL_FONT_VARIABLE_CLASSES} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${LANDING_FONT_VARIABLE_CLASSES} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
         {/* Provider order matters: Theme outermost so the rest renders with
             the correct colors immediately. Language next so toasts can use

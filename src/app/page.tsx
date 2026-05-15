@@ -100,11 +100,13 @@ export default function LandingPage() {
     once: true,
     margin: "0px 0px -80px 0px",
   });
-  const galleryRef = useRef<HTMLDivElement>(null);
-  const galleryInView = useInView(galleryRef, {
-    once: true,
-    margin: "0px 0px -80px 0px",
-  });
+  // galleryRef + galleryInView were used by the framer-motion staggerContainer
+  // that wrapped the template gallery. That wrapper was replaced with a plain
+  // <div> + CSS animation (.gallery-card-rise in globals.css) so the
+  // framer-motion runtime no longer hydrates per gallery card — Lighthouse
+  // mobile flagged the previous setup as 137 KiB of unused-JS on landing.
+  // The hero + features stagger still uses framer-motion since those are
+  // five-element groups, not sixty.
 
   return (
     <div className="bg-[color:var(--color-bg)] text-[color:var(--color-text)] transition-colors">
@@ -226,48 +228,38 @@ export default function LandingPage() {
         </div>
         {/* Gallery cascade — 30ms apart, slightly faster than the
             features stagger because there are many more cards. */}
-        <motion.div
-          ref={galleryRef}
-          variants={staggerContainer(0.03)}
-          initial="initial"
-          animate={galleryInView ? "animate" : "initial"}
-          // grid-cols-1 is load-bearing on mobile: without an explicit track,
-          // the implicit grid sizes columns to content, and the 794px-wide
-          // (A4 @96dpi) template stage inside each TemplatePreview blows out
-          // the column past the 375px viewport — even with overflow-hidden
-          // clipping the visual, the grid track is still 794px so users
-          // get horizontal page-scroll. `minmax(0, 1fr)` (what Tailwind's
-          // grid-cols-1 expands to) breaks that inflation.
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {visibleTemplates.map((tpl) => (
-            <motion.div
+        {/* Gallery grid — plain <div> instead of <motion.div>. The
+            previous staggered fade-in was framer-motion mounting 60
+            <motion.div> instances at first paint, each registering
+            its own variant resolver + whileHover handler — Lighthouse
+            mobile flagged the resulting hydration as a 137 KiB
+            unused-JS line + ~70 ms forced-reflow contributor. CSS
+            keyframes on the card itself (.gallery-card-rise in
+            globals.css) give the same staggered fade-in without
+            framer's per-element runtime cost, mirroring the Reveal
+            pattern in philipsloth-portfolio. Hover lift moves to a
+            CSS transition on .gallery-card-rise:hover.
+            grid-cols-1 is load-bearing on mobile: without an explicit
+            track the 794 px-wide (A4 @96dpi) template stage inside
+            each TemplatePreview blows out the column past the 375 px
+            viewport — `minmax(0, 1fr)` (which grid-cols-1 expands to)
+            breaks that inflation. */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleTemplates.map((tpl, idx) => (
+            // `content-visibility: auto` tells the browser to skip
+            // paint + style for descendants while the card is outside
+            // the viewport; React still mounts (so the
+            // LazyTemplatePreview's IntersectionObserver wakes up),
+            // but the work is deferred. `containIntrinsicSize`
+            // reserves the card's expected size so the scrollbar
+            // doesn't jump when cards downstream materialise.
+            // `animationDelay` caps at 600 ms so card #60 doesn't
+            // wait 1.8 s to fade in.
+            <div
               key={tpl.id}
-              variants={staggerItem}
-              // Hover lift via Framer transform so the underlying CSS
-              // class rules don't fight the entrance translate. Pure
-              // transform — no layout impact.
-              whileHover={{ y: -4, scale: 1.01 }}
-              transition={{ duration: 0.2, ease: EASE.out }}
-              // `content-visibility: auto` tells the browser to skip
-              // rendering descendants of this card while it is
-              // outside the viewport. The card stays in the DOM and
-              // scrolls into view normally, but its inner
-              // TemplateRenderer (which mounts the template-specific
-              // font + a full sample-data layout pass — ~30 fonts
-              // across the 60-card gallery) doesn't run style / paint
-              // / layout work until the user actually scrolls close
-              // to it. `containIntrinsicSize` reserves the card's
-              // expected size so the scrollbar doesn't jump when
-              // cards downstream materialise. Net effect on
-              // PageSpeed: TBT drops dramatically because only the
-              // ~6-9 cards visible above the fold actually hydrate
-              // their preview at first paint — the rest defer to
-              // scroll. The "what you see is what you'll edit"
-              // guarantee is preserved (it's the same React
-              // TemplateRenderer; just deferred), so no design
-              // compromise.
+              className="gallery-card-rise"
               style={{
+                animationDelay: `${Math.min(idx * 30, 600)}ms`,
                 contentVisibility: "auto",
                 containIntrinsicSize: "auto 640px",
               }}
@@ -302,9 +294,9 @@ export default function LandingPage() {
                   </p>
                 </div>
               </button>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
         <div className="mt-12 flex justify-center">
           <Link href="/dashboard">
             <Button size="lg">

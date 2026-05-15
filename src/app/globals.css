@@ -564,6 +564,33 @@ button:disabled,
  * !important is required: framer-motion sets duration as inline style
  * via the Animations API, and Tailwind's transition-duration utilities
  * also win specificity wars without it. */
+/* Gallery card entrance — CSS keyframes replacement for the
+ * <motion.div> staggered fade-in that used to wrap each template
+ * card. The motion variants registered a runtime resolver per
+ * card; with ~60 cards on the landing page that compounded into
+ * the 137 KiB unused-JS line + ~70 ms forced-reflow contributor
+ * PageSpeed flagged on mobile. Stagger is driven by inline
+ * `animationDelay` on the React element (capped at 600 ms in
+ * page.tsx so card #60 doesn't wait 1.8 s) — no framer-motion
+ * runtime cost.
+ *
+ * `translate3d` + `opacity` only — composited, no layout work.
+ * `forwards` keeps the card at its end state so re-renders don't
+ * snap back to opacity:0. */
+@keyframes galleryCardRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.gallery-card-rise {
+  animation: galleryCardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

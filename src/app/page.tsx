@@ -140,45 +140,45 @@ export default function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_10%,rgba(15,23,42,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_10%,rgba(255,255,255,0.05),transparent_50%)]"
         />
-        {/* Hero entrance — custom variants override the default staggerItem
-            so this entrance feels MORE pronounced than the rest of the
-            page (24 px rise, 600 ms duration, expo-out). The headline
-            also gets a tiny scale-in (0.98 → 1) and a subtle filter:blur
-            wipe so the typography reads as "settling" rather than
-            "popping". Stagger spacing of 130 ms lets each element have
-            its own moment without dragging the total too long. */}
-        <motion.div
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer(0.13, 0.05)}
-          className="mx-auto max-w-3xl text-center"
-        >
-          <motion.p
-            variants={HERO_ITEM}
-            className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium text-[color:var(--color-text-muted)]"
+        {/* Hero entrance — CSS keyframes (.hero-rise / .hero-rise-headline
+            in globals.css) instead of framer-motion variants. The
+            previous setup held the subhead behind a JS-hydrated motion
+            variant with a ~900 ms delay, which made the subhead the
+            page's LCP element and pushed LCP to 3.9 s on mobile (the
+            element was visible in the SSR HTML but framer's
+            opacity-0 starting state hid it until variants fired).
+            CSS keyframes run as soon as the browser parses the
+            stylesheet, so the SSR-rendered text reaches LCP-counted
+            opacity inside the first paint window. Same 24 px rise,
+            same staggered cadence (delays inline below), just no JS
+            gate. */}
+        <div className="mx-auto max-w-3xl text-center">
+          <p
+            className="hero-rise mb-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1 text-xs font-medium text-[color:var(--color-text-muted)]"
+            style={{ animationDelay: "50ms" }}
           >
             <Sparkles className="h-3 w-3" />
             {t("landing.eyebrow")}
-          </motion.p>
-          <motion.h1
-            variants={HERO_HEADLINE}
-            className="text-balance text-3xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-5xl md:text-6xl"
+          </p>
+          <h1
+            className="hero-rise-headline text-balance text-3xl font-semibold tracking-tight text-[color:var(--color-text)] sm:text-5xl md:text-6xl"
+            style={{ animationDelay: "180ms" }}
           >
             {t("landing.headlineA")}
             <br />
             <span className="text-[color:var(--color-text-muted)]">
               {t("landing.headlineB")}
             </span>
-          </motion.h1>
-          <motion.p
-            variants={HERO_ITEM}
-            className="mx-auto mt-6 max-w-xl text-pretty text-base text-[color:var(--color-text-muted)] sm:text-lg"
+          </h1>
+          <p
+            className="hero-rise mx-auto mt-6 max-w-xl text-pretty text-base text-[color:var(--color-text-muted)] sm:text-lg"
+            style={{ animationDelay: "310ms" }}
           >
             {t("landing.body")}
-          </motion.p>
-          <motion.div
-            variants={HERO_ITEM}
-            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          </p>
+          <div
+            className="hero-rise mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            style={{ animationDelay: "440ms" }}
           >
             <Link href="/dashboard" className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
@@ -191,8 +191,8 @@ export default function LandingPage() {
                 {t("landing.signIn")}
               </Button>
             </Link>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </section>
 
       {/* ---------------- Feature trio ----------------

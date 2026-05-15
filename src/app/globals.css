@@ -564,6 +564,46 @@ button:disabled,
  * !important is required: framer-motion sets duration as inline style
  * via the Animations API, and Tailwind's transition-duration utilities
  * also win specificity wars without it. */
+/* Hero entrance — CSS keyframes that replace framer-motion variants
+ * on the landing hero. Previously the hero subhead was the page's
+ * LCP element AND it sat behind an opacity-0 framer-motion variant
+ * that didn't flip until JS hydrated (~1.1 s element-render-delay
+ * on mobile), so PageSpeed's LCP audit hit 3.9 s. CSS keyframes
+ * run as soon as the browser parses the stylesheet, well before
+ * hydration completes, so the LCP element paints with the rest of
+ * the SSR-rendered DOM. Same visual — 24 px rise, expo-out, fade
+ * — just earlier on the timeline. */
+@keyframes heroRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.hero-rise {
+  animation: heroRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Headline gets a slightly slower, more pronounced rise — matches
+ * the previous HERO_HEADLINE variant (600 ms with a tiny scale-in). */
+@keyframes heroRiseHeadline {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+.hero-rise-headline {
+  animation: heroRiseHeadline 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Gallery card entrance — CSS keyframes replacement for the
  * <motion.div> staggered fade-in that used to wrap each template
  * card. The motion variants registered a runtime resolver per

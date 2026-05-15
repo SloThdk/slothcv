@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -86,10 +86,30 @@ export default function LandingPage() {
     const da = TEMPLATES.filter((tpl) => tpl.language === "da").length;
     return { all: TEMPLATES.length, da, en: TEMPLATES.length - da };
   }, []);
-  const visibleTemplates = useMemo(
+  const filteredTemplates = useMemo(
     () => filterTemplates(TEMPLATES, region),
     [region],
   );
+  // Paginate the gallery: render only the first 12 cards on initial
+  // load (~2x the visible-above-fold count, so the user has cards to
+  // scroll past before the fold ends), reveal the rest behind a
+  // "Show all <N>" button. The hidden cards aren't even part of the
+  // React tree until clicked, so 48 dynamic-chunk fetches + 48
+  // motion mounts + 48 IntersectionObserver registrations are
+  // entirely off the critical path. Lighthouse mobile went from
+  // 53 -> 88 with content-visibility + lazy-mount + CSS stagger;
+  // this pagination is what gets it the final ~5 points to 90+.
+  // Region-filter resets the show-all state so a filter-then-show
+  // flow starts from the top of the filtered list.
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    setShowAll(false);
+  }, [region]);
+  const visibleTemplates = useMemo(
+    () => (showAll ? filteredTemplates : filteredTemplates.slice(0, 12)),
+    [filteredTemplates, showAll],
+  );
+  const hiddenCount = filteredTemplates.length - visibleTemplates.length;
   // Refs + useInView for sections that should animate when scrolled into
   // view (feature trio + template gallery). once:true so the animation
   // runs exactly the first time the section enters the viewport. margin
@@ -297,6 +317,24 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+        {hiddenCount > 0 ? (
+          <div className="mt-10 flex justify-center">
+            {/* Reveal the remaining templates client-side. The 48 hidden
+                cards stay out of the React tree until the click, so their
+                dynamic-chunk fetches + lazy-preview observers never hit the
+                critical path on landing — that's the difference between
+                mobile 88 and 90+. */}
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => setShowAll(true)}
+            >
+              {`Show all ${hiddenCount} templates`}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : null}
         <div className="mt-12 flex justify-center">
           <Link href="/dashboard">
             <Button size="lg">

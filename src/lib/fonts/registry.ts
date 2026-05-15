@@ -81,6 +81,24 @@ import {
 // in parallel with the HTML, which is critical for LCP on landing /
 // dashboard / editor (any page that mounts the renderer).
 // ─────────────────────────────────────────────────────────────────────
+// Inter is the ONLY font preloaded site-wide. globals.css wires it
+// into `--font-sans` which the layout's body inherits, so every
+// public page (landing, dashboard skeleton, editor shell chrome)
+// uses Inter for body / UI text — preloading it shaves the LCP font
+// swap entirely. Every other font in this file used to ship with
+// `preload: true`, which made Next.js emit a <link rel="preload">
+// for each of them in EVERY page's <head>. The PageSpeed audit on
+// 2026-05-15 showed twelve woff2 files all blocking the critical
+// path on the landing page for ~1.8 s each — LCP 10.9 s. None of
+// those fonts is actually used on the landing page (Lora,
+// EB_Garamond, Fraunces, etc. are template-only — they render
+// inside the editor's live A4 preview once the user picks one).
+// Setting them to preload:false drops them off the critical path
+// while keeping them available: next/font still self-hosts the
+// WOFF2 and CSS still references them; the browser fetches the
+// file the first time a template mounts a `var(--font-lora)`
+// element, with `display: swap` masking the load behind the
+// fallback so there is no FOIT.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -91,31 +109,31 @@ const lora = Lora({
   subsets: ["latin"],
   variable: "--font-lora",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 const sourceSerif4 = Source_Serif_4({
   subsets: ["latin"],
   variable: "--font-source-serif-4",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
   variable: "--font-eb-garamond",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   display: "swap",
-  preload: true,
+  preload: false,
 });
 
 // ─────────────────────────────────────────────────────────────────────

@@ -27,7 +27,7 @@ import {
 import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { TEMPLATES } from "@/templates/registry";
-import { TemplatePreview } from "@/components/editor/template-preview";
+import { LazyTemplatePreview } from "@/components/editor/lazy-template-preview";
 import {
   DkBadge,
   TemplateFilterTabs,
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 className="group flex h-full w-full flex-col overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-left shadow-sm transition-shadow duration-200 hover:border-[color:var(--color-border-strong)] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] focus-visible:ring-offset-2 cursor-pointer"
               >
                 <div className="pointer-events-none relative border-b border-[color:var(--color-border)]">
-                  <TemplatePreview id={tpl.id} />
+                  <LazyTemplatePreview id={tpl.id} />
                   {tpl.language === "da" && <DkBadge />}
                 </div>
                 <div className="flex flex-1 flex-col p-5">

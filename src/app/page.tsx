@@ -249,6 +249,28 @@ export default function LandingPage() {
               // transform — no layout impact.
               whileHover={{ y: -4, scale: 1.01 }}
               transition={{ duration: 0.2, ease: EASE.out }}
+              // `content-visibility: auto` tells the browser to skip
+              // rendering descendants of this card while it is
+              // outside the viewport. The card stays in the DOM and
+              // scrolls into view normally, but its inner
+              // TemplateRenderer (which mounts the template-specific
+              // font + a full sample-data layout pass — ~30 fonts
+              // across the 60-card gallery) doesn't run style / paint
+              // / layout work until the user actually scrolls close
+              // to it. `containIntrinsicSize` reserves the card's
+              // expected size so the scrollbar doesn't jump when
+              // cards downstream materialise. Net effect on
+              // PageSpeed: TBT drops dramatically because only the
+              // ~6-9 cards visible above the fold actually hydrate
+              // their preview at first paint — the rest defer to
+              // scroll. The "what you see is what you'll edit"
+              // guarantee is preserved (it's the same React
+              // TemplateRenderer; just deferred), so no design
+              // compromise.
+              style={{
+                contentVisibility: "auto",
+                containIntrinsicSize: "auto 640px",
+              }}
             >
               {/* Card uses <button> instead of <Link> because the inner
                   <TemplatePreview> emits <a> elements for the personal

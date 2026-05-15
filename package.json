@@ -9,10 +9,19 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "optimize:images": "node scripts/optimize-images.mjs",
     "perf-gate": "python scripts/perf_gate.py",
     "perf-gate:baseline": "python scripts/perf_gate.py --baseline-out PERF_BASELINE.json",
     "deploy": "next build && wrangler pages deploy out --project-name slothcv --branch master"
   },
+  "browserslist": [
+    "Chrome >= 93",
+    "Firefox >= 92",
+    "Safari >= 15.4",
+    "Edge >= 93",
+    "not dead",
+    "not op_mini all"
+  ],
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -44,6 +53,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "wrangler": "^4.85.0"

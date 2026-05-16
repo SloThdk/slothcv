@@ -960,6 +960,22 @@ export const TRANSLATIONS = {
   "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
   "editor.replacePhoto": { en: "Replace photo", da: "Skift foto" },
   "editor.addPhoto": { en: "Add photo", da: "Tilføj foto" },
+  "auth.accountDeleted": {
+    en: "Your account was deleted by the site administrator. You've been signed out.",
+    da: "Din konto blev slettet af administratoren. Du er logget ud.",
+  },
+  "auth.accountSuspended": {
+    en: "Your account has been suspended. Contact the administrator if you believe this is a mistake.",
+    da: "Din konto er suspenderet. Kontakt administratoren, hvis du mener, det er en fejl.",
+  },
+  "auth.sessionRevoked": {
+    en: "Your session was revoked. Please sign in again.",
+    da: "Din session blev tilbagekaldt. Log ind igen.",
+  },
+  "auth.sessionExpired": {
+    en: "Your session expired. Please sign in again.",
+    da: "Din session er udløbet. Log ind igen.",
+  },
   "preview.hintKeyboard": {
     en: "Shortcuts",
     da: "Genveje",

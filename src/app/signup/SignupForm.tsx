@@ -249,13 +249,12 @@ export function SignupForm() {
     //
     // Google OAuth users are confirmed instantly (Google's email is
     // pre-verified), so is_confirmed:true is the natural state for them.
-    if (status.is_registered && status.is_confirmed) {
-      // Confirmed existing account — block, no magic link sent. Before
-      // showing the "already exists" banner, run a ban-status check so
-      // the user typing their banned email at /signup gets the explicit
-      // "suspended for N minutes" toast (same as /login). Without this
-      // they'd see "this email is already registered" with no signal
-      // that the account is in a suspended state.
+    // ── Ban check FIRST, before any other branching. ──────────────────
+    // Banned users get the explicit suspended toast regardless of
+    // whether they're "registered + confirmed" or some weird in-between
+    // state — the suspension is the load-bearing fact. Same ordering
+    // discipline as LoginForm: banned overrides every other branch.
+    if (status.is_registered) {
       const ban = await supabase.rpc("email_ban_status", {
         check_email: cleanEmail,
       });
@@ -276,8 +275,11 @@ export function SignupForm() {
           return;
         }
       }
-      // Not banned — fall through to the standard existing-account
-      // banner so the user is directed to /login.
+    }
+
+    if (status.is_registered && status.is_confirmed) {
+      // Confirmed existing account, not banned — show the standard
+      // "already exists" banner directing to /login.
       setSubmittingMagic(false);
       setExistingAccount(true);
       setExistingHasEmail(status.has_email);

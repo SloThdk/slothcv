@@ -225,27 +225,26 @@ export function LoginForm() {
       return;
     }
 
-    if (!status.has_email && status.has_google) {
-      // OAuth-only account — REFUSE magic link. The account was created
-      // via Google and never opted in to email-link sign-in; sending one
-      // would either silently link a new identity (Supabase default) or
-      // be rejected. We surface the explicit "use Google" message and
-      // bail without sending anything to the inbox.
-      setSubmittingMagic(false);
-      toast.error(t("login.errOAuthOnlyGoogle"));
-      return;
-    }
-
     // ── Step 1.5: ban check via email_ban_status RPC ───────────────────
-    // Supabase's signInWithOtp does NOT block sends for banned users — it
-    // happily fires another magic link to the inbox the banned user
-    // can't redeem. And on the user's SECOND click of the same dead
-    // link, /auth/callback returns "otp_expired"/"link_used" instead of
-    // the ban error, which falls through to the generic "sign-in
-    // didn't complete" toast. So we check the database directly here:
-    // is_banned + the absolute banned_until timestamp. If banned, show
-    // the live-duration toast ("...for the next 47 minutes") and refuse
-    // to send. Every retry sees the freshest state, every retry shows
+    // Runs BEFORE the OAuth-only check. Banned overrides every
+    // other provider-routing decision: if the user is suspended, the
+    // right message is "you're suspended for N minutes", regardless of
+    // which auth provider their account was originally created with.
+    //
+    // Without this ordering, a Google-only banned user who types their
+    // email at /login would see "use Google sign-in" (the OAuth-only
+    // toast) instead of "your account is suspended" — confusing and
+    // wrong. They'd then try Google, fail at the callback stage with
+    // the correct suspended toast, and wonder why /login lied to them.
+    //
+    // Why the RPC matters at all: Supabase's signInWithOtp does NOT
+    // block sends for banned users — it happily fires another magic
+    // link the banned user can't redeem. And on the SECOND click of
+    // the same dead link, /auth/callback returns "otp_expired" /
+    // "link_used" instead of the ban error, falling through to the
+    // generic "sign-in didn't complete" toast. So we check the
+    // database directly: is_banned + the absolute banned_until
+    // timestamp. Every retry recomputes the freshest state and shows
     // the right duration. Reference: migration 0021.
     const ban = await supabase.rpc("email_ban_status", {
       check_email: cleanEmail,
@@ -268,6 +267,17 @@ export function LoginForm() {
     // RPC error path → fall through. The /auth/callback ban-detector is
     // still in place so a banned user clicking their link will see the
     // generic suspended toast even if this pre-send guard couldn't run.
+
+    if (!status.has_email && status.has_google) {
+      // OAuth-only account — REFUSE magic link. The account was created
+      // via Google and never opted in to email-link sign-in; sending one
+      // would either silently link a new identity (Supabase default) or
+      // be rejected. We surface the explicit "use Google" message and
+      // bail without sending anything to the inbox.
+      setSubmittingMagic(false);
+      toast.error(t("login.errOAuthOnlyGoogle"));
+      return;
+    }
 
     // ── Step 2: send magic link ────────────────────────────────────────
     // Email is registered. shouldCreateUser:false is still passed as a

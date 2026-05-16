@@ -10,13 +10,27 @@
  */
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { TemplateRenderer } from "@/templates/renderer";
 import { TEMPLATES } from "@/templates/registry";
 import { sampleResumeData } from "@/templates/sample-data";
 import { TEMPLATE_IDS } from "@/types/resume";
 import Link from "next/link";
 
-export default function DebugTemplatesPage() {
+/** Inner component — wrapped in Suspense at the page boundary because
+ *  useSearchParams() suspends during the static-export build path. */
+function DebugInner() {
+  const params = useSearchParams();
+  // Font override hooks for the visual font-picker audit (2026-05-16).
+  // Visiting /debug-templates?titleFont=Cormorant&bodyFont=JetBrains+Mono
+  // forces every template to render with those fonts; any template whose
+  // headings or body don't flip is a candidate for a missed
+  // --cv-X-font migration. Default behaviour (no params) is unchanged
+  // so the page still works as the original per-template render audit.
+  const titleOverride = params.get("titleFont");
+  const bodyOverride = params.get("bodyFont");
+  const hasOverride = Boolean(titleOverride || bodyOverride);
   return (
     <div className="bg-neutral-100 p-6 text-neutral-900">
       <div className="mb-6">
@@ -24,8 +38,20 @@ export default function DebugTemplatesPage() {
         <p className="mt-1 text-sm text-neutral-600">
           Renders each of the {TEMPLATES.length} registered templates with
           its sample data. If a template card below is empty or wrong,
-          that template's renderer or seed data is broken.
+          that template&apos;s renderer or seed data is broken.
         </p>
+        {hasOverride && (
+          <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <strong>Font override active:</strong>{" "}
+            {titleOverride && (
+              <span>titleFont={titleOverride}</span>
+            )}{" "}
+            {bodyOverride && <span>bodyFont={bodyOverride}</span>}{" "}
+            — every template below renders with these fonts forced. Headings
+            that don&apos;t flip to <code>{titleOverride ?? "(unset)"}</code> are
+            a font-pipe bug for that template.
+          </p>
+        )}
       </div>
       <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
         {TEMPLATE_IDS.map((id) => {
@@ -33,6 +59,16 @@ export default function DebugTemplatesPage() {
           let err: string | null = null;
           try {
             data = sampleResumeData(id);
+            if (data && (titleOverride || bodyOverride)) {
+              data = {
+                ...data,
+                design: {
+                  ...data.design,
+                  ...(titleOverride ? { titleFont: titleOverride } : {}),
+                  ...(bodyOverride ? { bodyFont: bodyOverride } : {}),
+                },
+              };
+            }
           } catch (e) {
             err = e instanceof Error ? e.message : String(e);
           }
@@ -77,5 +113,13 @@ export default function DebugTemplatesPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function DebugTemplatesPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm">Loading audit…</div>}>
+      <DebugInner />
+    </Suspense>
   );
 }

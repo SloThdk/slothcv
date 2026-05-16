@@ -220,8 +220,19 @@ export const NO_SKILL_LEVEL_TEMPLATES: ReadonlySet<TemplateId> = new Set([
  *  Design tab's Accent picker would dispatch state these templates ignore,
  *  so we hide it. Users who want a different accent on those layouts
  *  should pick a different template; the accent IS the template's
- *  identity on this set. Per audit 2026-05-16. */
+ *  identity on this set.
+ *
+ *  Re-audited 2026-05-16 (double-pass): grew from 9 to 27 entries after
+ *  spot-checking every template that doesn't directly reference
+ *  `design.accentColor`. The pattern that catches the rest is the
+ *  "override-and-replace" idiom — these templates pass an overridden
+ *  design object to SectionBody like:
+ *      <SectionBody design={{ ...d, accentColor: NAVY }} ... />
+ *  which makes the user's picker choice irrelevant on the rendered
+ *  output. All 27 verified case-by-case (see audit grep at
+ *  research/feature-matrix-audit-2026-05-16.md). */
 export const NO_ACCENT_COLOR_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  // Original 9 (audit pass 1 — accent hardcoded as template identity).
   "atelier",
   "boston",
   "canvas",
@@ -231,6 +242,26 @@ export const NO_ACCENT_COLOR_TEMPLATES: ReadonlySet<TemplateId> = new Set([
   "scrubs",
   "stanford",
   "studio",
+  // Added pass 2 — override-and-replace via {...d, accentColor: CONST}
+  // or template renders zero accent at all.
+  "atlas",
+  "blank",
+  "cambridge",
+  "copenhagen",
+  "dubai",
+  "frankfurt",
+  "geneva",
+  "heidelberg",
+  "helvetica",
+  "linear",
+  "madison",
+  "manhattan",
+  "notion",
+  "roskilde",
+  "singapore",
+  "stripe",
+  "vienna",
+  "zurich",
 ]);
 
 /** Templates whose `case "experience" / "education" / etc.` renderers

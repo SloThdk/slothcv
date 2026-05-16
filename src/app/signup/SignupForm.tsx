@@ -59,7 +59,7 @@ import {
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
 import { waitForFreshCaptchaToken } from "@/lib/captcha";
-import { formatBanDuration } from "@/lib/ban-format";
+import { formatBanUntilExact } from "@/lib/ban-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -264,11 +264,11 @@ export function SignupForm() {
           | null)?.[0];
         if (row?.is_banned) {
           setSubmittingMagic(false);
-          const dur = row.banned_until
-            ? formatBanDuration(row.banned_until, lang)
-            : "";
-          if (dur) {
-            toast.error(t("auth.errUserBannedFor", { duration: dur }));
+          const until = row.banned_until
+            ? formatBanUntilExact(row.banned_until, lang)
+            : null;
+          if (until) {
+            toast.error(t("auth.errUserBannedFor", { until }));
           } else {
             toast.error(t("auth.errUserBanned"));
           }

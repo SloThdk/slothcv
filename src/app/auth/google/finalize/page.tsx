@@ -45,6 +45,31 @@ interface FinalizeError {
   error: string;
 }
 
+/**
+ * Best-effort extraction of the `email` claim from a Google ID token's
+ * payload. We do NOT verify the signature — Supabase already verified it
+ * a moment ago via signInWithIdToken (and rejected it with user_banned).
+ * The email is read here for the sole purpose of looking up
+ * `public.email_ban_status(email)` so we can pass the exact unban
+ * timestamp through to /login. If decoding fails for any reason, we
+ * fall through to a non-enriched redirect (LoginForm renders the
+ * generic suspended toast instead of the exact-timestamp one).
+ */
+function extractEmailFromIdToken(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    // base64url → standard base64, with padding to multiple of 4.
+    let p = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (p.length % 4) p += "=";
+    const json = atob(p);
+    const payload = JSON.parse(json) as { email?: unknown };
+    return typeof payload.email === "string" ? payload.email : null;
+  } catch {
+    return null;
+  }
+}
+
 function FinalizeInner() {
   const router = useRouter();
   const params = useSearchParams();
@@ -144,7 +169,38 @@ function FinalizeInner() {
         ) {
           mapped = "account_suspended";
         }
-        router.replace(`/login/?error=${mapped}`);
+
+        // For account_suspended, enrich the redirect with the exact
+        // unban timestamp so /login renders the dynamic
+        // auth.errUserBannedFor toast ("until 17 May 2026 05:24
+        // (+0200)") instead of the generic auth.errUserBanned copy.
+        // Best-effort: decode the ID token to extract email, then
+        // call public.email_ban_status(email) to read banned_until
+        // from auth.users directly. If anything fails (decode error,
+        // RPC error, banned_until missing), we fall back to the
+        // un-enriched redirect — the user still sees the suspended
+        // toast, just without the exact time.
+        let untilParam = "";
+        if (mapped === "account_suspended" && pending) {
+          const email = extractEmailFromIdToken(pending.id_token);
+          if (email) {
+            const supabase2 = createClient();
+            const { data: banData, error: banErr } = await supabase2.rpc(
+              "email_ban_status",
+              { check_email: email },
+            );
+            if (!banErr) {
+              const row = (banData as
+                | { is_banned: boolean; banned_until: string | null }[]
+                | null)?.[0];
+              if (row?.banned_until) {
+                untilParam = `&until=${encodeURIComponent(row.banned_until)}`;
+              }
+            }
+          }
+        }
+
+        router.replace(`/login/?error=${mapped}${untilParam}`);
         return;
       }
 

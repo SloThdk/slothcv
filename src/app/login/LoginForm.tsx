@@ -24,7 +24,7 @@ import {
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
 import { waitForFreshCaptchaToken } from "@/lib/captcha";
-import { formatBanDuration } from "@/lib/ban-format";
+import { formatBanUntilExact } from "@/lib/ban-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/google-icon";
@@ -134,13 +134,35 @@ export function LoginForm() {
   useEffect(() => {
     if (loading) return;
     if (!error) return;
-    // Strip the param either way so it doesn't re-fire on language toggle.
+    // /auth/google/finalize and the magic-link callback can pass the
+    // exact unban timestamp through as `?until=<iso>` alongside the
+    // error code so we can render the dynamic toast with the same
+    // formatBanUntilExact output the pre-send check uses — same
+    // wording whether the user got bounced from a callback or typed
+    // their email and submitted.
+    const untilRaw = searchParams.get("until");
+    // Strip both params so neither re-fires on language toggle.
     const url = new URL(window.location.href);
     url.searchParams.delete("error");
+    url.searchParams.delete("until");
     router.replace(url.pathname + url.search);
     // Only TOAST if the user is anonymous. Signed-in users with a stale
     // ?error= param just get the silent cleanup — they're being redirected.
     if (user) return;
+    // Account-suspended dynamic variant: when /auth/google/finalize
+    // looked up the user's banned_until and passed it through the URL,
+    // render the exact-timestamp toast instead of the generic suspended
+    // copy. Falls through to the generic mapping when until is absent
+    // (magic-link callback path — we don't have the email there, so no
+    // lookup is possible; the user retries via the form and gets the
+    // exact-timestamp toast on the pre-send check).
+    if (error === "account_suspended" && untilRaw) {
+      const until = formatBanUntilExact(untilRaw, lang);
+      if (until) {
+        toast.error(t("auth.errUserBannedFor", { until }));
+        return;
+      }
+    }
     const key = callbackErrorTranslationKey(error) ?? "login.errExchangeGeneric";
     toast.error(t(key));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- guarded one-shot on first non-loading render
@@ -255,9 +277,11 @@ export function LoginForm() {
         | null)?.[0];
       if (row?.is_banned) {
         setSubmittingMagic(false);
-        const dur = row.banned_until ? formatBanDuration(row.banned_until, lang) : "";
-        if (dur) {
-          toast.error(t("auth.errUserBannedFor", { duration: dur }));
+        const until = row.banned_until
+          ? formatBanUntilExact(row.banned_until, lang)
+          : null;
+        if (until) {
+          toast.error(t("auth.errUserBannedFor", { until }));
         } else {
           toast.error(t("auth.errUserBanned"));
         }

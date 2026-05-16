@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { createClient } from "./supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getMyProfile, type Profile } from "@/lib/profile";
-import { formatBanDuration } from "@/lib/ban-format";
+import { formatBanUntilExact } from "@/lib/ban-format";
 
 interface AuthContextValue {
   user: User | null;
@@ -157,12 +157,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Append the ban duration when known. Reads the live language ref
       // so a mid-session lang switch picks the right format.
       if (key === "auth.accountSuspended" && extra?.bannedUntil) {
-        const dur = formatBanDuration(extra.bannedUntil, langRef.current);
-        if (dur) {
+        const until = formatBanUntilExact(extra.bannedUntil, langRef.current);
+        if (until) {
           copy =
             langRef.current === "da"
-              ? `Din konto er suspenderet ${dur}.`
-              : `Your account has been suspended ${dur}.`;
+              ? `Din konto er suspenderet indtil ${until}.`
+              : `Your account has been suspended until ${until}.`;
         }
       }
       toast.error(copy, { duration: TOAST_DURATION_MS });

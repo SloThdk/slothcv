@@ -1,59 +1,61 @@
 /**
- * Format a banned-until ISO timestamp into a human-readable duration
- * phrase. Picks the largest meaningful unit so the toast reads cleanly:
+ * Format a `banned_until` ISO timestamp into the exact unban date+time
+ * the user will see in their inbox notification or admin view — matching
+ * the Supabase Studio "This user will not be able to log in until: …"
+ * format Philip specified 2026-05-16:
  *
- *   < 1 h   → "for the next N minutes" / "i de næste N minutter"
- *   < 24 h  → "for the next N hours"   / "i de næste N timer"
- *   < 30 d  → "for the next N days"    / "i de næste N dage"
- *   >= 30 d → "until <localised date>" / "indtil <dato>"
+ *   "17 May 2026 05:24 (+0200)"
+ *    └──────────────┘ └───┘ └─────┘
+ *      DD MMM YYYY    HH:MM  TZ offset of the user's local clock
  *
- * Returns an empty string when the timestamp is invalid or already in
- * the past (callers should treat empty as "not banned" / "fall back to
- * generic copy").
+ * Earlier helper returned a relative phrase ("for the next 47 minutes")
+ * which is friendly but ambiguous — the user can't verify it against
+ * a clock or screenshot it as proof of duration. The exact timestamp
+ * is unambiguous, locale-aware on the month name, and shows the
+ * offset so the user always knows which clock the timestamp refers to.
+ *
+ * Returns null when the timestamp is invalid or already in the past
+ * (callers fall back to generic "suspended" copy in that case).
  *
  * Shared by:
- *   - `lib/auth-context.tsx` — the in-session kick toast (signed-in
- *     user just got banned, validate() picks up the change).
- *   - `app/login/LoginForm.tsx` — the pre-send toast (banned user
- *     tries to request a fresh magic link).
- *   - `app/signup/SignupForm.tsx` — same as LoginForm, defensive.
+ *   - `lib/auth-context.tsx` — in-session kick toast.
+ *   - `app/login/LoginForm.tsx` — pre-send ban toast + URL-param toast
+ *     when /auth/google/finalize bounces with `?until=…`.
+ *   - `app/signup/SignupForm.tsx` — pre-send ban toast.
  *
- * Extracting this helper means a banned user sees the SAME duration
- * format whether they were just kicked from the dashboard or are
- * staring at /login retrying — important because inconsistency
- * across surfaces erodes trust in the ban being a real, enforced
- * thing.
+ * All surfaces phrase the unban time identically because they read
+ * from the same helper — important so a user kicked from the dashboard
+ * sees the same time on /login when they retry. Drift erodes trust.
  */
-export function formatBanDuration(
+export function formatBanUntilExact(
   iso: string,
   lang: "en" | "da",
-): string {
-  const until = new Date(iso);
-  if (Number.isNaN(until.getTime())) return "";
-  const ms = until.getTime() - Date.now();
-  if (ms <= 0) return "";
-  const minutes = Math.round(ms / 60_000);
-  const hours = Math.round(ms / 3_600_000);
-  const days = Math.round(ms / 86_400_000);
-  if (minutes < 60) {
-    return lang === "da"
-      ? `i de næste ${minutes} minutter`
-      : `for the next ${minutes} minute${minutes === 1 ? "" : "s"}`;
-  }
-  if (hours < 24) {
-    return lang === "da"
-      ? `i de næste ${hours} timer`
-      : `for the next ${hours} hour${hours === 1 ? "" : "s"}`;
-  }
-  if (days < 30) {
-    return lang === "da"
-      ? `i de næste ${days} dage`
-      : `for the next ${days} day${days === 1 ? "" : "s"}`;
-  }
-  const dateStr = until.toLocaleDateString(lang === "da" ? "da-DK" : undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-  return lang === "da" ? `indtil ${dateStr}` : `until ${dateStr}`;
+): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getTime() <= Date.now()) return null;
+
+  const day = String(d.getDate()).padStart(2, "0");
+  // Short month name in the user's display language. `replace(/\./g, "")`
+  // strips the trailing dot some Danish locales add ("maj." → "maj").
+  const month = new Intl.DateTimeFormat(
+    lang === "da" ? "da-DK" : "en-GB",
+    { month: "short" },
+  )
+    .format(d)
+    .replace(/\./g, "");
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+
+  // Timezone offset in (+HHMM) form. Date.getTimezoneOffset() returns
+  // minutes WEST of UTC (so +120 for Copenhagen during DST means UTC-2,
+  // which we then NEGATE to get the conventional "+0200" presentation).
+  const offsetMin = -d.getTimezoneOffset();
+  const sign = offsetMin >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMin);
+  const tzHH = String(Math.floor(abs / 60)).padStart(2, "0");
+  const tzMM = String(abs % 60).padStart(2, "0");
+
+  return `${day} ${month} ${year} ${hours}:${minutes} (${sign}${tzHH}${tzMM})`;
 }

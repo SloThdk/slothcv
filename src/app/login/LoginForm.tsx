@@ -55,6 +55,14 @@ export function LoginForm() {
   // we reset the widget after each submit so the next attempt gets a fresh
   // one. Tokens expire after 5 minutes per Cloudflare default.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Track whether the widget errored / expired — drives a visible "couldn't
+  // verify you're human" hint + a retry button so the user knows why the
+  // Send Link button is greyed out. Without this, a silent Turnstile failure
+  // (domain not whitelisted in CF dashboard, ad-blocker, network drop,
+  // managed-mode challenge requiring interaction the user didn't see) just
+  // leaves the button disabled with zero feedback — Philip's bug report
+  // 2026-05-16.
+  const [captchaError, setCaptchaError] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
   // Coordinates a "wait for the next fresh token" promise. Used to auto-
   // retry signInWithOtp after a captcha_failed: reset() + wait for the
@@ -367,22 +375,52 @@ export function LoginForm() {
               sitekey is configured (graceful degradation if env var
               missing). */}
           {TURNSTILE_SITE_KEY && (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-2">
               <Turnstile
                 ref={turnstileRef}
                 siteKey={TURNSTILE_SITE_KEY}
                 onSuccess={(token) => {
                   setCaptchaToken(token);
+                  setCaptchaError(false);
                   // Unblock any auto-retry that's waiting for a fresh token.
                   if (captchaResolveRef.current) {
                     captchaResolveRef.current(token);
                     captchaResolveRef.current = null;
                   }
                 }}
-                onError={() => setCaptchaToken(null)}
-                onExpire={() => setCaptchaToken(null)}
+                onError={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError(true);
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                }}
                 options={{ theme: "auto", size: "normal" }}
               />
+              {/* Status line — explains exactly why the Send Link button
+                  is greyed out, with a one-click retry when the widget
+                  failed. Without this the disabled state is silent and
+                  the user has no idea what to do. */}
+              {captchaError ? (
+                <p className="text-center text-xs text-red-600 dark:text-red-400">
+                  {t("login.captchaFailed")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptchaError(false);
+                      setCaptchaToken(null);
+                      turnstileRef.current?.reset();
+                    }}
+                    className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+                  >
+                    {t("login.captchaRetry")}
+                  </button>
+                </p>
+              ) : !captchaToken ? (
+                <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
+                  {t("login.captchaWaiting")}
+                </p>
+              ) : null}
             </div>
           )}
           <Button

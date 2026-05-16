@@ -217,6 +217,18 @@ export const TRANSLATIONS = {
   "login.emailPlaceholder": { en: "you@example.com", da: "dig@eksempel.dk" },
   "login.sendLink": { en: "Send link", da: "Send link" },
   "login.sending": { en: "Sending…", da: "Sender…" },
+  "login.captchaWaiting": {
+    en: "Waiting for human-verification to complete…",
+    da: "Venter på godkendelse af, at du er menneske…",
+  },
+  "login.captchaFailed": {
+    en: "Human-verification failed.",
+    da: "Godkendelse mislykkedes.",
+  },
+  "login.captchaRetry": {
+    en: "Retry",
+    da: "Prøv igen",
+  },
   "login.linkSentTo": { en: "I sent a sign-in link to", da: "Jeg sendte et login-link til" },
   "login.linkSentBody": {
     en: "Open it on this device to continue.",

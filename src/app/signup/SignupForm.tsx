@@ -97,6 +97,10 @@ export function SignupForm() {
   // probe pattern (Supabase issues #1547, #1955) by forcing every probe
   // through a CAPTCHA challenge.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Mirrors LoginForm — track widget errors so the disabled Send Link
+  // button has a visible reason + retry instead of silently greying out.
+  // See LoginForm.tsx for the bug-report context.
+  const [captchaError, setCaptchaError] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
   // Same auto-retry coordination as LoginForm — when Supabase rejects
   // a token we wait for a fresh one and retry once before surfacing
@@ -463,22 +467,46 @@ export function SignupForm() {
               consumes the first token; handleMagicLink polls for a fresh
               one before the real-signup call. */}
           {TURNSTILE_SITE_KEY && (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-2">
               <Turnstile
                 ref={turnstileRef}
                 siteKey={TURNSTILE_SITE_KEY}
                 onSuccess={(token) => {
                   setCaptchaToken(token);
+                  setCaptchaError(false);
                   // Unblock any in-flight auto-retry waiting for a fresh token.
                   if (captchaResolveRef.current) {
                     captchaResolveRef.current(token);
                     captchaResolveRef.current = null;
                   }
                 }}
-                onError={() => setCaptchaToken(null)}
+                onError={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError(true);
+                }}
                 onExpire={() => setCaptchaToken(null)}
                 options={{ theme: "auto", size: "normal" }}
               />
+              {captchaError ? (
+                <p className="text-center text-xs text-red-600 dark:text-red-400">
+                  {t("login.captchaFailed")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptchaError(false);
+                      setCaptchaToken(null);
+                      turnstileRef.current?.reset();
+                    }}
+                    className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+                  >
+                    {t("login.captchaRetry")}
+                  </button>
+                </p>
+              ) : !captchaToken ? (
+                <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
+                  {t("login.captchaWaiting")}
+                </p>
+              ) : null}
             </div>
           )}
           <Button

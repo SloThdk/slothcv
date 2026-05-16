@@ -48,6 +48,7 @@ import { TEMPLATES, TEMPLATES_BY_ID } from "@/templates/registry";
 import { TemplatePreview } from "@/components/editor/template-preview";
 import {
   DkBadge,
+  EnBadge,
   TemplateFilterTabs,
   filterTemplates,
   type TemplateRegion,
@@ -290,7 +291,7 @@ function NewCvPage() {
             >
               <div className="pointer-events-none relative border-b border-[color:var(--color-border)]">
                 <TemplatePreview id={tpl.id} />
-                {tpl.language === "da" && <DkBadge />}
+                {tpl.language === "da" ? <DkBadge /> : <EnBadge />}
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-baseline justify-between gap-3">

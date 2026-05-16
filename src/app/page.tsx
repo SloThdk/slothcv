@@ -30,6 +30,7 @@ import { TEMPLATES } from "@/templates/registry";
 import { LazyTemplatePreview } from "@/components/editor/lazy-template-preview";
 import {
   DkBadge,
+  EnBadge,
   TemplateFilterTabs,
   filterTemplates,
   type TemplateRegion,
@@ -298,7 +299,7 @@ export default function LandingPage() {
               >
                 <div className="pointer-events-none relative border-b border-[color:var(--color-border)]">
                   <LazyTemplatePreview id={tpl.id} />
-                  {tpl.language === "da" && <DkBadge />}
+                  {tpl.language === "da" ? <DkBadge /> : <EnBadge />}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-baseline justify-between gap-3">

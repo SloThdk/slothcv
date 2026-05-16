@@ -100,6 +100,7 @@ export const TRANSLATIONS = {
     da: "Ingen skabeloner matcher dette filter.",
   },
   "templates.filter.daBadge": { en: "DK", da: "DK" },
+  "templates.filter.enBadge": { en: "EN", da: "EN" },
 
   // ─── Back-to-top button ────────────────────────────────────────────
   // Floating bottom-right button that appears after scrolling and

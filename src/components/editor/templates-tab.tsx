@@ -49,6 +49,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { translateError } from "@/lib/translatable-error";
 import {
   DkBadge,
+  EnBadge,
   TemplateFilterTabs,
   filterTemplates,
   type TemplateRegion,
@@ -267,7 +268,7 @@ export function TemplatesTab() {
                 className="aspect-[210/297] w-full"
                 data={userData}
               />
-              {tpl.language === "da" && <DkBadge />}
+              {tpl.language === "da" ? <DkBadge /> : <EnBadge />}
             </div>
             <div className="p-2.5">
               <div className="flex items-center justify-between">

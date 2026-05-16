@@ -147,3 +147,22 @@ export function DkBadge() {
     </span>
   );
 }
+
+/**
+ * EnBadge — sibling pill for English-pool templates. Mirrors DkBadge so
+ * users browsing the mixed Alle view can tell which templates belong to
+ * which pool at a glance. Before this badge existed, Danish templates
+ * carried a DK pill but English templates had no parallel marker, which
+ * read as "DK is a special tag" instead of "every template is tagged."
+ */
+export function EnBadge() {
+  const { t } = useLanguage();
+  return (
+    <span
+      className="pointer-events-none absolute right-2 top-2 inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-neutral-700 shadow-sm ring-1 ring-black/5 backdrop-blur-sm"
+      aria-label={t("templates.filter.en")}
+    >
+      {t("templates.filter.enBadge")}
+    </span>
+  );
+}

@@ -164,6 +164,121 @@ export function Preview() {
     pageHeightRef.current = pageHeightPx;
   }, [pageWidthPx, pageHeightPx]);
 
+  // "Replace photo" hover-button injection. Templates render the personal
+  // photo with `data-element-id="personal.photo"`, but the button itself
+  // isn't part of any template's JSX — adding it to all 48 templates that
+  // render the photo would be a lot of churn for one affordance. Instead
+  // we imperatively inject a single <button> child into the wrapper here,
+  // then rely on the CSS rule in frame.tsx to handle hide/reveal on
+  // hover. Click triggers the same file picker double-click does, so
+  // users get a discoverable replace path without losing the existing
+  // double-click shortcut. Re-runs only when photo state actually changes
+  // (template swap, photo enable/disable, photoUrl change, language
+  // switch for the label) — typing in any form field doesn't re-fire it.
+  useEffect(() => {
+    if (!data.design.photo.enabled) return;
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+    const setup = (attempt: number) => {
+      if (cancelled) return;
+      const wrapper = document.querySelector('[data-element-id="personal.photo"]');
+      if (!(wrapper instanceof HTMLElement)) {
+        // Template hasn't rendered the photo yet — retry up to ~10 frames
+        // before giving up (some templates conditionally render the photo
+        // only when photoUrl is set, in which case there's nothing to
+        // attach to and we exit cleanly).
+        if (attempt < 10) requestAnimationFrame(() => setup(attempt + 1));
+        return;
+      }
+      // Bail if a button is already attached (effect re-ran but DOM is
+      // unchanged — happens on language switch where we just need to
+      // refresh the label).
+      const existing = wrapper.querySelector('[data-replace-photo-btn]');
+      const labelText = data.personal.photoUrl
+        ? t("editor.replacePhoto")
+        : t("editor.addPhoto");
+      if (existing instanceof HTMLElement) {
+        const labelEl = existing.querySelector('[data-replace-photo-label]');
+        if (labelEl) labelEl.textContent = labelText;
+        return;
+      }
+      // Ensure absolute positioning works — many template wrappers don't
+      // declare `position: relative` because their layout doesn't need
+      // it. We promote them, and stash the original value so cleanup can
+      // restore it on template swap.
+      const computed = getComputedStyle(wrapper);
+      const wasStaticPosition = computed.position === "static";
+      const originalInlinePosition = wrapper.style.position;
+      if (wasStaticPosition) wrapper.style.position = "relative";
+      const btn = document.createElement("button");
+      btn.setAttribute("data-replace-photo-btn", "true");
+      btn.type = "button";
+      btn.title = labelText;
+      btn.setAttribute("aria-label", labelText);
+      btn.style.cssText = [
+        "position: absolute",
+        "top: 4px",
+        "right: 4px",
+        "display: inline-flex",
+        "align-items: center",
+        "gap: 4px",
+        "padding: 4px 8px",
+        "border-radius: 6px",
+        "border: 1px solid rgba(255,255,255,0.16)",
+        "background: rgba(15,23,42,0.85)",
+        "color: #ffffff",
+        "font: 500 11px/1.2 system-ui, -apple-system, sans-serif",
+        "cursor: pointer",
+        "z-index: 5",
+        "white-space: nowrap",
+        "user-select: none",
+        "box-shadow: 0 1px 4px rgba(0,0,0,0.25)",
+      ].join(";");
+      // Lucide Camera glyph inlined as SVG so we don't need to React-render
+      // an icon component into a non-React subtree. 12px square matches
+      // the 11px label baseline.
+      btn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>' +
+        `<span data-replace-photo-label>${labelText}</span>`;
+      const onClick = (e: Event) => {
+        // Stop the click from bubbling to the wrapper's drag/jump
+        // handlers — without this, replace-click would also dispatch the
+        // "open Design tab > Photo" jump, which is the exact friction
+        // we're removing.
+        e.stopPropagation();
+        e.preventDefault();
+        photoFileRef.current?.click();
+      };
+      const onPointerDown = (e: Event) => {
+        // Window-level drag handler reads pointerdown to start a drag.
+        // Stopping propagation here keeps a click on the button from
+        // accidentally arming a drag of the photo wrapper.
+        e.stopPropagation();
+      };
+      btn.addEventListener("click", onClick);
+      btn.addEventListener("pointerdown", onPointerDown);
+      btn.addEventListener("dblclick", onClick);
+      wrapper.appendChild(btn);
+      cleanup = () => {
+        btn.removeEventListener("click", onClick);
+        btn.removeEventListener("pointerdown", onPointerDown);
+        btn.removeEventListener("dblclick", onClick);
+        btn.remove();
+        if (wasStaticPosition) wrapper.style.position = originalInlinePosition;
+      };
+    };
+    requestAnimationFrame(() => setup(0));
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [
+    data.design.photo.enabled,
+    data.personal.photoUrl,
+    data.meta.template,
+    t,
+  ]);
+
   // Recompute fit scale on container resize. Strategy: fit by WIDTH only.
   // The user wants the working scale of the visual designer to stay big
   // enough to actually edit on — fitting by both axes makes the page tiny

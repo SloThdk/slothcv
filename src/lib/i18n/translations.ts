@@ -957,6 +957,8 @@ export const TRANSLATIONS = {
   "settings.exportPdf": { en: "Export PDF", da: "Eksportér PDF" },
   "settings.exportPdfGenerating": { en: "Generating PDF…", da: "Genererer PDF…" },
   "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
+  "editor.replacePhoto": { en: "Replace photo", da: "Skift foto" },
+  "editor.addPhoto": { en: "Add photo", da: "Tilføj foto" },
   "settings.exportPdfAtsTitle": {
     en: "Vector PDF — ATS-readable",
     da: "Vektor-PDF — ATS-læsbar",

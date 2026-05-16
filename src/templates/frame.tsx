@@ -169,6 +169,23 @@ export function TemplateFrame({
         .slothcv-page-hover [data-element-id="personal.photo"] img {
           border-radius: var(--cv-photo-radius) !important;
         }
+        /* "Replace photo" hover affordance. The button itself is injected
+           imperatively from preview.tsx into the photo wrapper across
+           every template (no per-template render change). The CSS here
+           handles hide-by-default + reveal-on-hover so hover detection
+           lives in the browser, not in JS event listeners. Visible on
+           keyboard focus too so the affordance is reachable without a
+           pointer device. */
+        .slothcv-page-hover [data-element-id="personal.photo"] [data-replace-photo-btn] {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 120ms ease-out;
+        }
+        .slothcv-page-hover [data-element-id="personal.photo"]:hover [data-replace-photo-btn],
+        .slothcv-page-hover [data-element-id="personal.photo"] [data-replace-photo-btn]:focus-visible {
+          opacity: 1;
+          pointer-events: auto;
+        }
       `}</style>
       {children}
       <Watermark design={design} data={data} />

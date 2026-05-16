@@ -959,6 +959,14 @@ export const TRANSLATIONS = {
   "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
   "editor.replacePhoto": { en: "Replace photo", da: "Skift foto" },
   "editor.addPhoto": { en: "Add photo", da: "Tilføj foto" },
+  "preview.hintKeyboard": {
+    en: "Shortcuts",
+    da: "Genveje",
+  },
+  "preview.hintKeyboardTitle": {
+    en: "Drag → move · Shift → constrain 45° · Cmd/Ctrl → bypass snap · Arrows → nudge 1 px · Shift+Arrows → 10 px · R → rotate · Cmd/Ctrl+Z → undo · Cmd/Ctrl+Shift+Z → redo",
+    da: "Træk → flyt · Shift → lås 45° · Cmd/Ctrl → ignorér snap · Pile → flyt 1 px · Shift+Pile → 10 px · R → rotér · Cmd/Ctrl+Z → fortryd · Cmd/Ctrl+Shift+Z → annullér fortryd",
+  },
   "settings.exportBgGraphicsHint": {
     en: "Tip: in the print dialog, enable “Background graphics” so dark page backgrounds and accent colours print. Light templates print the same either way.",
     da: "Tip: i printdialogen skal du slå ”Baggrundsgrafik” til, så mørke sidebaggrunde og accentfarver kommer med. Lyse skabeloner ser ens ud uanset.",

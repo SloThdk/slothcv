@@ -32,6 +32,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useEditorStore } from "@/lib/store/editor";
 import type { Section, SkillsSection } from "@/types/resume";
 import { resolveDesign } from "@/templates/shared";
+import { NO_SKILL_LEVEL_TEMPLATES } from "@/templates/registry";
 import { defaultSkillItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,8 +47,18 @@ export function SkillsForm({ section }: { section: SkillsSection }) {
   // Read the live design so the level slider hides/shows in real time
   // when the user flips bar style (globally or via per-section override).
   const design = useEditorStore((s) => s.data.design);
+  const template = useEditorStore((s) => s.data.meta.template);
   const resolved = resolveDesign(design, section as Section);
-  const showLevel = LEVEL_STYLES.has(resolved.skillBarStyle);
+  // Two conditions for the level slider to be meaningful:
+  //   1. The resolved skillBarStyle visualises levels (bar/dots/circles/
+  //      stars). Pills + text-only ignore the level value.
+  //   2. The active template's `case "skills":` renderer actually
+  //      consumes skill.level. The 13 hand-rolled templates in
+  //      NO_SKILL_LEVEL_TEMPLATES do not — their renderers ignore the
+  //      level entirely and the slider would be a dead lever.
+  const templateIgnoresLevel = NO_SKILL_LEVEL_TEMPLATES.has(template);
+  const showLevel =
+    LEVEL_STYLES.has(resolved.skillBarStyle) && !templateIgnoresLevel;
   const setItems = (items: SkillsSection["items"]) =>
     update<SkillsSection>(section.id, { items });
 
@@ -116,9 +127,11 @@ export function SkillsForm({ section }: { section: SkillsSection }) {
       <p className="text-[11px] text-subtle">
         {showLevel
           ? "Level 0 hides the bar/dots — useful when you just want a skill name. Drag the handle on the left to reorder."
-          : "This template's skill style (" +
-            resolved.skillBarStyle +
-            ") doesn't show levels. Switch to bar / dots / circles / stars in Design to enable the level slider. Drag the handle on the left to reorder."}
+          : templateIgnoresLevel
+            ? "This template renders skills as chips / grouped lists without a level indicator — the 0–5 slider would have no visible effect, so it's hidden here. Pick a template like Berlin / Helsinki / Tokyo if you want visible skill levels. Drag the handle on the left to reorder."
+            : "This template's skill style (" +
+              resolved.skillBarStyle +
+              ") doesn't show levels. Switch to bar / dots / circles / stars in Design to enable the level slider. Drag the handle on the left to reorder."}
       </p>
     </div>
   );

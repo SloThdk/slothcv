@@ -32,12 +32,15 @@ export type DesignControlKey =
   | "dividerStyle"
   | "bulletStyle"
   | "skillBarStyle"
+  | "skillLevel"
   | "languageStyle"
   | "layout"
   | "sidebarWidth"
   | "pageMargin"
   | "photo"
   | "photoPosition"
+  | "accentColor"
+  | "dateFormat"
   | "watermark";
 
 /** Controls that no template honors today — hidden globally regardless
@@ -186,6 +189,72 @@ export const NO_SKILL_BAR_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
 /** Templates that render no body text at all (blank canvas / toolshelf).
  *  Typography + scale + letter-spacing pickers have nothing to act on. */
 export const NO_TEXT_TEMPLATES: ReadonlySet<TemplateId> = new Set(["blank"]);
+
+/** Templates whose `case "skills":` switch hand-rolls a renderer that
+ *  doesn't read `skill.level` at all (just renders the skill names as
+ *  chips / groups / etc). The 0–5 level slider in the skills-form is a
+ *  dead lever there — surface that to the user by hiding the slider so
+ *  they don't drag it expecting visible feedback that never comes.
+ *  Same template set as NO_SKILL_BAR_STYLE_TEMPLATES because the two
+ *  always co-occur (a template that hand-rolls skills usually ignores
+ *  both the style AND the level), but kept as its own set so future
+ *  refactors that split the two cleanly stay typed. */
+export const NO_SKILL_LEVEL_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "aurora",
+  "carbon",
+  "eclipse",
+  "geist",
+  "graphite",
+  "helvetica",
+  "linear",
+  "madison",
+  "mayfair",
+  "midnight",
+  "obsidian",
+  "onyx",
+  "stripe",
+]);
+
+/** Templates whose visual identity hardcodes the accent colour — Boston's
+ *  oxblood crimson, Stanford's cardinal red, Mayfair's burgundy, etc. The
+ *  Design tab's Accent picker would dispatch state these templates ignore,
+ *  so we hide it. Users who want a different accent on those layouts
+ *  should pick a different template; the accent IS the template's
+ *  identity on this set. Per audit 2026-05-16. */
+export const NO_ACCENT_COLOR_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atelier",
+  "boston",
+  "canvas",
+  "davos",
+  "founder",
+  "mayfair",
+  "scrubs",
+  "stanford",
+  "studio",
+]);
+
+/** Templates whose `case "experience" / "education" / etc.` renderers
+ *  hardcode the date format (Boston forces YYYY-MM, Helvetica locks
+ *  monospace dates, others suppress dates entirely or use a custom
+ *  layout that ignores design.dateFormat). The Design tab's date
+ *  format chip is a dead lever on these — hide it. Per audit
+ *  2026-05-16. */
+export const NO_DATE_FORMAT_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atelier",
+  "blank",
+  "boston",
+  "cambridge",
+  "canvas",
+  "davos",
+  "founder",
+  "helvetica",
+  "linear",
+  "mayfair",
+  "oslo",
+  "scrubs",
+  "studio",
+  "vienna",
+]);
 
 /** Templates whose own `case "languages":` switch ignores
  *  design.languageStyle — same architectural pattern as

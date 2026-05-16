@@ -40,7 +40,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Maximize2, Move, MousePointerClick } from "lucide-react";
+import { Keyboard, Maximize2, Move, MousePointerClick } from "lucide-react";
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -1324,6 +1324,21 @@ export function Preview() {
           <span className="hidden items-center gap-1 rounded bg-[color:var(--color-surface-hover)] px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-normal text-[color:var(--color-text-muted)] sm:inline-flex">
             <Move className="h-3 w-3" />
             {t("preview.hintDrag")}
+          </span>
+          {/* Keyboard-shortcuts pill — hover shows the full modifier list
+              via the native title attribute (Shift = 45° constrain, Cmd/
+              Ctrl = bypass smart-guides snap, Arrows = 1px nudge, Shift+
+              Arrows = 10px, R = rotate). Surfaces every keyboard binding
+              the canvas honours without burning vertical space on a
+              persistent legend. Mirrors how Figma / Affinity show their
+              gesture cheatsheet in the toolbar. */}
+          <span
+            className="hidden cursor-help items-center gap-1 rounded bg-[color:var(--color-surface-hover)] px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-normal text-[color:var(--color-text-muted)] sm:inline-flex"
+            title={t("preview.hintKeyboardTitle")}
+            aria-label={t("preview.hintKeyboardTitle")}
+          >
+            <Keyboard className="h-3 w-3" />
+            {t("preview.hintKeyboard")}
           </span>
         </div>
         <div className="flex items-center gap-1">

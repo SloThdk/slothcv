@@ -46,6 +46,8 @@ import {
   NO_BULLET_STYLE_TEMPLATES,
   NO_SKILL_BAR_STYLE_TEMPLATES,
   NO_LANGUAGE_STYLE_TEMPLATES,
+  NO_ACCENT_COLOR_TEMPLATES,
+  NO_DATE_FORMAT_TEMPLATES,
   NO_TEXT_TEMPLATES,
   LAYOUT_TEMPLATES,
   type DesignControlKey,
@@ -187,6 +189,15 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
     // on Berlin is a dead lever. Hide it instead of showing a control
     // that does nothing.
     if (key === "layout" && !LAYOUT_TEMPLATES.has(template)) return true;
+    // accentColor hardcoded on 9 templates whose identity IS the colour
+    // (Boston's oxblood, Stanford's cardinal, Mayfair's burgundy, etc).
+    // Hiding the picker on those keeps the Design tab honest.
+    if (key === "accentColor" && NO_ACCENT_COLOR_TEMPLATES.has(template))
+      return true;
+    // dateFormat hardcoded or suppressed on 14 templates. Hide the chip
+    // there instead of dispatching state that gets silently ignored.
+    if (key === "dateFormat" && NO_DATE_FORMAT_TEMPLATES.has(template))
+      return true;
     // bulletStyle dies on templates whose body renderers don't read
     // bulletGlyph(design) at all (no SectionBody, no hand-rolled
     // bulletGlyph call). Surface as an explicit negative list.
@@ -509,12 +520,21 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
       </Section>
 
       <Section title={t("design.color")} onReset={() => onResetGroup("color")}>
-        <ColorRow
-          label="Accent"
-          value={design.accentColor}
-          onChange={(v) => setDesign({ accentColor: v })}
-          presets={ACCENT_PRESETS}
-        />
+        {!isHidden("accentColor") && (
+          <ColorRow
+            label="Accent"
+            value={design.accentColor}
+            onChange={(v) => setDesign({ accentColor: v })}
+            presets={ACCENT_PRESETS}
+          />
+        )}
+        {isHidden("accentColor") && (
+          <p className="text-[11px] text-subtle">
+            This template&rsquo;s accent colour is part of its visual identity
+            and isn&rsquo;t user-editable. Pick a different template to change
+            the accent.
+          </p>
+        )}
         <ColorRow
           label="Secondary"
           value={design.secondaryColor}
@@ -837,19 +857,21 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           onChange={(v) => setDesign({ languageStyle: v })}
         />
         )}
-        <ChipRow
-          label="Date format"
-          hint={DESIGN_HINT.dateFormat}
-          value={design.dateFormat}
-          options={[
-            "Mon YYYY",
-            "MM/YYYY",
-            "YYYY-MM",
-            "Mon 'YY",
-            "locale",
-          ] as DateFormat[]}
-          onChange={(v) => setDesign({ dateFormat: v })}
-        />
+        {!isHidden("dateFormat") && (
+          <ChipRow
+            label="Date format"
+            hint={DESIGN_HINT.dateFormat}
+            value={design.dateFormat}
+            options={[
+              "Mon YYYY",
+              "MM/YYYY",
+              "YYYY-MM",
+              "Mon 'YY",
+              "locale",
+            ] as DateFormat[]}
+            onChange={(v) => setDesign({ dateFormat: v })}
+          />
+        )}
       </Section>
 
       {/* Page size selector removed — every CV ships A4 by default. The

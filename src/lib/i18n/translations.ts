@@ -969,8 +969,8 @@ export const TRANSLATIONS = {
     da: "Træk → flyt · Shift → lås 45° · Cmd/Ctrl → ignorér snap · Pile → flyt 1 px · Shift+Pile → 10 px · R → rotér · Cmd/Ctrl+Z → fortryd · Cmd/Ctrl+Shift+Z → annullér fortryd",
   },
   "settings.exportBgGraphicsHint": {
-    en: "Tip: in the print dialog, enable “Background graphics” so dark page backgrounds and accent colours print. Light templates print the same either way.",
-    da: "Tip: i printdialogen skal du slå ”Baggrundsgrafik” til, så mørke sidebaggrunde og accentfarver kommer med. Lyse skabeloner ser ens ud uanset.",
+    en: "Vector PDF with selectable text + embedded fonts — Workday / Greenhouse / Lever parsers read it natively. Tip: in the browser print dialog, enable “Background graphics” so dark page backgrounds and accent colours print (light templates look the same either way).",
+    da: "Vektor-PDF med markérbar tekst + indlejrede fonte — Workday / Greenhouse / Lever-parsere kan læse den. Tip: i printdialogen skal du slå ”Baggrundsgrafik” til, så mørke sidebaggrunde og accentfarver kommer med (lyse skabeloner ser ens ud uanset).",
   },
   "settings.exportPdfAtsTitle": {
     en: "Vector PDF — ATS-readable",

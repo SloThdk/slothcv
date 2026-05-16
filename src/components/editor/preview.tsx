@@ -215,30 +215,42 @@ export function Preview() {
       btn.type = "button";
       btn.title = labelText;
       btn.setAttribute("aria-label", labelText);
+      // Full-photo overlay pattern (Canva / Figma style) — covers the
+      // entire wrapper with a centred dark scrim + icon + label on
+      // hover. The earlier top-right pill (4 px offset, fixed padding)
+      // overflowed photos smaller than the label width (Aabenraa /
+      // Berlin sidebar photos are only ~80–90 px square). An overlay
+      // scales with the wrapper, so a 60 px tiny photo gets a 60 px
+      // hover layer — never bleeds outside the photo bounds.
       btn.style.cssText = [
         "position: absolute",
-        "top: 4px",
-        "right: 4px",
-        "display: inline-flex",
+        "inset: 0",
+        "display: flex",
+        "flex-direction: column",
         "align-items: center",
+        "justify-content: center",
         "gap: 4px",
-        "padding: 4px 8px",
-        "border-radius: 6px",
-        "border: 1px solid rgba(255,255,255,0.16)",
-        "background: rgba(15,23,42,0.85)",
+        "padding: 4px",
+        "border: 0",
+        "border-radius: var(--cv-photo-radius, 0)",
+        "background: rgba(15,23,42,0.6)",
         "color: #ffffff",
-        "font: 500 11px/1.2 system-ui, -apple-system, sans-serif",
+        "font: 500 10px/1.15 system-ui, -apple-system, sans-serif",
         "cursor: pointer",
         "z-index: 5",
         "white-space: nowrap",
         "user-select: none",
-        "box-shadow: 0 1px 4px rgba(0,0,0,0.25)",
+        "text-align: center",
+        // Browser-native font smoothing reads cleaner over a dark scrim.
+        "-webkit-font-smoothing: antialiased",
       ].join(";");
       // Lucide Camera glyph inlined as SVG so we don't need to React-render
-      // an icon component into a non-React subtree. 12px square matches
-      // the 11px label baseline.
+      // an icon component into a non-React subtree. 18 px reads at every
+      // photo size — small enough not to dominate a 60 px tiny avatar,
+      // large enough to be the legible primary affordance on a 300 px
+      // hero photo.
       btn.innerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>' +
         `<span data-replace-photo-label>${labelText}</span>`;
       const onClick = (e: Event) => {
         // Stop the click from bubbling to the wrapper's drag/jump

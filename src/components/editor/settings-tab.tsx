@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, FileJson, FileText, Trash2 } from "lucide-react";
+import { Download, FileJson, FileText, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEditorStore } from "@/lib/store/editor";
@@ -72,21 +72,14 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
     setExporting(true);
     try {
       await exportPdf(data, title || "resume");
-      // ATS-readable confirmation. SlothCV renders the PDF via
-      // window.print() on the live DOM — selectable text + embedded
-      // fonts come for free, which is the property ATS parsers
-      // (Workday / Greenhouse / Lever / Taleo) need to extract
-      // structured data. We surface that to the user explicitly so
-      // they know the export they just downloaded clears the bar
-      // that "free PDF builder + paid version for ATS" competitors
-      // gate behind a paywall. (Week 1 feature per Scout research
-      // 2026-05-16: turn existing technical truth into the only
-      // verified-ATS claim in the category.)
-      toast.success(t("settings.exportPdfAtsTitle"), {
-        description: t("settings.exportPdfAtsBody"),
-        icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-        duration: 6000,
-      });
+      // No post-export success toast — window.print() resolves whether
+      // the user clicks Print OR Cancel in the browser dialog, so any
+      // "PDF exported" toast would fire 100 % of the time including
+      // when nothing was actually saved (Philip's bug report 2026-05-
+      // 16). The ATS-readable claim that previously lived in this
+      // toast moved to the persistent inline hint next to the Export
+      // PDF button (visible BEFORE the click) where it can't lie
+      // about a cancelled export.
     } catch (e) {
       toast.error(translateError(e, t, "settings.exportPdfFailed"));
     } finally {

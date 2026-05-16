@@ -39,6 +39,16 @@
 # user-supplied script content" property), and silencing the error
 # stops it from drowning real diagnostics in the browser console.
 #
+# `https://challenges.cloudflare.com` is allowed in script-src,
+# connect-src, and frame-src because Cloudflare Turnstile (anti-bot
+# captcha on /login + /signup) loads its widget script + makes API
+# calls from there + renders an iframe for the challenge UI. Without
+# these three allowances the Turnstile widget silently fails to
+# render, the captcha token never arrives, and the Send Link button
+# stays disabled forever — Philip's bug report 2026-05-16. Domain is
+# Cloudflare's first-party CAPTCHA host; same trust level as our
+# own Supabase host already allowed in connect-src.
+#
 # `Cross-Origin-Opener-Policy` is set to `same-origin-allow-popups` (not
 # the stricter `same-origin`) because the Google OAuth flow opens a
 # pop-up and the strict variant breaks the OAuth callback's
@@ -48,7 +58,7 @@
 # All HTML — never cache, full security headers.
 /*
   Cache-Control: public, max-age=0, no-store, must-revalidate
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

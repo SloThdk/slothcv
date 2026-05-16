@@ -31,6 +31,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   PublicationsSection,
@@ -65,8 +66,7 @@ export function CambridgeTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[2.2em] leading-[1.05] tracking-tight"
           style={{
             color: "#1A1A1A",
-            fontFamily:
-              "var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif)",
             fontWeight: 500,
             ...elementStyle(data, "personal.name"),
           }}
@@ -79,7 +79,7 @@ export function CambridgeTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-1 block w-fit cursor-text text-[1em] italic"
             style={{
               color: "#3a3a3a",
-              fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
               fontWeight: 400,
               ...elementStyle(data, "personal.headline"),
             }}
@@ -128,7 +128,7 @@ function CambridgeContact({ data }: { data: ResumeData }) {
       className="mt-2 text-[0.85em]"
       style={{
         color: "#3a3a3a",
-        fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+        fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
       }}
     >
       {items.map((p, i) => (
@@ -181,7 +181,7 @@ function CambridgeSection({
         className="mb-2 inline-block cursor-text italic"
         style={{
           color: "#1A1A1A",
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
           fontSize: "1.1em",
           fontWeight: 500,
           ...elementStyle(data, titleId),
@@ -214,7 +214,7 @@ function GutterRow({
         className="text-right text-[0.82em]"
         style={{
           color: "#666",
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
         }}
       >
         {year}
@@ -242,7 +242,7 @@ function CambridgeBody({
           className="cursor-text text-[1em] leading-[1.55]"
           style={{
             color: "#1A1A1A",
-            fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+            fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -250,6 +250,7 @@ function CambridgeBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <CambridgeExperience section={section} design={design} data={data} />
@@ -281,7 +282,7 @@ function CambridgeExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -301,7 +302,7 @@ function CambridgeExperience({
             <GutterRow year={year}>
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                 }}
               >
                 <div className="font-semibold" style={{ color: "#1A1A1A" }}>
@@ -352,7 +353,7 @@ function CambridgeEducation({
             <GutterRow year={year}>
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                 }}
               >
                 <div className="font-semibold" style={{ color: "#1A1A1A" }}>
@@ -396,7 +397,7 @@ function CambridgePublications({
               <div
                 className="text-[0.95em]"
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                   color: "#1A1A1A",
                 }}
               >
@@ -455,7 +456,7 @@ function CambridgeTalks({
             <GutterRow year={t.date || ""}>
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                   color: "#1A1A1A",
                 }}
               >
@@ -493,7 +494,7 @@ function CambridgeCerts({
             <GutterRow year={c.date || ""}>
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                   color: "#1A1A1A",
                 }}
               >
@@ -530,7 +531,7 @@ function CambridgeBullets({
       className="mt-1 space-y-0.5 text-[0.9em]"
       style={{
         color: "#1A1A1A",
-        fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+        fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
       }}
     >
       {list.map((b) => {
@@ -579,7 +580,7 @@ function CambridgeFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: "#1A1A1A",
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -595,7 +596,7 @@ function CambridgeFallback({
         className="space-y-0.5 text-[0.95em]"
         style={{
           color: "#1A1A1A",
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
         }}
       >
         {visible.map((it) => {

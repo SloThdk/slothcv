@@ -37,6 +37,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -204,7 +205,7 @@ function OnyxContact({ data }: { data: ResumeData }) {
       className="mt-3 text-[0.85em]"
       style={{
         color: TEXT_DIM,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((it, i) => (
@@ -261,7 +262,7 @@ function OnyxSection({
         className="mb-3 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: PINK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 600,
           letterSpacing: "0.2em",
           ...elementStyle(data, titleId),
@@ -293,7 +294,7 @@ function OnyxBody({
           className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.55]"
           style={{
             color: TEXT,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -301,6 +302,7 @@ function OnyxBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <OnyxExperience section={section} design={design} data={data} />;
     case "projects":
@@ -321,7 +323,7 @@ function OnyxExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -342,7 +344,7 @@ function OnyxExperience({
                 className="text-[1em]"
                 style={{
                   color: TEXT,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 600,
                 }}
               >
@@ -407,7 +409,7 @@ function OnyxProjects({
                 className="text-[1em]"
                 style={{
                   color: TEXT,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 600,
                 }}
               >
@@ -534,7 +536,7 @@ function OnyxSkills({
               className="mb-1 text-[0.78em] uppercase"
               style={{
                 color: PINK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 600,
                 letterSpacing: "0.18em",
               }}
@@ -668,7 +670,7 @@ function OnyxBullets({
   return (
     <ul
       className="mt-1.5 space-y-1 text-[0.92em]"
-      style={{ color: TEXT, fontFamily: "var(--font-inter, 'Inter'), sans-serif" }}
+      style={{ color: TEXT, fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)" }}
     >
       {list.map((b) => {
         const id = `section.${sectionId}.bullet.${b.id}`;

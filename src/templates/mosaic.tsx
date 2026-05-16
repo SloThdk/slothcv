@@ -49,6 +49,7 @@ import type { ResumeData, Section, SectionType } from "@/types/resume";
 const TILE_PALETTE: Record<SectionType, { bg: string; border: string }> = {
   summary: { bg: "#fdf2f8", border: "#ec4899" },
   experience: { bg: "#ecfeff", border: "#0891b2" },
+  careerBreak: { bg: "#ecfeff", border: "#0891b2" },
   skills: { bg: "#ecfdf5", border: "#059669" },
   education: { bg: "#fffbeb", border: "#d97706" },
   projects: { bg: "#f5f3ff", border: "#7c3aed" },
@@ -77,8 +78,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <div
         style={{
-          fontFamily:
-            "var(--font-outfit, 'Outfit'), Inter, sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), Inter, sans-serif)",
         }}
       >
         {/* Header tile — full-width, uses a soft neutral so the name doesn't
@@ -98,8 +98,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
                 style={{
                   color: design.textColor,
-                  fontFamily:
-                    "var(--font-outfit, 'Outfit'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), sans-serif)",
                   fontWeight: 700,
                   ...elementStyle(data, "personal.name"),
                 }}
@@ -112,8 +111,7 @@ export function MosaicTemplate({ data, fixedSize, skipOverlay }: Props) {
                   className="mt-1 block w-fit cursor-text text-[1em]"
                   style={{
                     color: design.accentColor,
-                    fontFamily:
-                      "var(--font-outfit, 'Outfit'), sans-serif",
+                    fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), sans-serif)",
                     fontWeight: 600,
                     ...elementStyle(data, "personal.headline"),
                   }}
@@ -236,7 +234,7 @@ function MosaicTile({
         className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: palette.border,
-          fontFamily: "var(--font-outfit, 'Outfit'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.14em",
           ...elementStyle(data, titleId),

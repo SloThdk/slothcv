@@ -48,7 +48,7 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[2.2em] uppercase leading-[1.1]"
           style={{
             color: "#000",
-            fontFamily: "var(--font-public-sans, 'Public Sans'), Inter, sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-public-sans, 'Public Sans'), Inter, sans-serif)",
             fontWeight: 700,
             letterSpacing: "0.04em",
             ...elementStyle(data, "personal.name"),
@@ -62,7 +62,7 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-1 block w-fit cursor-text text-[0.92em] uppercase"
             style={{
               color: "#000",
-              fontFamily: "var(--font-public-sans, 'Public Sans'), sans-serif",
+              fontFamily: "var(--cv-title-font, var(--font-public-sans, 'Public Sans'), sans-serif)",
               fontWeight: 600,
               letterSpacing: "0.10em",
               ...elementStyle(data, "personal.headline"),
@@ -90,7 +90,7 @@ export function ViennaTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mb-1.5 inline-block cursor-text text-[0.78em] uppercase"
                 style={{
                   color: "#000",
-                  fontFamily: "var(--font-public-sans, 'Public Sans'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-public-sans, 'Public Sans'), sans-serif)",
                   fontWeight: 700,
                   letterSpacing: "0.16em",
                   ...elementStyle(data, titleId),

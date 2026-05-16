@@ -39,6 +39,7 @@ import {
 } from "./shared";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ResumeData,
@@ -110,7 +111,7 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.8em] leading-[1.05] tracking-tight"
               style={{
                 color: INK,
-                fontFamily: "var(--font-lora, 'Lora'), serif",
+                fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), serif)",
                 fontWeight: 600,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -123,7 +124,7 @@ export function CanvasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[1em] italic"
                 style={{
                   color: CYAN,
-                  fontFamily: "var(--font-lora, 'Lora'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), serif)",
                   ...elementStyle(data, "personal.headline"),
                 }}
               >
@@ -191,7 +192,7 @@ function CanvasContact({ data }: { data: ResumeData }) {
       className="mt-2 text-[0.85em]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((p, i) => (
@@ -254,7 +255,7 @@ function CanvasSection({
           className="cursor-text text-right text-[0.95em] italic"
           style={{
             color: CYAN,
-            fontFamily: "var(--font-lora, 'Lora'), serif",
+            fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), serif)",
             fontWeight: 500,
             paddingTop: "0.1em",
             ...elementStyle(data, titleId),
@@ -289,7 +290,7 @@ function CanvasBody({
           className="cursor-text text-[0.95em] leading-[1.6]"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -297,6 +298,7 @@ function CanvasBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <CanvasExperience section={section} design={design} data={data} />
@@ -311,7 +313,7 @@ function CanvasExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -332,7 +334,7 @@ function CanvasExperience({
                 className="text-[1em]"
                 style={{
                   color: INK,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 700,
                 }}
               >
@@ -348,7 +350,7 @@ function CanvasExperience({
                 className="text-[0.82em]"
                 style={{
                   color: `${INK}88`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 {formatDateRange(
@@ -395,7 +397,7 @@ function CanvasBullets({
       className="mt-1.5 space-y-1 pl-3 text-[0.92em] leading-[1.55]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {
@@ -437,7 +439,7 @@ function CanvasFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -470,7 +472,7 @@ function CanvasFallback({
                 background: `${CYAN}10`,
                 border: `1px solid ${CYAN}33`,
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 ...elementStyle(data, id),
               }}
             >

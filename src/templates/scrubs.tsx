@@ -37,6 +37,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   PublicationsSection,
@@ -105,8 +106,7 @@ export function ScrubsTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
               style={{
                 color: INK,
-                fontFamily:
-                  "var(--font-source-serif-4, 'Source Serif 4'), 'EB Garamond', serif",
+                fontFamily: "var(--cv-title-font, var(--font-source-serif-4, 'Source Serif 4'), 'EB Garamond', serif)",
                 fontWeight: 600,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -119,7 +119,7 @@ export function ScrubsTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-0.5 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: CYAN,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 600,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -148,7 +148,7 @@ function ScrubsContact({ data }: { data: ResumeData }) {
       className="text-right text-[0.85em]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {personal.email && (
@@ -232,7 +232,7 @@ function ScrubsSection({
           className="inline-block cursor-text text-[0.95em] uppercase"
           style={{
             color: CYAN,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             fontWeight: 700,
             letterSpacing: "0.14em",
             ...elementStyle(data, titleId),
@@ -270,7 +270,7 @@ function ScrubsBody({
           className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -278,6 +278,7 @@ function ScrubsBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <ScrubsExperience section={section} design={design} data={data} />
@@ -308,7 +309,7 @@ function ScrubsExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -329,7 +330,7 @@ function ScrubsExperience({
                 className="text-[1em]"
                 style={{
                   color: INK,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 700,
                 }}
               >
@@ -345,7 +346,7 @@ function ScrubsExperience({
                 className="text-[0.82em] tabular-nums"
                 style={{
                   color: `${INK}88`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 {formatDateRange(
@@ -402,7 +403,7 @@ function ScrubsEducation({
                 className="text-[0.95em]"
                 style={{
                   color: INK,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 <div className="font-bold">
@@ -473,7 +474,7 @@ function ScrubsCertCards({
               border: `1px solid ${CYAN}55`,
               background: `${CYAN}05`,
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -544,7 +545,7 @@ function ScrubsPublications({
             className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -599,7 +600,7 @@ function ScrubsBullets({
       className="mt-1 space-y-0.5 pl-3 text-[0.92em] leading-[1.5]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {
@@ -641,7 +642,7 @@ function ScrubsFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -665,7 +666,7 @@ function ScrubsFallback({
         className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-[0.92em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
         }}
       >
         {visible.map((it) => {

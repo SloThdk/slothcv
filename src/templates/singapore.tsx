@@ -86,8 +86,7 @@ export function SingaporeTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
                 style={{
                   color: INK,
-                  fontFamily:
-                    "var(--font-onest, 'Onest'), Inter, sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), Inter, sans-serif)",
                   fontWeight: 600,
                   ...elementStyle(data, "personal.name"),
                 }}
@@ -101,8 +100,7 @@ export function SingaporeTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text pl-[18px] text-[1em] italic"
                 style={{
                   color: RED,
-                  fontFamily:
-                    "var(--font-source-serif-4, 'Source Serif 4'), Georgia, serif",
+                  fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), Georgia, serif)",
                   fontWeight: 400,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -166,7 +164,7 @@ function SingaporeContact({ data }: { data: ResumeData }) {
         className="mb-1.5 text-[0.7em] uppercase"
         style={{
           color: RED,
-          fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.2em",
         }}
@@ -177,7 +175,7 @@ function SingaporeContact({ data }: { data: ResumeData }) {
         className="space-y-0.5 text-[0.75em] break-words"
         style={{
           color: INK,
-          fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
         }}
       >
         {personal.email && (
@@ -261,7 +259,7 @@ function SingaporeMainSection({
               transformOrigin: "center top",
               top: "44px",
               color: RED,
-              fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+              fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
               fontWeight: 700,
               letterSpacing: "0.22em",
               background: CREAM,
@@ -306,7 +304,7 @@ function SingaporeSidebarSection({
         className="mb-1 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: RED,
-          fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.2em",
           ...elementStyle(data, titleId),

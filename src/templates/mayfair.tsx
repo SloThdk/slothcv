@@ -38,6 +38,7 @@ import {
 } from "./shared";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ResumeData,
@@ -86,8 +87,7 @@ export function MayfairTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mx-auto block w-fit cursor-text text-[3.2em] leading-[1.05] tracking-tight"
             style={{
               color: BURGUNDY,
-              fontFamily:
-                "var(--font-playfair-display, 'Playfair Display'), 'EB Garamond', serif",
+              fontFamily: "var(--cv-title-font, var(--font-playfair-display, 'Playfair Display'), 'EB Garamond', serif)",
               fontWeight: 500,
               fontStyle: "italic",
               ...elementStyle(data, "personal.name"),
@@ -101,7 +101,7 @@ export function MayfairTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="mx-auto mt-2 block w-fit cursor-text text-[1em] italic"
               style={{
                 color: INK,
-                fontFamily: "var(--font-lora, 'Lora'), serif",
+                fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
                 fontWeight: 400,
                 ...elementStyle(data, "personal.headline"),
               }}
@@ -155,7 +155,7 @@ function MayfairContact({ data }: { data: ResumeData }) {
       className="mt-3 text-[0.85em] italic"
       style={{
         color: `${INK}cc`,
-        fontFamily: "var(--font-lora, 'Lora'), serif",
+        fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
       }}
     >
       {items.map((p, i) => (
@@ -213,8 +213,7 @@ function MayfairSection({
         className="mb-1 inline-block cursor-text text-[1em] italic"
         style={{
           color: BURGUNDY,
-          fontFamily:
-            "var(--font-playfair-display, 'Playfair Display'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-playfair-display, 'Playfair Display'), serif)",
           fontWeight: 600,
           fontVariant: "small-caps",
           letterSpacing: "0.06em",
@@ -251,7 +250,7 @@ function MayfairBody({
           className="cursor-text text-[1em] leading-[1.6]"
           style={{
             color: INK,
-            fontFamily: "var(--font-lora, 'Lora'), serif",
+            fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
             fontStyle: "italic",
             ...elementStyle(data, id),
           }}
@@ -260,6 +259,7 @@ function MayfairBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <MayfairExperience section={section} design={design} data={data} />
@@ -279,7 +279,7 @@ function MayfairExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -300,7 +300,7 @@ function MayfairExperience({
                 className="text-[1.05em]"
                 style={{
                   color: INK,
-                  fontFamily: "var(--font-lora, 'Lora'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
                   fontWeight: 600,
                 }}
               >
@@ -319,7 +319,7 @@ function MayfairExperience({
                 className="text-[0.85em] italic"
                 style={{
                   color: `${INK}99`,
-                  fontFamily: "var(--font-lora, 'Lora'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
                 }}
               >
                 {formatDateRange(
@@ -366,7 +366,7 @@ function MayfairBullets({
       className="mt-1.5 space-y-0.5 pl-3 text-[0.95em] leading-[1.55]"
       style={{
         color: INK,
-        fontFamily: "var(--font-lora, 'Lora'), serif",
+        fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
       }}
     >
       {list.map((b) => {
@@ -420,7 +420,7 @@ function MayfairInlineList({
       className="columns-2 gap-6 text-[0.95em]"
       style={{
         color: INK,
-        fontFamily: "var(--font-lora, 'Lora'), serif",
+        fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
       }}
     >
       {visible.map((it) => {
@@ -468,7 +468,7 @@ function MayfairFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-lora, 'Lora'), serif",
+          fontFamily: "var(--cv-body-font, var(--font-lora, 'Lora'), serif)",
           ...elementStyle(data, id),
         }}
       >

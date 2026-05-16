@@ -54,6 +54,7 @@ interface Props {
 const SECTION_ICONS: Record<SectionType, React.ComponentType<{ className?: string }>> = {
   summary: User,
   experience: Briefcase,
+  careerBreak: Briefcase,
   education: GraduationCap,
   skills: Code2,
   languages: LanguagesIcon,

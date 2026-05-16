@@ -714,6 +714,7 @@ export const TRANSLATIONS = {
   // ─── Section type labels ──────────────────────────────────────────
   "section.summary": { en: "Summary", da: "Resumé" },
   "section.experience": { en: "Experience", da: "Erfaring" },
+  "section.careerBreak": { en: "Career break", da: "Karrierepause" },
   "section.education": { en: "Education", da: "Uddannelse" },
   "section.skills": { en: "Skills", da: "Færdigheder" },
   "section.languages": { en: "Languages", da: "Sprog" },
@@ -956,6 +957,14 @@ export const TRANSLATIONS = {
   "settings.exportPdf": { en: "Export PDF", da: "Eksportér PDF" },
   "settings.exportPdfGenerating": { en: "Generating PDF…", da: "Genererer PDF…" },
   "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
+  "settings.exportPdfAtsTitle": {
+    en: "Vector PDF — ATS-readable",
+    da: "Vektor-PDF — ATS-læsbar",
+  },
+  "settings.exportPdfAtsBody": {
+    en: "Selectable text, embedded fonts, no rasterisation. Workday / Greenhouse / Lever parsers can read it.",
+    da: "Markérbar tekst, indlejrede fonte, ingen rasterisering. Workday / Greenhouse / Lever-parsere kan læse den.",
+  },
   "settings.exportJson": { en: "Export JSON (backup)", da: "Eksportér JSON (sikkerhedskopi)" },
   "settings.navigate": { en: "Navigate", da: "Naviger" },
   "settings.backToDashboard": { en: "Back to dashboard", da: "Tilbage til oversigten" },

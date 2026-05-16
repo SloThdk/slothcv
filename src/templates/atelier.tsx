@@ -38,6 +38,7 @@ import {
 } from "./shared";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ResumeData,
@@ -79,8 +80,7 @@ export function AtelierTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="relative mx-auto block w-fit cursor-text text-[3em] leading-[1.05] tracking-tight"
             style={{
               color: BROWN,
-              fontFamily:
-                "var(--font-fraunces, 'Fraunces'), 'EB Garamond', serif",
+              fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), 'EB Garamond', serif)",
               fontWeight: 400,
               fontStyle: "italic",
               ...elementStyle(data, "personal.name"),
@@ -94,7 +94,7 @@ export function AtelierTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="relative mx-auto mt-2 block w-fit cursor-text text-[0.82em] uppercase"
               style={{
                 color: TERRA,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 600,
                 letterSpacing: "0.32em",
                 ...elementStyle(data, "personal.headline"),
@@ -173,7 +173,7 @@ function AtelierContact({ data }: { data: ResumeData }) {
       className="relative mt-3 text-[0.85em]"
       style={{
         color: BROWN,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((p, i) => (
@@ -226,7 +226,7 @@ function AtelierSection({
         className="mb-3 inline-block cursor-text text-[1.4em] italic"
         style={{
           color: TERRA,
-          fontFamily: "var(--font-fraunces, 'Fraunces'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
           fontWeight: 400,
           ...elementStyle(data, titleId),
         }}
@@ -257,7 +257,7 @@ function AtelierBody({
           className="cursor-text text-[0.98em] leading-[1.65]"
           style={{
             color: BROWN,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             fontWeight: 400,
             ...elementStyle(data, id),
           }}
@@ -266,6 +266,7 @@ function AtelierBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <AtelierExperience section={section} design={design} data={data} />
@@ -280,7 +281,7 @@ function AtelierExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -301,7 +302,7 @@ function AtelierExperience({
                 className="text-[1.05em]"
                 style={{
                   color: BROWN,
-                  fontFamily: "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontWeight: 500,
                 }}
               >
@@ -320,7 +321,7 @@ function AtelierExperience({
                 className="text-[0.82em]"
                 style={{
                   color: `${BROWN}88`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 {formatDateRange(
@@ -336,7 +337,7 @@ function AtelierExperience({
                 className="text-[0.82em] italic"
                 style={{
                   color: `${BROWN}77`,
-                  fontFamily: "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                 }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.location`} value={it.location} placeholder="Location" />
@@ -370,7 +371,7 @@ function AtelierBullets({
       className="mt-1.5 space-y-1 pl-3 text-[0.95em] leading-[1.55]"
       style={{
         color: BROWN,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {
@@ -412,7 +413,7 @@ function AtelierFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: BROWN,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -443,8 +444,7 @@ function AtelierFallback({
               className="cursor-grab rounded-sm"
               style={{
                 color: BROWN,
-                fontFamily:
-                  "var(--font-fraunces, 'Fraunces'), serif",
+                fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                 fontStyle: "italic",
                 ...elementStyle(data, id),
               }}

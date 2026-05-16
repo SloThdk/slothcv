@@ -36,6 +36,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   HobbiesSection,
@@ -619,6 +620,7 @@ function BodySectionContent({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <BodyExperience section={section} design={design} data={data} />;
     case "projects":
@@ -635,7 +637,7 @@ function BodyExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {

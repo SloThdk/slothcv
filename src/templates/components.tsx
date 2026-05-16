@@ -34,6 +34,7 @@ import type {
   CertificationsSection,
   CustomSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   HobbiesSection,
@@ -385,7 +386,7 @@ export function ExperienceBody({
   section,
   design,
   data,
-}: SectionProps<ExperienceSection>) {
+}: SectionProps<ExperienceSection | CareerBreakSection>) {
   const { t } = useLanguage();
   if (section.items.length === 0)
     return <Placeholder tKey="placeholder.experience.empty" />;
@@ -1445,6 +1446,8 @@ export function SectionBody({
   switch (section.type) {
     case "summary":
       return <SummaryBody section={section} design={design} data={data} />;
+    case "careerBreak":
+
     case "experience":
       return <ExperienceBody section={section} design={design} data={data} />;
     case "education":

@@ -75,8 +75,7 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
         className="relative z-[1]"
         style={{
           color: CREAM,
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
         }}
       >
         {/* Header — name centered, italic headline, gold rule */}
@@ -90,8 +89,7 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="block w-fit cursor-text text-[2.7em] leading-[1.05] tracking-tight"
             style={{
               color: CREAM,
-              fontFamily:
-                "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
               fontWeight: 500,
               ...elementStyle(data, "personal.name"),
             }}
@@ -104,8 +102,7 @@ export function DubaiTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="mt-1 block w-fit cursor-text text-[1em] italic"
               style={{
                 color: GOLD,
-                fontFamily:
-                  "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+                fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
                 fontWeight: 400,
                 ...elementStyle(data, "personal.headline"),
               }}
@@ -186,8 +183,7 @@ function DubaiContact({ data }: { data: ResumeData }) {
         className="mb-1 text-[0.85em]"
         style={{
           color: GOLD,
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
           fontWeight: 600,
           fontVariant: "small-caps",
           letterSpacing: "0.12em",
@@ -268,8 +264,7 @@ function DubaiSidebarSection({
         className="mb-1 inline-block cursor-text text-[0.85em]"
         style={{
           color: GOLD,
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
           fontWeight: 600,
           fontVariant: "small-caps",
           letterSpacing: "0.12em",
@@ -314,8 +309,7 @@ function DubaiMainSection({
         className="mb-2 inline-block cursor-text text-[1em]"
         style={{
           color: GOLD,
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
           fontWeight: 600,
           fontVariant: "small-caps",
           letterSpacing: "0.1em",

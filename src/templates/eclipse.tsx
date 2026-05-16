@@ -30,6 +30,7 @@ import {
 import { SectionActions } from "./section-actions";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -61,8 +62,7 @@ export function EclipseTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[3.4em] leading-[1.05] tracking-tight"
           style={{
             color: design.accentColor,
-            fontFamily:
-              "var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif)",
             fontWeight: 500,
             fontStyle: "italic",
             ...elementStyle(data, "personal.name"),
@@ -76,8 +76,7 @@ export function EclipseTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-2 block w-fit cursor-text text-[0.9em] uppercase tracking-[0.16em]"
             style={{
               color: `${design.textColor}cc`,
-              fontFamily:
-                "var(--font-albert-sans, 'Albert Sans'), Inter, sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-albert-sans, 'Albert Sans'), Inter, sans-serif)",
               fontWeight: 500,
               ...elementStyle(data, "personal.headline"),
             }}
@@ -122,8 +121,7 @@ function EclipseSection({
           className="inline-block cursor-text text-[0.78em] uppercase tracking-[0.18em]"
           style={{
             color: design.accentColor,
-            fontFamily:
-              "var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), 'Source Serif 4', serif)",
             fontWeight: 500,
             ...elementStyle(data, titleId),
           }}
@@ -159,8 +157,7 @@ function EclipseBody({
           className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
           style={{
             color: design.textColor,
-            fontFamily:
-              "var(--font-albert-sans, 'Albert Sans'), Inter, sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-albert-sans, 'Albert Sans'), Inter, sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -168,6 +165,7 @@ function EclipseBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <EclipseExperience section={section} design={design} data={data} />;
     case "projects":
@@ -207,7 +205,7 @@ function EclipseExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -228,8 +226,7 @@ function EclipseExperience({
                 className="text-[1em]"
                 style={{
                   color: design.textColor,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontWeight: 500,
                   fontStyle: "italic",
                 }}
@@ -305,8 +302,7 @@ function EclipseProjects({
                 className="text-[1em]"
                 style={{
                   color: design.textColor,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontWeight: 500,
                 }}
               >

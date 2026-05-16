@@ -1068,6 +1068,15 @@ export function Preview() {
             window.dispatchEvent(
               new CustomEvent("slothcv:open-design-photo"),
             );
+          } else if (drag.id === "design.watermark") {
+            // Same pattern for the watermark: every property of the
+            // corner letters (text, position, colour) lives on the
+            // Design tab's Watermark Section, not in Content. Routing
+            // the click directly removes the "where do I configure
+            // this?" hunt Philip flagged 2026-05-16.
+            window.dispatchEvent(
+              new CustomEvent("slothcv:open-design-watermark"),
+            );
           } else {
             // Re-resolve the element from the DOM via its element id
             // (drag carries the id but not the node) so we can walk up

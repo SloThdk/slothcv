@@ -48,6 +48,7 @@ const ITEMS_BEARING_TYPES = new Set<Section["type"]>([
 const ADD_LABELS: Record<Section["type"], string> = {
   summary: "Edit summary",
   experience: "Add experience",
+  careerBreak: "Add career break",
   education: "Add education",
   skills: "Add skill",
   languages: "Add language",

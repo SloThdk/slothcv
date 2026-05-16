@@ -69,8 +69,7 @@ export function DashboardTemplate({ data, fixedSize, skipOverlay }: Props) {
     <TemplateFrame data={data} fixedSize={fixedSize} skipOverlay={skipOverlay}>
       <div
         style={{
-          fontFamily:
-            "var(--font-inter, 'Inter'), system-ui, sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), system-ui, sans-serif)",
         }}
       >
         {/* Header — name + headline + photo. Inline with KPI strip below. */}
@@ -85,7 +84,7 @@ export function DashboardTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.2em] leading-[1.05] tracking-tight"
               style={{
                 color: design.textColor,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 700,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -98,7 +97,7 @@ export function DashboardTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[0.92em] uppercase"
                 style={{
                   color: EMERALD,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 600,
                   letterSpacing: "0.16em",
                   ...elementStyle(data, "personal.headline"),
@@ -336,7 +335,7 @@ function SkillBarSection({
         className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: EMERALD,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.14em",
           ...elementStyle(data, titleId),
@@ -427,7 +426,7 @@ function DashboardSection({
         className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: EMERALD,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.14em",
           ...elementStyle(data, titleId),

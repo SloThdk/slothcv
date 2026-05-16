@@ -56,6 +56,11 @@ function Body({ section }: { section: Section }) {
       return <SummaryForm section={section} />;
     case "experience":
       return <ExperienceForm section={section} />;
+    case "careerBreak":
+      // Career break shares ExperienceForm — same item shape, just a
+      // different section-type discriminator. See CareerBreakSection
+      // in src/types/resume.ts for the rationale.
+      return <ExperienceForm section={section} />;
     case "education":
       return <EducationForm section={section} />;
     case "skills":

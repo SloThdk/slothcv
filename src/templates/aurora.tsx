@@ -36,6 +36,7 @@ import {
 import { SectionActions } from "./section-actions";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -698,6 +699,7 @@ function AuroraMainBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <Experience section={section} design={design} data={data} />;
     case "projects":
@@ -719,7 +721,7 @@ function Experience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {

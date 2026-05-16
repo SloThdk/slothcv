@@ -35,6 +35,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -90,7 +91,7 @@ export function LinearTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.5em] leading-[1.05]"
               style={{
                 color: design.textColor,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 700,
                 letterSpacing: "-0.03em",
                 ...elementStyle(data, "personal.name"),
@@ -104,7 +105,7 @@ export function LinearTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 400,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -225,7 +226,7 @@ function LinearSection({
         className="mb-3 inline-block cursor-text pb-0.5 text-[0.85em] uppercase"
         style={{
           color: design.textColor,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 600,
           letterSpacing: "0.12em",
           borderBottom: `2px solid ${INDIGO}`,
@@ -258,7 +259,7 @@ function LinearBody({
           className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5]"
           style={{
             color: design.textColor,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -266,6 +267,7 @@ function LinearBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <LinearExperience section={section} design={design} data={data} />;
     case "projects":
@@ -297,7 +299,7 @@ function LinearExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -332,7 +334,7 @@ function LinearExperience({
                   className="text-[1em]"
                   style={{
                     color: design.textColor,
-                    fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                    fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                     fontWeight: 600,
                   }}
                 >
@@ -426,7 +428,7 @@ function LinearProjects({
                   className="text-[1em]"
                   style={{
                     color: design.textColor,
-                    fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                    fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                     fontWeight: 600,
                   }}
                 >
@@ -589,7 +591,7 @@ function LinearSkills({
               className="mb-1 text-[0.78em] uppercase"
               style={{
                 color: `${design.textColor}66`,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 600,
                 letterSpacing: "0.1em",
               }}

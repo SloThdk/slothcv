@@ -65,8 +65,7 @@ export function ManhattanTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="block w-fit cursor-text text-[2.6em] leading-[1.05] tracking-tight"
             style={{
               color: NAVY,
-              fontFamily:
-                "var(--font-lora, 'Lora'), 'Source Serif 4', serif",
+              fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), 'Source Serif 4', serif)",
               fontWeight: 600,
               ...elementStyle(data, "personal.name"),
             }}
@@ -79,7 +78,7 @@ export function ManhattanTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="mt-1 block w-fit cursor-text text-[0.95em] uppercase"
               style={{
                 color: GOLD,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 600,
                 letterSpacing: "0.14em",
                 ...elementStyle(data, "personal.headline"),
@@ -139,7 +138,7 @@ function ManhattanContact({ data }: { data: ResumeData }) {
         className="mb-2 text-[0.78em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 600,
           letterSpacing: "0.16em",
         }}
@@ -224,7 +223,7 @@ function ManhattanSection({
         className="mb-1.5 inline-block cursor-text text-[0.82em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 600,
           letterSpacing: "0.14em",
           ...elementStyle(data, titleId),

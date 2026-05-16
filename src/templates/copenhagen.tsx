@@ -50,7 +50,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.6em] leading-[1.05] tracking-tight"
               style={{
                 color: design.textColor,
-                fontFamily: "var(--font-onest, 'Onest'), Inter, sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), Inter, sans-serif)",
                 fontWeight: 300,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -63,7 +63,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-2 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
-                  fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
                   fontWeight: 400,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -111,7 +111,7 @@ export function CopenhagenTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mb-2 inline-block cursor-text text-[0.95em] lowercase"
                 style={{
                   color: design.textColor,
-                  fontFamily: "var(--font-onest, 'Onest'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-onest, 'Onest'), sans-serif)",
                   fontWeight: 500,
                   ...elementStyle(data, titleId),
                 }}

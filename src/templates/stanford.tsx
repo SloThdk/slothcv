@@ -34,6 +34,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   PublicationsSection,
@@ -65,8 +66,7 @@ export function StanfordTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[2.7em] leading-[1.02] tracking-tight"
           style={{
             color: CARDINAL,
-            fontFamily:
-              "var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif)",
             fontWeight: 600,
             ...elementStyle(data, "personal.name"),
           }}
@@ -79,7 +79,7 @@ export function StanfordTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-0.5 block w-fit cursor-text text-[0.95em]"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 500,
               ...elementStyle(data, "personal.headline"),
             }}
@@ -123,7 +123,7 @@ function StanfordContact({ data }: { data: ResumeData }) {
       className="mt-2 text-[0.85em]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((p, i) => (
@@ -178,7 +178,7 @@ function StanfordSection({
         className="inline-block cursor-text text-[1.05em] uppercase"
         style={{
           color: CARDINAL,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.06em",
           ...elementStyle(data, titleId),
@@ -214,7 +214,7 @@ function StanfordBody({
           className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -222,6 +222,7 @@ function StanfordBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <StanfordExperience section={section} design={design} data={data} />
@@ -246,7 +247,7 @@ function StanfordExperience({
   section,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -266,7 +267,7 @@ function StanfordExperience({
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div
                 style={{
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                   color: INK,
                 }}
               >
@@ -285,7 +286,7 @@ function StanfordExperience({
                 className="text-[0.82em] tabular-nums"
                 style={{
                   color: `${INK}99`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 {year}
@@ -327,7 +328,7 @@ function StanfordEducation({
             <div
               className="text-[0.95em]"
               style={{
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 color: INK,
               }}
             >
@@ -382,7 +383,7 @@ function StanfordTwoCol({
             className="cursor-grab rounded-sm text-[0.88em]"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -428,7 +429,7 @@ function StanfordCerts({
             className="cursor-grab rounded-sm text-[0.9em]"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -461,7 +462,7 @@ function StanfordFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -487,7 +488,7 @@ function StanfordFallback({
                 background: `${CARDINAL}10`,
                 border: `1px solid ${CARDINAL}33`,
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 ...elementStyle(data, id),
               }}
             >
@@ -517,7 +518,7 @@ function StanfordBullets({
       className="mt-1 space-y-0.5 pl-1 text-[0.9em] leading-[1.5]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {

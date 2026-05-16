@@ -78,8 +78,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
       <div
         className="relative z-[1]"
         style={{
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
         }}
       >
         {/* Header — academic-style, name first, then "of Department" */}
@@ -93,8 +92,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mx-auto block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
             style={{
               color: design.textColor,
-              fontFamily:
-                "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
               fontWeight: 600,
               ...elementStyle(data, "personal.name"),
             }}
@@ -107,8 +105,7 @@ export function HeidelbergTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="mx-auto mt-1 block w-fit cursor-text text-[0.95em] italic"
               style={{
                 color: RED,
-                fontFamily:
-                  "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+                fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
                 fontWeight: 400,
                 ...elementStyle(data, "personal.headline"),
               }}
@@ -210,8 +207,7 @@ function HeidelbergSection({
         className="mb-1.5 inline-block cursor-text text-[1em]"
         style={{
           color: RED,
-          fontFamily:
-            "var(--font-eb-garamond, 'EB Garamond'), Garamond, serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), Garamond, serif)",
           fontWeight: 600,
           fontVariant: "small-caps",
           letterSpacing: "0.06em",

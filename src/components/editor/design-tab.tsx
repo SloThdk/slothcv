@@ -45,7 +45,9 @@ import {
   DIVIDER_STYLE_TEMPLATES,
   NO_BULLET_STYLE_TEMPLATES,
   NO_SKILL_BAR_STYLE_TEMPLATES,
+  NO_LANGUAGE_STYLE_TEMPLATES,
   NO_TEXT_TEMPLATES,
+  LAYOUT_TEMPLATES,
   type DesignControlKey,
 } from "@/templates/registry";
 import { RotateCcw } from "lucide-react";
@@ -104,10 +106,21 @@ const ACCENT_PRESETS = [
 // src/lib/fonts/registry.ts for the full list and licensing notes.
 
 /** Optional scroll target the editor page passes when the user clicks
- *  the empty page background. DesignTab acts on it on its very first
- *  render so the scroll fires on click 1, not click 2. */
+ *  a specific element on the canvas. DesignTab acts on it on its very
+ *  first render so the scroll fires on click 1, not click 2.
+ *
+ *  Click target → scrollTo value:
+ *    - empty page background → "pageBg"
+ *    - personal.photo        → "photo"
+ *    - design.watermark      → "watermark"
+ *
+ *  Every target also flashes a brief accent ring around the matched
+ *  Section so the user immediately sees which control corresponds to
+ *  the element they clicked — answers Philip's UX brief on 2026-05-16
+ *  ("clicking visually on it but want to see it immediately also in
+ *  the design tab"). */
 export interface DesignTabProps {
-  scrollTo?: "pageBg" | "photo" | null;
+  scrollTo?: "pageBg" | "photo" | "watermark" | null;
   onScrolled?: () => void;
 }
 
@@ -169,6 +182,11 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
       return true;
     if (key === "sidebarWidth" && !SIDEBAR_WIDTH_TEMPLATES.has(template))
       return true;
+    // layout chip only meaningful on Scratch + Aurora — every other
+    // template hardcodes its column structure, so picking "two-col"
+    // on Berlin is a dead lever. Hide it instead of showing a control
+    // that does nothing.
+    if (key === "layout" && !LAYOUT_TEMPLATES.has(template)) return true;
     // bulletStyle dies on templates whose body renderers don't read
     // bulletGlyph(design) at all (no SectionBody, no hand-rolled
     // bulletGlyph call). Surface as an explicit negative list.
@@ -180,6 +198,14 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
     if (
       key === "skillBarStyle" &&
       NO_SKILL_BAR_STYLE_TEMPLATES.has(template)
+    )
+      return true;
+    // languageStyle dies on the same templates that hand-roll their
+    // languages renderer — the shared SectionBody honours all four
+    // styles, but these 21 templates ignore the picker entirely.
+    if (
+      key === "languageStyle" &&
+      NO_LANGUAGE_STYLE_TEMPLATES.has(template)
     )
       return true;
     if (NO_TEXT_TEMPLATES.has(template)) {
@@ -212,7 +238,10 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   // the first event. The prop-driven path fires on the same render.
   const pageBgRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
+  const watermarkRef = useRef<HTMLDivElement>(null);
   const [bgFlash, setBgFlash] = useState(false);
+  const [photoFlash, setPhotoFlash] = useState(false);
+  const [wmFlash, setWmFlash] = useState(false);
 
   // Photo scroll-to: when the user clicks the photo on the canvas, the
   // editor sets pendingDesignScroll="photo" + switches to this tab.
@@ -228,6 +257,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   useEffect(() => {
     if (scrollTo !== "photo") return;
     let cancelled = false;
+    let flashTimeoutId: number | undefined;
     const tryScroll = (attempt: number) => {
       if (cancelled) return;
       const el = photoRef.current;
@@ -244,12 +274,48 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
         if (r.top > 200 || r.top < 0) {
           el.scrollIntoView({ behavior: "auto", block: "start" });
         }
+        setPhotoFlash(true);
+        flashTimeoutId = window.setTimeout(() => setPhotoFlash(false), 1400);
         onScrolled?.();
       });
     };
     requestAnimationFrame(() => tryScroll(0));
     return () => {
       cancelled = true;
+      if (flashTimeoutId !== undefined) window.clearTimeout(flashTimeoutId);
+    };
+  }, [scrollTo, onScrolled]);
+
+  // Watermark scroll-to: mirrors the photo pattern (behavior:"auto" + retry)
+  // because the Watermark Section is the LAST one on the panel, far below
+  // the fold. Smooth scroll mid-render lands wrong.
+  useEffect(() => {
+    if (scrollTo !== "watermark") return;
+    let cancelled = false;
+    let flashTimeoutId: number | undefined;
+    const tryScroll = (attempt: number) => {
+      if (cancelled) return;
+      const el = watermarkRef.current;
+      if (!el) {
+        if (attempt < 10) setTimeout(() => tryScroll(attempt + 1), 50);
+        return;
+      }
+      el.scrollIntoView({ behavior: "auto", block: "start" });
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const r = el.getBoundingClientRect();
+        if (r.top > 200 || r.top < 0) {
+          el.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+        setWmFlash(true);
+        flashTimeoutId = window.setTimeout(() => setWmFlash(false), 1400);
+        onScrolled?.();
+      });
+    };
+    requestAnimationFrame(() => tryScroll(0));
+    return () => {
+      cancelled = true;
+      if (flashTimeoutId !== undefined) window.clearTimeout(flashTimeoutId);
     };
   }, [scrollTo, onScrolled]);
 
@@ -331,7 +397,6 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           pageMargin: factory.pageMargin,
           pageMarginMm: factory.pageMarginMm,
           pageSize: factory.pageSize,
-          multiPage: factory.multiPage,
         });
         break;
       case "photo":
@@ -339,8 +404,6 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
         break;
       case "sections":
         setDesign({
-          sectionIcons: factory.sectionIcons,
-          iconSet: factory.iconSet,
           bulletStyle: factory.bulletStyle,
           dividerStyle: factory.dividerStyle,
           headerStyle: factory.headerStyle,
@@ -525,24 +588,30 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
 
       <Section title={t("design.layout")} onReset={() => onResetGroup("layout")}>
         {/* Layout chip is honored by Scratch (the blank-canvas template) and
-            controls Aurora's grid columns. Other templates have hard-coded
-            layouts that come from picking a different template — surface
-            that to the user with the helper text below. */}
-        <ChipRow
-          label="Layout (Scratch / Aurora)"
-          value={design.layout}
-          options={[
-            "single",
-            "two-col",
-            "sidebar-left",
-            "sidebar-right",
-          ] as Layout[]}
-          onChange={(v) => setDesign({ layout: v })}
-        />
-        <p className="text-[11px] text-subtle">
-          For other templates, pick a different template in the Templates tab to
-          change layout.
-        </p>
+            controls Aurora's grid columns. Every other template hardcodes
+            its column structure in JSX — the chip hides on those via the
+            LAYOUT_TEMPLATES gate so users aren't pointed at a dead lever.
+            The Templates tab is the surface for changing column structure
+            on those templates. */}
+        {!isHidden("layout") && (
+          <ChipRow
+            label="Layout"
+            value={design.layout}
+            options={[
+              "single",
+              "two-col",
+              "sidebar-left",
+              "sidebar-right",
+            ] as Layout[]}
+            onChange={(v) => setDesign({ layout: v })}
+          />
+        )}
+        {isHidden("layout") && (
+          <p className="text-[11px] text-subtle">
+            To change the column structure of this template, pick a
+            different one in the Templates tab.
+          </p>
+        )}
         {!isHidden("sidebarWidth") && (
           <SliderRow
             label={`Sidebar width (${Math.round(design.sidebarWidth * 100)}%)`}
@@ -572,7 +641,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
       </Section>
 
       {!isHidden("photo") && (
-      <Section title={t("design.photo")} onReset={() => onResetGroup("photo")} sectionRef={photoRef}>
+      <Section title={t("design.photo")} onReset={() => onResetGroup("photo")} sectionRef={photoRef} flash={photoFlash}>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -759,6 +828,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           onChange={(v) => setDesign({ skillBarStyle: v })}
         />
         )}
+        {!isHidden("languageStyle") && (
         <ChipRow
           label="Language display"
           hint={DESIGN_HINT.languageStyle}
@@ -766,6 +836,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           options={["bar", "dots", "text", "cefr-badges"] as LanguageStyle[]}
           onChange={(v) => setDesign({ languageStyle: v })}
         />
+        )}
         <ChipRow
           label="Date format"
           hint={DESIGN_HINT.dateFormat}
@@ -792,7 +863,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           Users can also double-click the watermark on the canvas to
           inline-edit the text, but this Section gives them the full
           control surface (position, colour, clear). */}
-      <Section title={t("design.watermark")} onReset={() => onResetGroup("watermark")}>
+      <Section title={t("design.watermark")} onReset={() => onResetGroup("watermark")} sectionRef={watermarkRef} flash={wmFlash}>
         <div>
           <Label>Watermark text</Label>
           <Input
@@ -845,6 +916,7 @@ function Section({
   children,
   onReset,
   sectionRef,
+  flash = false,
 }: {
   title: string;
   children: React.ReactNode;
@@ -856,11 +928,16 @@ function Section({
    *  scroll to this section in response to a canvas-side click (e.g.
    *  clicking the photo jumps to the FOTO section). */
   sectionRef?: React.Ref<HTMLDivElement>;
+  /** When true, applies the slothcv-bg-flash class so the section pulses
+   *  a brief accent-coloured outline. Used by the scroll-to-on-click
+   *  flow to confirm to the user which control matches the element
+   *  they clicked on the canvas. */
+  flash?: boolean;
 }) {
   return (
     <div
       ref={sectionRef}
-      className="rounded-lg border border-border bg-surface p-3"
+      className={`rounded-lg border border-border bg-surface p-3 scroll-mt-6 scroll-mb-6 ${flash ? "slothcv-bg-flash" : ""}`}
     >
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">

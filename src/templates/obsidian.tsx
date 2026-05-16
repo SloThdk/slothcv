@@ -39,6 +39,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -198,7 +199,7 @@ function ObsidianContact({ data }: { data: ResumeData }) {
       className="mt-4 text-[0.85em]"
       style={{
         color: `var(--obs-text-99)`,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((it, i) => (
@@ -257,7 +258,7 @@ function ObsidianSection({
         className="mb-5 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: PURPLE,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 500,
           letterSpacing: "0.28em",
           ...elementStyle(data, titleId),
@@ -289,7 +290,7 @@ function ObsidianBody({
           className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
           style={{
             color: OFF_WHITE,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -297,6 +298,7 @@ function ObsidianBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <ObsidianExperience section={section} design={design} data={data} />
@@ -323,7 +325,7 @@ function ObsidianExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -344,8 +346,7 @@ function ObsidianExperience({
                 className="text-[1.05em]"
                 style={{
                   color: OFF_WHITE,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontWeight: 500,
                   fontStyle: "italic",
                 }}
@@ -362,7 +363,7 @@ function ObsidianExperience({
                 className="text-[0.78em]"
                 style={{
                   color: `var(--obs-text-77)`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 }}
               >
                 {formatDateRange(
@@ -420,8 +421,7 @@ function ObsidianProjects({
                 className="text-[1em]"
                 style={{
                   color: OFF_WHITE,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontWeight: 500,
                 }}
               >
@@ -506,8 +506,7 @@ function ObsidianEducation({
                 className="text-[0.95em]"
                 style={{
                   color: OFF_WHITE,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontStyle: "italic",
                 }}
               >
@@ -565,7 +564,7 @@ function ObsidianSkills({
               className="mb-1 text-[0.78em] uppercase"
               style={{
                 color: PURPLE,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 500,
                 letterSpacing: "0.18em",
               }}
@@ -624,8 +623,7 @@ function ObsidianCerts({
               <span
                 style={{
                   fontWeight: 500,
-                  fontFamily:
-                    "var(--font-fraunces, 'Fraunces'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), serif)",
                   fontStyle: "italic",
                 }}
               >

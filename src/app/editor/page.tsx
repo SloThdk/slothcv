@@ -83,7 +83,7 @@ function EditorInner() {
   // is "pageBg" exactly when DesignTab mounts → scroll fires on the
   // very first render. DesignTab calls back via onScrolled to clear.
   const [pendingDesignScroll, setPendingDesignScroll] = useState<
-    "pageBg" | "photo" | null
+    "pageBg" | "photo" | "watermark" | null
   >(null);
   const handleDesignScrolled = useCallback(
     () => setPendingDesignScroll(null),
@@ -194,15 +194,29 @@ function EditorInner() {
       prevTabBeforeSelectionRef.current = null;
       setPendingDesignScroll("photo");
     }
+    function onOpenDesignWatermark() {
+      setTab("design");
+      setMobilePane("edit");
+      prevTabBeforeSelectionRef.current = null;
+      setPendingDesignScroll("watermark");
+    }
     window.addEventListener("slothcv:jump-to-section", onJump);
     window.addEventListener("slothcv:open-design-tab", onOpenDesign);
     window.addEventListener("slothcv:open-design-photo", onOpenDesignPhoto);
+    window.addEventListener(
+      "slothcv:open-design-watermark",
+      onOpenDesignWatermark,
+    );
     return () => {
       window.removeEventListener("slothcv:jump-to-section", onJump);
       window.removeEventListener("slothcv:open-design-tab", onOpenDesign);
       window.removeEventListener(
         "slothcv:open-design-photo",
         onOpenDesignPhoto,
+      );
+      window.removeEventListener(
+        "slothcv:open-design-watermark",
+        onOpenDesignWatermark,
       );
     };
   }, [requestJumpToSection]);

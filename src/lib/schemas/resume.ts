@@ -93,8 +93,6 @@ const layoutSchema = z.enum([
 ]);
 const letterSpacingSchema = z.enum(["tight", "normal", "wide"]);
 const pageMarginSchema = z.enum(["narrow", "normal", "wide", "custom"]);
-const iconSetSchema = z.enum(["lucide", "heroicons", "tabler", "none"]);
-
 const globalDesignSchema = z.object({
   accentColor: colorSchema,
   secondaryColor: colorSchema,
@@ -119,8 +117,6 @@ const globalDesignSchema = z.object({
     borderColor: z.string().max(64).optional(),
     borderWidth: z.number().min(0).max(8).optional(),
   }),
-  sectionIcons: z.boolean(),
-  iconSet: iconSetSchema,
   bulletStyle: bulletStyleSchema,
   dividerStyle: dividerStyleSchema,
   headerStyle: headerStyleSchema,
@@ -128,7 +124,6 @@ const globalDesignSchema = z.object({
   languageStyle: languageStyleSchema,
   dateFormat: dateFormatSchema,
   pageSize: pageSizeSchema,
-  multiPage: z.boolean(),
   /** Watermark fields are kept optional in the migration sense — older
    *  rows in the DB don't have them, so parseResumeData() backfills the
    *  defaults via the migrate() pass. */
@@ -221,20 +216,27 @@ const summarySectionSchema = z.object({
   body: z.string().max(4000),
 });
 
+const experienceItemSchema = z.object({
+  ...datedItemFields,
+  company: z.string().max(160),
+  role: z.string().max(160),
+  location: z.string().max(120),
+  bullets: z.array(bulletSchema).max(20),
+});
+
 const experienceSectionSchema = z.object({
   ...sectionBaseFields,
   type: z.literal("experience"),
-  items: z
-    .array(
-      z.object({
-        ...datedItemFields,
-        company: z.string().max(160),
-        role: z.string().max(160),
-        location: z.string().max(120),
-        bullets: z.array(bulletSchema).max(20),
-      }),
-    )
-    .max(40),
+  items: z.array(experienceItemSchema).max(40),
+});
+
+// Career break — same item shape as experience, distinct discriminator so
+// UI can label sections appropriately. See CareerBreakSection in
+// src/types/resume.ts for rationale.
+const careerBreakSectionSchema = z.object({
+  ...sectionBaseFields,
+  type: z.literal("careerBreak"),
+  items: z.array(experienceItemSchema).max(40),
 });
 
 const educationSectionSchema = z.object({
@@ -434,6 +436,7 @@ const customSectionSchema = z.object({
 const sectionSchema = z.discriminatedUnion("type", [
   summarySectionSchema,
   experienceSectionSchema,
+  careerBreakSectionSchema,
   educationSectionSchema,
   skillsSectionSchema,
   languagesSectionSchema,

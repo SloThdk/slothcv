@@ -65,7 +65,7 @@ export function AtlasTemplate({ data, fixedSize, skipOverlay }: Props) {
       <div
         className="relative z-[1]"
         style={{
-          fontFamily: "var(--font-inter, 'Inter'), system-ui, sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), system-ui, sans-serif)",
         }}
       >
         {/* Header */}
@@ -80,7 +80,7 @@ export function AtlasTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.6em] leading-[1.05] tracking-tight"
               style={{
                 color: design.textColor,
-                fontFamily: "var(--font-lora, 'Lora'), Georgia, serif",
+                fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), Georgia, serif)",
                 fontWeight: 600,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -93,7 +93,7 @@ export function AtlasTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[0.95em] italic"
                 style={{
                   color: SKY,
-                  fontFamily: "var(--font-lora, 'Lora'), Georgia, serif",
+                  fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), Georgia, serif)",
                   fontWeight: 400,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -262,7 +262,7 @@ function AtlasSection({
         className="mb-1.5 inline-flex items-center cursor-text text-[1em]"
         style={{
           color: SKY,
-          fontFamily: "var(--font-lora, 'Lora'), Georgia, serif",
+          fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), Georgia, serif)",
           fontWeight: 600,
           ...elementStyle(data, titleId),
         }}

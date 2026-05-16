@@ -81,8 +81,7 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[2.5em] leading-[1.05] tracking-tight"
           style={{
             color: NAVY,
-            fontFamily:
-              "var(--font-source-serif-4, 'Source Serif 4'), Georgia, serif",
+            fontFamily: "var(--cv-title-font, var(--font-source-serif-4, 'Source Serif 4'), Georgia, serif)",
             fontWeight: 600,
             ...elementStyle(data, "personal.name"),
           }}
@@ -95,7 +94,7 @@ export function GenevaTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-1 block w-fit cursor-text text-[0.92em] uppercase"
             style={{
               color: `${design.textColor}99`,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 500,
               letterSpacing: "0.14em",
               ...elementStyle(data, "personal.headline"),
@@ -167,7 +166,7 @@ function GenevaContact({ data }: { data: ResumeData }) {
         className="mb-1.5 text-[0.7em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.18em",
         }}
@@ -178,7 +177,7 @@ function GenevaContact({ data }: { data: ResumeData }) {
         className="space-y-0.5 text-[0.78em]"
         style={{
           color: design.textColor,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
         }}
       >
         {personal.email && (
@@ -255,7 +254,7 @@ function KpiTiles({ experience }: { experience: ExperienceSection }) {
         className="mb-1.5 text-[0.7em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.18em",
         }}
@@ -273,7 +272,7 @@ function KpiTiles({ experience }: { experience: ExperienceSection }) {
               className="font-semibold"
               style={{
                 color: NAVY,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               }}
             >
               {t.proof}
@@ -313,7 +312,7 @@ function GenevaMainSection({
         className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.16em",
           ...elementStyle(data, titleId),
@@ -356,7 +355,7 @@ function GenevaSidebarSection({
         className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.18em",
           ...elementStyle(data, titleId),

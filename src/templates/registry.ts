@@ -32,6 +32,8 @@ export type DesignControlKey =
   | "dividerStyle"
   | "bulletStyle"
   | "skillBarStyle"
+  | "languageStyle"
+  | "layout"
   | "sidebarWidth"
   | "pageMargin"
   | "photo"
@@ -50,6 +52,16 @@ export type DesignControlKey =
  *    least one template's layout is parameterised on photo.position. */
 export const GLOBALLY_HIDDEN_CONTROLS: ReadonlySet<DesignControlKey> = new Set([
   "photoPosition",
+]);
+
+/** Templates whose render reads design.layout (single / two-col /
+ *  sidebar-left / sidebar-right). Every other template hardcodes its
+ *  column structure in JSX — picking "two-col" on Berlin is a dead
+ *  lever, so the chip hides. Re-audit by grepping for `design.layout`
+ *  across src/templates/. */
+export const LAYOUT_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "scratch",
+  "aurora",
 ]);
 
 /** Templates that ACTUALLY apply design.dividerStyle under section
@@ -174,6 +186,38 @@ export const NO_SKILL_BAR_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
 /** Templates that render no body text at all (blank canvas / toolshelf).
  *  Typography + scale + letter-spacing pickers have nothing to act on. */
 export const NO_TEXT_TEMPLATES: ReadonlySet<TemplateId> = new Set(["blank"]);
+
+/** Templates whose own `case "languages":` switch ignores
+ *  design.languageStyle — same architectural pattern as
+ *  NO_BULLET_STYLE_TEMPLATES / NO_SKILL_BAR_STYLE_TEMPLATES. The shared
+ *  SectionBody in components.tsx honours every languageStyle option (bar
+ *  / dots / text / cefr-badges), but these 21 templates hand-roll their
+ *  own languages renderer and hardcode the visualisation, so the chip
+ *  is a dead lever there. Re-audit by grepping for `case "languages"`
+ *  and `design.languageStyle` across src/templates/. */
+export const NO_LANGUAGE_STYLE_TEMPLATES: ReadonlySet<TemplateId> = new Set([
+  "atelier",
+  "aurora",
+  "boston",
+  "canvas",
+  "carbon",
+  "davos",
+  "eclipse",
+  "founder",
+  "geist",
+  "graphite",
+  "helvetica",
+  "linear",
+  "madison",
+  "mayfair",
+  "midnight",
+  "obsidian",
+  "onyx",
+  "scrubs",
+  "stanford",
+  "stripe",
+  "studio",
+]);
 
 export interface TemplateMeta {
   id: TemplateId;

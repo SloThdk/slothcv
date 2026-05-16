@@ -505,7 +505,6 @@ export type LetterSpacing = "tight" | "normal" | "wide";
 /** Page margin presets — `custom` reads `pageMarginMm`. */
 export type PageMargin = "narrow" | "normal" | "wide" | "custom";
 /** Icon set picker — Phase 2 only ships lucide; the others are plumbing. */
-export type IconSet = "lucide" | "heroicons" | "tabler" | "none";
 
 /** Full global design block — every control in master plan §Design (global). */
 export interface GlobalDesign {
@@ -547,8 +546,10 @@ export interface GlobalDesign {
   };
 
   // Section ornamentation
-  sectionIcons: boolean;
-  iconSet: IconSet;
+  // sectionIcons + iconSet were removed 2026-05-16 — zero templates
+  // ever consumed them and there was no UI control beyond the silent
+  // reset path. The schema strips unknown properties on parse, so old
+  // CVs carrying these fields hydrate cleanly with the fields dropped.
   bulletStyle: BulletStyle;
   dividerStyle: DividerStyle;
   headerStyle: HeaderStyle;
@@ -560,8 +561,8 @@ export interface GlobalDesign {
   // Misc
   dateFormat: DateFormat;
   pageSize: PageSize;
-  /** Auto-paginate vs warn when content overflows one page. */
-  multiPage: boolean;
+  // multiPage was removed 2026-05-16 — no template's overflow logic
+  // ever read it; the schema-strip-on-parse path covers old data.
 
   /** Big decorative branding text rendered in a corner of the page (e.g.
    *  "CV", initials). Empty + position "off" disables it. */
@@ -587,6 +588,7 @@ export interface GlobalDesign {
 export type SectionType =
   | "summary"
   | "experience"
+  | "careerBreak"
   | "education"
   | "skills"
   | "languages"
@@ -659,6 +661,17 @@ export interface ExperienceItem extends DatedItem {
   bullets: Bullet[];
 }
 export interface ExperienceSection extends SectionBase<"experience"> {
+  items: ExperienceItem[];
+}
+
+/** Career Break section — same shape as Experience but with a distinct
+ *  type discriminator so the UX can label it appropriately and hand-rolled
+ *  templates can opt to render it differently in the future. LinkedIn
+ *  shipped this concept in 2022; treating it as a first-class entry type
+ *  (rather than hiding gaps) is the modern Western hiring norm. v0.1
+ *  renders identically to Experience via fallthrough in every template's
+ *  section-type switch. */
+export interface CareerBreakSection extends SectionBase<"careerBreak"> {
   items: ExperienceItem[];
 }
 
@@ -808,6 +821,7 @@ export interface CustomSection extends SectionBase<"custom"> {
 export type Section =
   | SummarySection
   | ExperienceSection
+  | CareerBreakSection
   | EducationSection
   | SkillsSection
   | LanguagesSection
@@ -832,6 +846,7 @@ export const RESUME_SCHEMA_VERSION = 1;
 export const SECTION_LABELS: Record<SectionType, string> = {
   summary: "Summary",
   experience: "Experience",
+  careerBreak: "Career break",
   education: "Education",
   skills: "Skills",
   languages: "Languages",

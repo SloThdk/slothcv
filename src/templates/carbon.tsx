@@ -36,6 +36,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -290,6 +291,7 @@ function CarbonBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <CarbonExperience section={section} design={design} data={data} />;
     case "projects":
@@ -331,7 +333,7 @@ function CarbonExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {

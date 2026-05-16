@@ -77,7 +77,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
           style={{
             background: BLACK,
             color: SIDEBAR_TEXT,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           }}
         >
           {/* Photo top — full sidebar width effect via square */}
@@ -107,7 +107,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[1.6em] leading-[1.05] tracking-tight"
               style={{
                 color: SIDEBAR_TEXT,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 700,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -120,7 +120,7 @@ export function FrankfurtTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[0.78em] uppercase"
                 style={{
                   color: SIDEBAR_MUTED,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 500,
                   letterSpacing: "0.16em",
                   ...elementStyle(data, "personal.headline"),
@@ -225,7 +225,7 @@ function FrankfurtSidebarSection({
         className="mb-1.5 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: SIDEBAR_TEXT,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.2em",
           ...elementStyle(data, titleId),
@@ -273,7 +273,7 @@ function FrankfurtMainSection({
         className="mb-1.5 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: BLACK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.16em",
           ...elementStyle(data, titleId),

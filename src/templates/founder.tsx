@@ -108,7 +108,7 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 700,
               letterSpacing: "-0.01em",
               ...elementStyle(data, "personal.name"),
@@ -149,8 +149,7 @@ export function FounderTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="text-[1.6em] italic leading-[1.25]"
             style={{
               color: INK,
-              fontFamily:
-                "var(--font-fraunces, 'Fraunces'), 'EB Garamond', serif",
+              fontFamily: "var(--cv-title-font, var(--font-fraunces, 'Fraunces'), 'EB Garamond', serif)",
               fontWeight: 400,
             }}
           >
@@ -312,7 +311,7 @@ function FounderContact({ data }: { data: ResumeData }) {
       className="mt-1 text-[0.85em]"
       style={{
         color: MUTED,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {items.map((p, i) => (
@@ -371,7 +370,7 @@ function FounderPillar({
         className="text-[0.78em] uppercase"
         style={{
           color: VIOLET,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 800,
           letterSpacing: "0.18em",
         }}
@@ -406,7 +405,7 @@ function FounderJobCard({
         className="text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 700,
         }}
       >
@@ -424,7 +423,7 @@ function FounderJobCard({
         className="text-[0.78em]"
         style={{
           color: MUTED,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
         }}
       >
         {formatDateRange(
@@ -460,7 +459,7 @@ function FounderBullets({
       className="mt-1 space-y-0.5 text-[0.85em] leading-[1.5]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {
@@ -493,7 +492,7 @@ function FounderEmpty({ children }: { children: React.ReactNode }) {
       className="text-[0.82em] italic"
       style={{
         color: MUTED,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {children}
@@ -524,7 +523,7 @@ function FounderTailSection({
         className="mb-1 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: VIOLET,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 800,
           letterSpacing: "0.18em",
           ...elementStyle(data, titleId),
@@ -558,7 +557,7 @@ function FounderTailBody({
         className="cursor-text whitespace-pre-wrap text-[0.92em] leading-[1.55]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -591,7 +590,7 @@ function FounderTailBody({
                 background: `${VIOLET}10`,
                 border: `1px solid ${VIOLET}33`,
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-body-font, var(--font-inter, 'Inter'), sans-serif)",
                 ...elementStyle(data, id),
               }}
             >

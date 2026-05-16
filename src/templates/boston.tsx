@@ -35,6 +35,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   PublicationsSection,
@@ -73,8 +74,7 @@ export function BostonTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
           style={{
             color: BOSTON_INK,
-            fontFamily:
-              "var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), 'Source Serif 4', serif)",
             fontWeight: 600,
             ...elementStyle(data, "personal.name"),
           }}
@@ -87,7 +87,7 @@ export function BostonTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="mt-1 block w-fit cursor-text text-[0.95em] italic"
             style={{
               color: BOSTON_INK,
-              fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
               ...elementStyle(data, "personal.headline"),
             }}
           >
@@ -132,7 +132,7 @@ function BostonContact({ data }: { data: ResumeData }) {
       className="mt-2 text-[0.85em]"
       style={{
         color: BOSTON_INK,
-        fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+        fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
       }}
     >
       {items.map((p, i) => (
@@ -187,7 +187,7 @@ function BostonSection({
         className="mb-1 inline-block cursor-text text-[0.8em] uppercase"
         style={{
           color: BOSTON_RED,
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
           fontWeight: 700,
           letterSpacing: "0.16em",
           ...elementStyle(data, titleId),
@@ -223,7 +223,7 @@ function BostonBody({
           className="cursor-text text-[0.95em] leading-[1.5]"
           style={{
             color: BOSTON_INK,
-            fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+            fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -231,6 +231,7 @@ function BostonBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <BostonExperience section={section} design={design} data={data} />
@@ -265,7 +266,7 @@ function BostonExperience({
   section,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -285,7 +286,7 @@ function BostonExperience({
             <div className="flex items-baseline justify-between gap-3">
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                   color: BOSTON_INK,
                 }}
               >
@@ -336,7 +337,7 @@ function BostonEducation({
             <div className="flex items-baseline justify-between gap-3">
               <div
                 style={{
-                  fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+                  fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
                   color: BOSTON_INK,
                 }}
               >
@@ -389,7 +390,7 @@ function BostonPublications({
             data-element-id={id}
             className="grid cursor-grab grid-cols-[2.2em_1fr] gap-1 rounded-sm text-[0.9em]"
             style={{
-              fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
               color: BOSTON_INK,
               ...elementStyle(data, id),
             }}
@@ -446,7 +447,7 @@ function BostonTalks({
             data-element-id={id}
             className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em]"
             style={{
-              fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
               color: BOSTON_INK,
               ...elementStyle(data, id),
             }}
@@ -482,7 +483,7 @@ function BostonCerts({
             data-element-id={id}
             className="flex cursor-grab items-baseline justify-between gap-3 rounded-sm text-[0.9em]"
             style={{
-              fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+              fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
               color: BOSTON_INK,
               ...elementStyle(data, id),
             }}
@@ -516,7 +517,7 @@ function BostonFallback({
         className="cursor-text whitespace-pre-wrap text-[0.9em]"
         style={{
           color: BOSTON_INK,
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -534,7 +535,7 @@ function BostonFallback({
         className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-[0.9em]"
         style={{
           color: BOSTON_INK,
-          fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+          fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
         }}
       >
         {visible.map((it) => {
@@ -573,7 +574,7 @@ function BostonBullets({
       className="mt-1 space-y-0.5 pl-3 text-[0.88em] leading-[1.5]"
       style={{
         color: BOSTON_INK,
-        fontFamily: "var(--font-eb-garamond, 'EB Garamond'), serif",
+        fontFamily: "var(--cv-title-font, var(--font-eb-garamond, 'EB Garamond'), serif)",
       }}
     >
       {list.map((b) => {

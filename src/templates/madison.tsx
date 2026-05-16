@@ -43,6 +43,7 @@ import {
 import type {
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   LanguagesSection,
@@ -92,8 +93,7 @@ export function MadisonTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="mx-auto block w-fit cursor-text text-[3em] leading-[1] tracking-tight"
           style={{
             color: NAVY,
-            fontFamily:
-              "var(--font-lora, 'Lora'), 'Source Serif 4', serif",
+            fontFamily: "var(--cv-title-font, var(--font-lora, 'Lora'), 'Source Serif 4', serif)",
             fontWeight: 600,
             ...elementStyle(data, "personal.name"),
           }}
@@ -177,8 +177,7 @@ function MadisonContactBlock({ data }: { data: ResumeData }) {
         className="space-y-1 text-[0.85em]"
         style={{
           color: NAVY,
-          fontFamily:
-            "var(--font-source-serif-4, 'Source Serif 4'), serif",
+          fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
         }}
       >
         {personal.email && (
@@ -382,8 +381,7 @@ function MadisonEducation({
             className="cursor-grab rounded-sm text-[0.85em]"
             style={{
               color: NAVY,
-              fontFamily:
-                "var(--font-source-serif-4, 'Source Serif 4'), serif",
+              fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -424,8 +422,7 @@ function MadisonCerts({
             className="cursor-grab rounded-sm"
             style={{
               color: NAVY,
-              fontFamily:
-                "var(--font-source-serif-4, 'Source Serif 4'), serif",
+              fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -460,8 +457,7 @@ function MadisonLanguages({
             className="flex cursor-grab justify-between gap-2 rounded-sm"
             style={{
               color: NAVY,
-              fontFamily:
-                "var(--font-source-serif-4, 'Source Serif 4'), serif",
+              fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
               ...elementStyle(data, id),
             }}
           >
@@ -519,8 +515,7 @@ function MadisonSkills({
                 className="flex cursor-grab items-center gap-2 rounded-sm"
                 style={{
                   color: NAVY,
-                  fontFamily:
-                    "var(--font-source-serif-4, 'Source Serif 4'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
                   ...elementStyle(data, id),
                 }}
               >
@@ -556,7 +551,7 @@ function MadisonGenericList({
         className="space-y-0.5 text-[0.85em]"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-source-serif-4, 'Source Serif 4'), serif",
+          fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
         }}
       >
         {visible.map((it) => {
@@ -635,8 +630,7 @@ function MadisonRightBody({
           className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: NAVY,
-            fontFamily:
-              "var(--font-source-serif-4, 'Source Serif 4'), serif",
+            fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -644,6 +638,7 @@ function MadisonRightBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <MadisonExperience section={section} design={design} data={data} />
@@ -660,7 +655,7 @@ function MadisonExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -684,8 +679,7 @@ function MadisonExperience({
                 className="text-[1em]"
                 style={{
                   color: NAVY,
-                  fontFamily:
-                    "var(--font-source-serif-4, 'Source Serif 4'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
                   fontWeight: 700,
                 }}
               >
@@ -730,8 +724,7 @@ function MadisonExperience({
                 style={{
                   borderColor: GOLD,
                   color: GOLD,
-                  fontFamily:
-                    "var(--font-source-serif-4, 'Source Serif 4'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
                   fontStyle: "italic",
                   fontWeight: 600,
                   ...elementStyle(
@@ -753,8 +746,7 @@ function MadisonExperience({
                 className="mt-1.5 space-y-0.5 pl-2 text-[0.9em] leading-[1.5]"
                 style={{
                   color: NAVY,
-                  fontFamily:
-                    "var(--font-source-serif-4, 'Source Serif 4'), serif",
+                  fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
                 }}
               >
                 {restBullets.map((b) => {
@@ -803,8 +795,7 @@ function MadisonRightFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: NAVY,
-          fontFamily:
-            "var(--font-source-serif-4, 'Source Serif 4'), serif",
+          fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -822,7 +813,7 @@ function MadisonRightFallback({
         className="space-y-0.5 text-[0.92em]"
         style={{
           color: NAVY,
-          fontFamily: "var(--font-source-serif-4, 'Source Serif 4'), serif",
+          fontFamily: "var(--cv-body-font, var(--font-source-serif-4, 'Source Serif 4'), serif)",
         }}
       >
         {visible.map((it) => {

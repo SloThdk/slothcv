@@ -85,6 +85,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 const SECTION_TKEY: Record<SectionType, TranslationKey> = {
   summary: "section.summary",
   experience: "section.experience",
+  careerBreak: "section.careerBreak",
   education: "section.education",
   skills: "section.skills",
   languages: "section.languages",

@@ -34,6 +34,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -67,7 +68,7 @@ export function GeistTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.4em] leading-[1.0]"
               style={{
                 color: design.textColor,
-                fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
                 fontWeight: 700,
                 letterSpacing: "-0.03em",
                 ...elementStyle(data, "personal.name"),
@@ -254,7 +255,7 @@ function GeistBody({
           className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.5]"
           style={{
             color: design.textColor,
-            fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -262,6 +263,7 @@ function GeistBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return <GeistExperience section={section} design={design} data={data} />;
     case "projects":
@@ -282,7 +284,7 @@ function GeistExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -303,7 +305,7 @@ function GeistExperience({
                 className="text-[1em]"
                 style={{
                   color: design.textColor,
-                  fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
                   fontWeight: 600,
                   letterSpacing: "-0.01em",
                 }}
@@ -365,7 +367,7 @@ function GeistMetric({ text, design }: { text: string; design: GlobalDesign }) {
         color: looksMetric ? design.accentColor : `${design.textColor}88`,
         fontFamily: looksMetric
           ? "var(--font-geist-mono, 'Geist Mono'), 'JetBrains Mono', monospace"
-          : "var(--font-geist, 'Geist'), Inter, sans-serif",
+          : "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
       }}
     >
       {text}
@@ -399,7 +401,7 @@ function GeistProjects({
                 className="text-[1em]"
                 style={{
                   color: design.textColor,
-                  fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
                   fontWeight: 600,
                   letterSpacing: "-0.01em",
                 }}
@@ -507,7 +509,7 @@ function GeistEducation({
                 style={{
                   color: design.textColor,
                   fontWeight: 600,
-                  fontFamily: "var(--font-geist, 'Geist'), Inter, sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-geist, 'Geist'), Inter, sans-serif)",
                 }}
               >
                 <EditableFallback data={data} fieldId={`section.${section.id}.item.${it.id}.degree`} value={it.degree} placeholder="Degree" />

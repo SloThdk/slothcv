@@ -39,6 +39,7 @@ import type {
   Bullet,
   CertificationsSection,
   EducationSection,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ProjectsSection,
@@ -289,6 +290,7 @@ function MidnightBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <MidnightExperience section={section} design={design} data={data} />
@@ -315,7 +317,7 @@ function MidnightExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {

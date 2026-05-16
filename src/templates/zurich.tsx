@@ -112,8 +112,7 @@ export function ZurichTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.4em] leading-[1.05] tracking-tight"
               style={{
                 color: SLATE,
-                fontFamily:
-                  "var(--font-manrope, 'Manrope'), Inter, sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), Inter, sans-serif)",
                 fontWeight: 700,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -126,8 +125,7 @@ export function ZurichTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[0.95em]"
                 style={{
                   color: `${design.textColor}99`,
-                  fontFamily:
-                    "var(--font-manrope, 'Manrope'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
                   fontWeight: 500,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -157,7 +155,7 @@ function ZurichContact({ data }: { data: ResumeData }) {
         className="mb-1 text-[0.65em] uppercase"
         style={{
           color: SLATE,
-          fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.18em",
         }}
@@ -168,7 +166,7 @@ function ZurichContact({ data }: { data: ResumeData }) {
         className="space-y-0.5 text-[0.75em] break-words"
         style={{
           color: design.textColor,
-          fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
         }}
       >
         {personal.email && (
@@ -239,7 +237,7 @@ function ZurichSidebarSection({
         className="mb-1 inline-block cursor-text text-[0.65em] uppercase"
         style={{
           color: SLATE,
-          fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.18em",
           ...elementStyle(data, titleId),
@@ -277,7 +275,7 @@ function ZurichMainSection({
         className="mb-2 inline-block cursor-text text-[0.85em] uppercase"
         style={{
           color: SLATE,
-          fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.14em",
           ...elementStyle(data, titleId),

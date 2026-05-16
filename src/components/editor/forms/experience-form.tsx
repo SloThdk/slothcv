@@ -3,17 +3,23 @@
 "use client";
 
 import { useEditorStore } from "@/lib/store/editor";
-import type { ExperienceSection } from "@/types/resume";
+import type { CareerBreakSection, ExperienceSection } from "@/types/resume";
 import { defaultExperienceItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddEntryButton, BulletsEditor, ItemRow, moveItem } from "./shared";
 
-export function ExperienceForm({ section }: { section: ExperienceSection }) {
+// Accepts both Experience and CareerBreak sections — both carry
+// `items: ExperienceItem[]`, so the form's surface is identical. The
+// CareerBreak discriminator only affects how the section is labeled
+// and (eventually) how individual templates may want to style it.
+type SectionLike = ExperienceSection | CareerBreakSection;
+
+export function ExperienceForm({ section }: { section: SectionLike }) {
   const update = useEditorStore((s) => s.updateSection);
-  const setItems = (items: ExperienceSection["items"]) =>
-    update<ExperienceSection>(section.id, { items });
-  const patchItem = (idx: number, patch: Partial<ExperienceSection["items"][number]>) => {
+  const setItems = (items: SectionLike["items"]) =>
+    update<SectionLike>(section.id, { items });
+  const patchItem = (idx: number, patch: Partial<SectionLike["items"][number]>) => {
     const next = [...section.items];
     next[idx] = { ...next[idx], ...patch };
     setItems(next);

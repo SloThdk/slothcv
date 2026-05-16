@@ -77,8 +77,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
       <div
         className="grid gap-6"
         style={{
-          fontFamily:
-            "var(--font-manrope, 'Manrope'), Inter, sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), Inter, sans-serif)",
           gridTemplateColumns: "1.05fr 1fr",
           gridAutoRows: "min-content",
         }}
@@ -96,8 +95,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="block w-fit cursor-text text-[2.2em] leading-[1.05] tracking-tight"
                 style={{
                   color: design.textColor,
-                  fontFamily:
-                    "var(--font-manrope, 'Manrope'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
                   fontWeight: 700,
                   ...elementStyle(data, "personal.name"),
                 }}
@@ -110,8 +108,7 @@ export function BentoTemplate({ data, fixedSize, skipOverlay }: Props) {
                   className="mt-1 block w-fit cursor-text text-[0.92em]"
                   style={{
                     color: accent,
-                    fontFamily:
-                      "var(--font-manrope, 'Manrope'), sans-serif",
+                    fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
                     fontWeight: 600,
                     ...elementStyle(data, "personal.headline"),
                   }}
@@ -317,7 +314,7 @@ function BentoCell({
         className="mb-2 inline-block cursor-text text-[0.78em] uppercase"
         style={{
           color: d.accentColor,
-          fontFamily: "var(--font-manrope, 'Manrope'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-manrope, 'Manrope'), sans-serif)",
           fontWeight: 700,
           letterSpacing: "0.16em",
           ...elementStyle(data, titleId),

@@ -54,6 +54,7 @@ import { SectionEditor } from "./forms/section-editor";
 const SECTION_TKEY: Record<SectionType, TranslationKey> = {
   summary: "section.summary",
   experience: "section.experience",
+  careerBreak: "section.careerBreak",
   education: "section.education",
   skills: "section.skills",
   languages: "section.languages",
@@ -71,6 +72,7 @@ const SECTION_TKEY: Record<SectionType, TranslationKey> = {
 const SECTION_OPTIONS: SectionType[] = [
   "summary",
   "experience",
+  "careerBreak",
   "education",
   "skills",
   "languages",
@@ -123,7 +125,13 @@ export function SectionList() {
     setExpanded(pendingJumpId);
     // Two RAF passes: the first lets React render the newly-expanded
     // row's body; the second lets the layout settle so scrollIntoView
-    // lands on the *expanded* size, not the collapsed one.
+    // lands on the *expanded* size, not the collapsed one. After the
+    // scroll lands, apply the slothcv-bg-flash class imperatively so
+    // the user sees a brief accent-ring pulse confirming this row is
+    // the one their canvas click matched. Without the flash the
+    // scroll happened silently and (per Philip 2026-05-16 UX brief)
+    // users couldn't tell WHICH row corresponded to their click.
+    let flashTimeoutId: number | undefined;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const el = listRef.current?.querySelector(
@@ -134,11 +142,18 @@ export function SectionList() {
             behavior: "smooth",
             block: "start",
           });
+          (el as HTMLElement).classList.add("slothcv-bg-flash");
+          flashTimeoutId = window.setTimeout(() => {
+            (el as HTMLElement).classList.remove("slothcv-bg-flash");
+          }, 1400);
         }
         // Clear the pending jump so a re-render doesn't re-scroll.
         requestJumpToSection(null);
       });
     });
+    return () => {
+      if (flashTimeoutId !== undefined) window.clearTimeout(flashTimeoutId);
+    };
   }, [pendingJumpId, requestJumpToSection]);
 
   // Pointer sensor only triggers after 5px of movement so plain clicks on
@@ -195,6 +210,23 @@ export function SectionList() {
 
   return (
     <div ref={listRef} className="space-y-1.5">
+      {/* Co-located keyframe for the jump-flash. Same shape as the one
+          in design-tab.tsx — outline pulses twice in the accent colour
+          6 px outside the row's bounding box so it never overlaps the
+          row's own border. prefers-reduced-motion users get the
+          animation collapsed by the globals.css guard. */}
+      <style>{`
+        @keyframes slothcv-bg-flash {
+          0%, 100% { outline-color: transparent; }
+          50%      { outline-color: var(--color-accent); }
+        }
+        .slothcv-bg-flash {
+          outline: 2px solid transparent;
+          outline-offset: 6px;
+          border-radius: 10px;
+          animation: slothcv-bg-flash 0.7s ease-in-out 2;
+        }
+      `}</style>
       {/* Personal info — fixed top, can't be dragged or removed. */}
       <div
         data-row-id="personal"

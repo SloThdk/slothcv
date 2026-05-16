@@ -208,6 +208,7 @@ function freshSection(s: Section): Section {
     case "summary":
       return { ...s, id: baseId };
     case "experience":
+    case "careerBreak":
       return {
         ...s,
         id: baseId,

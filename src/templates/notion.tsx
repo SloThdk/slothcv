@@ -106,8 +106,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.4em] leading-[1.1]"
               style={{
                 color: design.textColor,
-                fontFamily:
-                  "var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif)",
                 fontWeight: 700,
                 ...elementStyle(data, "personal.name"),
               }}
@@ -120,8 +119,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1 block w-fit cursor-text text-[1em]"
                 style={{
                   color: `${design.textColor}aa`,
-                  fontFamily:
-                    "var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif)",
                   fontWeight: 400,
                   ...elementStyle(data, "personal.headline"),
                 }}
@@ -162,8 +160,7 @@ export function NotionTemplate({ data, fixedSize, skipOverlay }: Props) {
                   className="cursor-text text-[0.95em]"
                   style={{
                     color: design.textColor,
-                    fontFamily:
-                      "var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif",
+                    fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif)",
                     fontWeight: 600,
                     ...elementStyle(data, titleId),
                   }}
@@ -206,7 +203,7 @@ function NotionContact({ data }: { data: ResumeData }) {
       className="mt-3 flex flex-wrap gap-1.5 text-[0.85em]"
       style={{
         color: `${design.textColor}aa`,
-        fontFamily: "var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif",
+        fontFamily: "var(--cv-title-font, var(--font-outfit, 'Outfit'), 'DM Sans', sans-serif)",
       }}
     >
       {items.map((it) =>

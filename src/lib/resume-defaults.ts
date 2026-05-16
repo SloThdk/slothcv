@@ -15,6 +15,7 @@ import {
   RESUME_SCHEMA_VERSION,
   SECTION_LABELS,
   type AwardsSection,
+  type CareerBreakSection,
   type CertificationsSection,
   type CustomElement,
   type CustomElementKind,
@@ -215,7 +216,14 @@ export function defaultDesignForTemplate(
         secondaryColor: "#525252",
         pageBg: "#fafafa",
         textColor: "#000000",
-        titleFont: "Inter",
+        // The visible heading slot in the Geist template renders in the
+        // Geist sans (display name, role, company labels — see geist.tsx
+        // lines 70/257/306/402/510). Reflect that in the picker so the
+        // initial value matches what the user sees, instead of the
+        // earlier Inter/Inter lie that made the Title-font picker
+        // appear dead until the user changed it. Mono dates/metrics
+        // remain a third-font accent the picker doesn't drive.
+        titleFont: "Geist",
         bodyFont: "Inter",
         headerStyle: "underline",
         photo: { enabled: false, shape: "circle", position: "top-left" },
@@ -779,8 +787,6 @@ export function defaultDesign(): GlobalDesign {
     sidebarWidth: 0.32,
     pageMargin: "normal",
     photo: { enabled: false, shape: "circle", position: "top-left" },
-    sectionIcons: false,
-    iconSet: "lucide",
     bulletStyle: "disc",
     dividerStyle: "line",
     headerStyle: "uppercase",
@@ -793,7 +799,6 @@ export function defaultDesign(): GlobalDesign {
     languageStyle: "text",
     dateFormat: "Mon YYYY",
     pageSize: "A4",
-    multiPage: true,
     watermarkText: "",
     watermarkPosition: "off",
     watermarkColor: "",
@@ -815,6 +820,10 @@ export function defaultSection(type: SectionType): Section {
     }
     case "experience": {
       const s: ExperienceSection = { ...base, type, items: [] };
+      return s;
+    }
+    case "careerBreak": {
+      const s: CareerBreakSection = { ...base, type, items: [] };
       return s;
     }
     case "education": {

@@ -36,6 +36,7 @@ import {
 } from "./shared";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ResumeData,
@@ -78,7 +79,7 @@ export function StudioTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="text-[0.7em] uppercase"
             style={{
               color: MUTED,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 600,
               letterSpacing: "0.32em",
             }}
@@ -90,7 +91,7 @@ export function StudioTemplate({ data, fixedSize, skipOverlay }: Props) {
             className="block w-fit cursor-text text-[5em] leading-[0.9] tracking-tight"
             style={{
               color: INK,
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 800,
               letterSpacing: "-0.02em",
               ...elementStyle(data, "personal.name"),
@@ -104,7 +105,7 @@ export function StudioTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[0.95em] uppercase"
               style={{
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 500,
                 letterSpacing: "0.16em",
                 ...elementStyle(data, "personal.headline"),
@@ -194,7 +195,7 @@ function HeroImage({
           <span
             className="text-[0.7em] uppercase"
             style={{
-              fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+              fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
               fontWeight: 600,
               letterSpacing: "0.18em",
               opacity: 0.7,
@@ -232,7 +233,7 @@ function StudioContact({ data }: { data: ResumeData }) {
       className="text-[0.78em] uppercase"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
         fontWeight: 500,
         letterSpacing: "0.18em",
       }}
@@ -299,7 +300,7 @@ function StudioSection({
           className="inline-block cursor-text text-[0.78em] uppercase"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
             fontWeight: 700,
             letterSpacing: "0.22em",
             ...elementStyle(data, titleId),
@@ -332,7 +333,7 @@ function StudioBody({
           className="cursor-text text-[0.95em] leading-[1.55]"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
             ...elementStyle(data, id),
           }}
         >
@@ -340,6 +341,7 @@ function StudioBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <StudioExperience section={section} design={design} data={data} />
@@ -354,7 +356,7 @@ function StudioExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -374,7 +376,7 @@ function StudioExperience({
               className="text-[0.78em] uppercase"
               style={{
                 color: MUTED,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 500,
                 letterSpacing: "0.18em",
               }}
@@ -390,7 +392,7 @@ function StudioExperience({
               className="text-[1.05em]"
               style={{
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 700,
               }}
             >
@@ -438,7 +440,7 @@ function StudioBullets({
       className="mt-1 space-y-0.5 text-[0.92em] leading-[1.5]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
       }}
     >
       {list.map((b) => {
@@ -476,7 +478,7 @@ function StudioFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           ...elementStyle(data, id),
         }}
       >
@@ -500,7 +502,7 @@ function StudioFallback({
         className="space-y-0.5 text-[0.92em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
         }}
       >
         {visible.map((it) => {

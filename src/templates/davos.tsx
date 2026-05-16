@@ -37,6 +37,7 @@ import {
 } from "./shared";
 import type {
   Bullet,
+  CareerBreakSection,
   ExperienceSection,
   GlobalDesign,
   ResumeData,
@@ -80,7 +81,7 @@ export function DavosTemplate({ data, fixedSize, skipOverlay }: Props) {
               className="block w-fit cursor-text text-[2.2em] leading-[1] tracking-tight"
               style={{
                 color: INK,
-                fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                 fontWeight: 300,
                 letterSpacing: "-0.01em",
                 ...elementStyle(data, "personal.name"),
@@ -94,7 +95,7 @@ export function DavosTemplate({ data, fixedSize, skipOverlay }: Props) {
                 className="mt-1.5 block w-fit cursor-text text-[0.78em] uppercase"
                 style={{
                   color: `${INK}88`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 400,
                   letterSpacing: "0.22em",
                   ...elementStyle(data, "personal.headline"),
@@ -195,7 +196,7 @@ function DavosSection({
         className="mb-3 inline-block cursor-text text-[0.7em] uppercase"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 500,
           letterSpacing: "0.18em",
           ...elementStyle(data, titleId),
@@ -227,7 +228,7 @@ function DavosBody({
           className="cursor-text text-[0.95em] leading-[1.6]"
           style={{
             color: INK,
-            fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+            fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
             fontWeight: 300,
             ...elementStyle(data, id),
           }}
@@ -236,6 +237,7 @@ function DavosBody({
         </p>
       );
     }
+    case "careerBreak":
     case "experience":
       return (
         <DavosExperience section={section} design={design} data={data} />
@@ -250,7 +252,7 @@ function DavosExperience({
   design,
   data,
 }: {
-  section: ExperienceSection;
+  section: ExperienceSection | CareerBreakSection;
   design: GlobalDesign;
   data: ResumeData;
 }) {
@@ -271,7 +273,7 @@ function DavosExperience({
                 className="text-[1em]"
                 style={{
                   color: INK,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 500,
                 }}
               >
@@ -287,7 +289,7 @@ function DavosExperience({
                 className="text-[0.78em] tabular-nums"
                 style={{
                   color: `${INK}88`,
-                  fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+                  fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
                   fontWeight: 300,
                   letterSpacing: "0.04em",
                 }}
@@ -336,7 +338,7 @@ function DavosBullets({
       className="mt-2 space-y-1 text-[0.92em] leading-[1.55]"
       style={{
         color: INK,
-        fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+        fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
         fontWeight: 300,
       }}
     >
@@ -380,7 +382,7 @@ function DavosFallback({
         className="cursor-text whitespace-pre-wrap text-[0.95em] leading-[1.6]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 300,
           ...elementStyle(data, id),
         }}
@@ -405,7 +407,7 @@ function DavosFallback({
         className="space-y-1 text-[0.92em]"
         style={{
           color: INK,
-          fontFamily: "var(--font-inter, 'Inter'), sans-serif",
+          fontFamily: "var(--cv-title-font, var(--font-inter, 'Inter'), sans-serif)",
           fontWeight: 300,
         }}
       >

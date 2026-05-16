@@ -266,6 +266,13 @@ export function exchangeErrorToCallbackCode(error: AuthError | { message?: strin
         // already has a magic-link account, so we surface the specific
         // "use the magic link" copy via account_exists_use_magic_link.
         return "account_exists_use_magic_link";
+      case "user_banned":
+        // The user is moderation-banned (auth.users.banned_until set in
+        // the future). Surface the explicit "your account is suspended"
+        // toast instead of the generic "sign-in didn't complete" — the
+        // user otherwise has no idea why they're stuck and may keep
+        // re-requesting magic links to the same dead end.
+        return "account_suspended";
       default:
         return "exchange_failed";
     }
@@ -307,6 +314,21 @@ export function exchangeErrorToCallbackCode(error: AuthError | { message?: strin
     m.includes("provider_mixing")
   ) {
     return "account_exists_use_magic_link";
+  }
+  // Ban / suspension detection. Catches Supabase phrasings like "User is
+  // banned" + our own message tags. Critical so a banned user clicking
+  // their magic link or "Continue with Google" sees "your account is
+  // suspended" instead of the generic "sign-in didn't complete" — the
+  // latter encourages them to keep requesting fresh links to a dead end.
+  if (
+    m.includes("user is banned") ||
+    m.includes("user_banned") ||
+    m.includes("user banned") ||
+    m.includes("account suspended") ||
+    m.includes("account_suspended") ||
+    m.includes("suspended")
+  ) {
+    return "account_suspended";
   }
   return "exchange_failed";
 }
@@ -353,6 +375,12 @@ export function callbackErrorTranslationKey(
       // deleted from auth.users. The user is bounced here from
       // wherever they were in-app.
       return "login.errAccountDeleted";
+    case "account_suspended":
+      // Banned user attempted to complete sign-in via magic link OR
+      // Continue-with-Google. Use the dedicated "suspended" copy so
+      // the user understands the account state instead of being told
+      // the generic "sign-in didn't complete, request a fresh link."
+      return "auth.errUserBanned";
     default:
       return null;
   }

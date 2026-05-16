@@ -353,6 +353,16 @@ export const TRANSLATIONS = {
     en: "This account has been suspended. Contact support if you believe this is a mistake.",
     da: "Denne konto er suspenderet. Kontakt support hvis du mener, det er en fejl.",
   },
+  // Dynamic variant: rendered when the live `email_ban_status` RPC tells
+  // us how long the suspension lasts. `{duration}` is interpolated with
+  // the same formatBanDuration() output as the in-session kick toast,
+  // so the user sees the SAME phrasing whether they were just kicked or
+  // are staring at /login retrying. Refresh = refetch = current N
+  // minutes left, every time.
+  "auth.errUserBannedFor": {
+    en: "This account has been suspended {duration}. Contact support if you believe this is a mistake.",
+    da: "Denne konto er suspenderet {duration}. Kontakt support hvis du mener, det er en fejl.",
+  },
   "auth.errEmailNotConfirmed": {
     en: "Your email isn't confirmed yet. Click the link in the email I sent you.",
     da: "Din e-mail er ikke bekræftet endnu. Klik på linket i e-mailen jeg sendte dig.",

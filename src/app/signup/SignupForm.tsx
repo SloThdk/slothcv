@@ -59,6 +59,7 @@ import {
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
 import { waitForFreshCaptchaToken } from "@/lib/captcha";
+import { formatBanDuration } from "@/lib/ban-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,7 +72,7 @@ export function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const next = searchParams.get("next") ?? "/dashboard";
   const queryError = searchParams.get("error");
 
@@ -120,6 +121,19 @@ export function SignupForm() {
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
+
+  // Hard timeout for a stuck Turnstile widget — mirrors LoginForm. If
+  // 12 s pass with no token and no error, the widget script is wedged
+  // (ad-blocker, network drop, CF challenge-platform glitch) and the
+  // "waiting for human-verification" message would otherwise hang
+  // forever. Forcing captchaError exposes the Retry button so the user
+  // has a path out instead of staring at a greyed-out submit button.
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    if (captchaToken || captchaError) return;
+    const timer = setTimeout(() => setCaptchaError(true), 12000);
+    return () => clearTimeout(timer);
+  }, [captchaToken, captchaError]);
 
   // Forward already-signed-in users so they don't see a confusing signup form.
   useEffect(() => {
@@ -236,8 +250,34 @@ export function SignupForm() {
     // Google OAuth users are confirmed instantly (Google's email is
     // pre-verified), so is_confirmed:true is the natural state for them.
     if (status.is_registered && status.is_confirmed) {
-      // Confirmed existing account — block, no magic link sent. Banner
-      // picks the provider-specific body via existingHasEmail / existingHasGoogle.
+      // Confirmed existing account — block, no magic link sent. Before
+      // showing the "already exists" banner, run a ban-status check so
+      // the user typing their banned email at /signup gets the explicit
+      // "suspended for N minutes" toast (same as /login). Without this
+      // they'd see "this email is already registered" with no signal
+      // that the account is in a suspended state.
+      const ban = await supabase.rpc("email_ban_status", {
+        check_email: cleanEmail,
+      });
+      if (!ban.error) {
+        const row = (ban.data as
+          | { is_banned: boolean; banned_until: string | null }[]
+          | null)?.[0];
+        if (row?.is_banned) {
+          setSubmittingMagic(false);
+          const dur = row.banned_until
+            ? formatBanDuration(row.banned_until, lang)
+            : "";
+          if (dur) {
+            toast.error(t("auth.errUserBannedFor", { duration: dur }));
+          } else {
+            toast.error(t("auth.errUserBanned"));
+          }
+          return;
+        }
+      }
+      // Not banned — fall through to the standard existing-account
+      // banner so the user is directed to /login.
       setSubmittingMagic(false);
       setExistingAccount(true);
       setExistingHasEmail(status.has_email);

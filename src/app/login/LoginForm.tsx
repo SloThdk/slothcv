@@ -24,6 +24,7 @@ import {
   callbackErrorTranslationKey,
 } from "@/lib/auth-errors";
 import { waitForFreshCaptchaToken } from "@/lib/captcha";
+import { formatBanDuration } from "@/lib/ban-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/google-icon";
@@ -35,7 +36,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const next = searchParams.get("next") ?? "/dashboard";
   const error = searchParams.get("error");
 
@@ -90,6 +91,21 @@ export function LoginForm() {
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
+
+  // Hard timeout for a stuck Turnstile widget. Managed-mode tokens normally
+  // arrive in 1-2 s, interactive challenges within 5-8 s. If 12 s pass with
+  // neither a token nor an onError call, the widget script is wedged
+  // (network drop, partial ad-blocker, CF challenge-platform glitch) and
+  // the "waiting for human-verification" message would otherwise hang the
+  // page forever. Forcing captchaError exposes the Retry button so the
+  // user has a path out. Cleanup cancels the timer when the token arrives
+  // or the user resets the widget.
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    if (captchaToken || captchaError) return;
+    const timer = setTimeout(() => setCaptchaError(true), 12000);
+    return () => clearTimeout(timer);
+  }, [captchaToken, captchaError]);
 
   // Forward already-signed-in users so they don't see a confusing login form.
   useEffect(() => {
@@ -219,6 +235,39 @@ export function LoginForm() {
       toast.error(t("login.errOAuthOnlyGoogle"));
       return;
     }
+
+    // ── Step 1.5: ban check via email_ban_status RPC ───────────────────
+    // Supabase's signInWithOtp does NOT block sends for banned users — it
+    // happily fires another magic link to the inbox the banned user
+    // can't redeem. And on the user's SECOND click of the same dead
+    // link, /auth/callback returns "otp_expired"/"link_used" instead of
+    // the ban error, which falls through to the generic "sign-in
+    // didn't complete" toast. So we check the database directly here:
+    // is_banned + the absolute banned_until timestamp. If banned, show
+    // the live-duration toast ("...for the next 47 minutes") and refuse
+    // to send. Every retry sees the freshest state, every retry shows
+    // the right duration. Reference: migration 0021.
+    const ban = await supabase.rpc("email_ban_status", {
+      check_email: cleanEmail,
+    });
+    if (!ban.error) {
+      const row = (ban.data as
+        | { is_banned: boolean; banned_until: string | null }[]
+        | null)?.[0];
+      if (row?.is_banned) {
+        setSubmittingMagic(false);
+        const dur = row.banned_until ? formatBanDuration(row.banned_until, lang) : "";
+        if (dur) {
+          toast.error(t("auth.errUserBannedFor", { duration: dur }));
+        } else {
+          toast.error(t("auth.errUserBanned"));
+        }
+        return;
+      }
+    }
+    // RPC error path → fall through. The /auth/callback ban-detector is
+    // still in place so a banned user clicking their link will see the
+    // generic suspended toast even if this pre-send guard couldn't run.
 
     // ── Step 2: send magic link ────────────────────────────────────────
     // Email is registered. shouldCreateUser:false is still passed as a

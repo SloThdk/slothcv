@@ -27,21 +27,37 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { createClient } from "./supabase/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getMyProfile, type Profile } from "@/lib/profile";
+import { formatBanDuration } from "@/lib/ban-format";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  /**
+   * Latest profile row for the current user. `null` when anonymous or
+   * before the first hydration completes. Mutated server-side via
+   * `/lib/profile` helpers; consumers should call `refreshProfile()`
+   * after any of those mutations so the new state propagates to every
+   * subscriber (SiteHeader avatar, /account form, etc.) instead of
+   * each subscriber polling on its own.
+   */
+  profile: Profile | null;
+  /** Re-fetch the profile and update the context. Resolves after the
+   *  state has been pushed to subscribers. Safe no-op when anonymous. */
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
+  profile: null,
+  refreshProfile: async () => {},
   signOut: async () => {},
 });
 
@@ -67,46 +83,8 @@ function reasonToTranslationKey(
   return "auth.sessionRevoked";
 }
 
-/** Format a banned-until ISO timestamp into a human phrase (EN/DA-bilingual).
- *  Picks the largest meaningful unit so the toast reads cleanly:
- *    < 1 h  → "for the next N minutes" / "i de næste N minutter"
- *    < 24 h → "for the next N hours" / "i de næste N timer"
- *    < 30 d → "for the next N days" / "i de næste N dage"
- *    >= 30 d → "until <localised date>" / "indtil <dato>"
- *  Returns empty string if the timestamp is invalid or already in the past. */
-function formatBanDuration(
-  iso: string,
-  lang: "en" | "da",
-): string {
-  const until = new Date(iso);
-  if (Number.isNaN(until.getTime())) return "";
-  const ms = until.getTime() - Date.now();
-  if (ms <= 0) return "";
-  const minutes = Math.round(ms / 60_000);
-  const hours = Math.round(ms / 3_600_000);
-  const days = Math.round(ms / 86_400_000);
-  if (minutes < 60) {
-    return lang === "da"
-      ? `i de næste ${minutes} minutter`
-      : `for the next ${minutes} minute${minutes === 1 ? "" : "s"}`;
-  }
-  if (hours < 24) {
-    return lang === "da"
-      ? `i de næste ${hours} timer`
-      : `for the next ${hours} hour${hours === 1 ? "" : "s"}`;
-  }
-  if (days < 30) {
-    return lang === "da"
-      ? `i de næste ${days} dage`
-      : `for the next ${days} day${days === 1 ? "" : "s"}`;
-  }
-  const dateStr = until.toLocaleDateString(lang === "da" ? "da-DK" : undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-  return lang === "da" ? `indtil ${dateStr}` : `until ${dateStr}`;
-}
+// formatBanDuration moved to lib/ban-format.ts so LoginForm + SignupForm
+// can share it. The kick toast + pre-send toast now use identical phrasing.
 
 /** How long the toast stays visible AND how long we wait before
  *  hard-navigating. Earlier "redirect immediately after toast" path
@@ -119,6 +97,12 @@ const REDIRECT_DELAY_MS = 4_000;
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Canonical profile state. Lifted out of SiteHeader + /account so
+  // both subscribe to the same value — earlier each component owned
+  // its own copy and mutating one didn't tell the other, which left
+  // the header showing a stale avatar after "remove photo" on /account
+  // until the next focus event refetched independently.
+  const [profile, setProfile] = useState<Profile | null>(null);
   const { t, lang } = useLanguage();
   // Mirror the current user id into a ref so the validation loop can
   // read the latest value without re-creating its interval on every
@@ -203,11 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!userIdRef.current) return; // anonymous, nothing to validate
       const { data, error } = await supabase.auth.getUser();
       if (kickedRef.current) return;
+
+      // Path 1: Supabase already rejected the JWT — user deleted, JWT
+      // tampered, token expired without refresh, etc. These return
+      // error / no user from /auth/v1/user.
       if (error || !data.user) {
-        // For ban responses, try to fetch the actual until-timestamp via
-        // a SECURITY DEFINER RPC so the toast can show "for the next N
-        // days" instead of just "suspended". Falls back silently when
-        // the RPC isn't installed on the project.
         let bannedUntil: string | null = null;
         const errText = (error?.message ?? "").toLowerCase();
         if (
@@ -223,6 +207,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
         void kick(error?.message, { bannedUntil });
+        return;
+      }
+
+      // Path 2: Supabase returned 200 but the user is BANNED. This is
+      // the silent-ban gotcha — /auth/v1/user does NOT enforce
+      // banned_until against an existing valid JWT (the access token
+      // continues to validate until it expires naturally, ~1h default).
+      // The ban only blocks new sign-ins via /token. So we have to
+      // inspect data.user.banned_until ourselves and force-kick when
+      // it's a future timestamp. Without this, an admin pressing "Ban"
+      // in Supabase Studio leaves the user fully operational on every
+      // open tab until their token happens to refresh.
+      //
+      // The field is sometimes typed as missing on @supabase/supabase-js
+      // User but is present on the wire response. Cast to read it.
+      const bannedRaw = (data.user as { banned_until?: string | null }).banned_until;
+      if (bannedRaw) {
+        const banDate = new Date(bannedRaw);
+        if (!Number.isNaN(banDate.getTime()) && banDate.getTime() > Date.now()) {
+          void kick("user_banned", { bannedUntil: bannedRaw });
+          return;
+        }
       }
     }
 
@@ -273,8 +279,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") window.location.assign("/");
   }
 
+  // Profile hydration + refresh. `refreshProfile` is stable across renders
+  // so consumers can put it in effect deps without re-firing every tick.
+  const refreshProfile = useCallback(async () => {
+    if (!userIdRef.current) {
+      setProfile(null);
+      return;
+    }
+    try {
+      const p = await getMyProfile();
+      setProfile(p);
+    } catch {
+      // Profile is non-critical chrome (avatar / display name); silently
+      // leave the previous value so we don't blank the header on a flaky
+      // network. The next refresh will recover.
+    }
+  }, []);
+
+  // Auto-hydrate when user identity changes. Drops profile on sign-out.
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    void refreshProfile();
+    // Re-fetch on focus too — covers cross-tab updates (avatar uploaded
+    // on /account in tab A should appear in tab B's header on focus).
+    function onFocus() {
+      void refreshProfile();
+    }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user?.id, refreshProfile]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ user, loading, profile, refreshProfile, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

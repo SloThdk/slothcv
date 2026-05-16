@@ -129,6 +129,20 @@ function FinalizeInner() {
           lower.includes("unique constraint")
         ) {
           mapped = "account_exists_use_magic_link";
+        } else if (
+          // Ban detection — kept in sync with /auth/callback's matcher
+          // and exchangeErrorToCallbackCode in lib/auth-errors.ts. A
+          // banned user completing Continue-with-Google must see the
+          // "suspended" toast, not the generic exchange-failed one.
+          (error as { code?: string }).code === "user_banned" ||
+          lower.includes("user is banned") ||
+          lower.includes("user_banned") ||
+          lower.includes("user banned") ||
+          lower.includes("account suspended") ||
+          lower.includes("account_suspended") ||
+          lower.includes("suspended")
+        ) {
+          mapped = "account_suspended";
         }
         router.replace(`/login/?error=${mapped}`);
         return;

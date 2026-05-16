@@ -24,47 +24,16 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getMyProfile, type Profile } from "@/lib/profile";
 
 export function SiteHeader() {
-  const { user, loading, signOut } = useAuth();
+  // Profile lives in AuthContext so every consumer sees the same value —
+  // /account mutating the avatar calls refreshProfile() which pushes
+  // the new state here instantly, no focus event or refresh required.
+  const { user, loading, profile, signOut } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  // Hydrate the profile when the user changes (sign-in / sign-out).
-  useEffect(() => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-    let cancelled = false;
-    getMyProfile()
-      .then((p) => {
-        if (!cancelled) setProfile(p);
-      })
-      .catch(() => {
-        // Header is non-critical — silently fall back to initials.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  // Re-fetch when the page regains focus (covers the case where avatar was
-  // updated on /account in another tab).
-  useEffect(() => {
-    function refetch() {
-      if (!user) return;
-      getMyProfile()
-        .then((p) => setProfile(p))
-        .catch(() => undefined);
-    }
-    window.addEventListener("focus", refetch);
-    return () => window.removeEventListener("focus", refetch);
-  }, [user?.id]);
 
   // Close the user menu on outside click + Escape.
   useEffect(() => {

@@ -73,6 +73,20 @@ function CallbackInner() {
         // matching the wide net above to the specific "use magic link"
         // toast.
         mapped = "account_exists_use_magic_link";
+      } else if (
+        lower.includes("user is banned") ||
+        lower.includes("user_banned") ||
+        lower.includes("user banned") ||
+        lower.includes("account suspended") ||
+        lower.includes("account_suspended") ||
+        lower.includes("suspended")
+      ) {
+        // Banned user clicked the magic link / completed OAuth. Surface
+        // the explicit "suspended" toast instead of the generic
+        // "sign-in didn't complete" — the user otherwise has no idea
+        // why they're stuck and may keep re-requesting fresh links
+        // into a dead end.
+        mapped = "account_suspended";
       } else if (lower.includes("access_denied") || lower.includes("denied")) {
         // User declined the OAuth consent screen.
         mapped = "oauth_declined";

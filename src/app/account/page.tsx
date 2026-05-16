@@ -46,7 +46,7 @@ import {
 
 function AccountInner() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { t } = useLanguage();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -89,6 +89,9 @@ function AccountInner() {
     try {
       await updateMyProfile({ display_name: trimmed || null });
       setProfile({ ...profile, display_name: trimmed || null });
+      // Push the new value into AuthContext so SiteHeader re-renders
+      // without waiting for tab focus.
+      void refreshProfile();
       toast.success(t("account.toastNameSaved"));
     } catch (e) {
       toast.error(translateError(e, t, "account.toastSaveFailed"));
@@ -102,6 +105,9 @@ function AccountInner() {
     try {
       const url = await uploadAvatar(file);
       setProfile((p) => (p ? { ...p, avatar_url: url } : p));
+      // Sync the new avatar URL to AuthContext so the header swaps
+      // the image immediately.
+      void refreshProfile();
       toast.success(t("account.toastAvatarSaved"));
     } catch (e) {
       toast.error(translateError(e, t, "account.toastUploadFailed"));
@@ -117,6 +123,8 @@ function AccountInner() {
     try {
       await removeAvatar();
       setProfile((p) => (p ? { ...p, avatar_url: null } : p));
+      // Same reason as upload — propagate the null avatar to the header.
+      void refreshProfile();
       toast.success(t("account.toastAvatarRemoved"));
     } catch (e) {
       toast.error(translateError(e, t, "account.toastRemoveFailed"));

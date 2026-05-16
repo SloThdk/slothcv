@@ -138,6 +138,14 @@ export function SettingsTab({ initialTitle }: { initialTitle: string }) {
           <Download className="h-4 w-4" />
           {exporting ? t("settings.exportPdfGenerating") : t("settings.exportPdf")}
         </Button>
+        {/* Browser-print quirk users hit on dark templates: Chrome/Edge
+            ship with "Background graphics" OFF by default, which turns
+            an Aurora/Carbon/Midnight CV into a white page with light
+            text on white. Surface this once next to the export button
+            so the user has the answer before they get the surprise. */}
+        <p className="text-[11px] leading-snug text-subtle">
+          {t("settings.exportBgGraphicsHint")}
+        </p>
         <Button
           type="button"
           variant="outline"

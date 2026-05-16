@@ -294,13 +294,52 @@ async function flushSave() {
   }
 }
 
-/** Force an immediate flush (e.g. on page-unload). Returns the pending save. */
+/** Force an immediate flush (e.g. on page-unload, on SPA route change, on
+ *  beforeunload). State is captured SYNCHRONOUSLY here so a subsequent
+ *  reset() call on the same tick (the editor unmount cleanup does this)
+ *  doesn't wipe resumeId/data before the async save body has a chance to
+ *  read them — that's the data-loss race that made fast nav-away-after-
+ *  edit silently drop the user's edits. Returns a promise for the
+ *  network call so callers can await completion if they want. */
 export function flushPendingSave(): Promise<void> {
   if (saveTimer) {
     clearTimeout(saveTimer);
     saveTimer = null;
   }
-  return flushSave();
+  // Capture identity + payload synchronously, BEFORE any other code on
+  // this microtask can mutate the store (specifically: reset()).
+  const { resumeId, data, saveStatus } = useEditorStore.getState();
+  if (!resumeId) return Promise.resolve();
+  // An in-flight save will land on its own; piling another concurrent
+  // request on top would race the response handlers.
+  if (saveStatus === "saving") return Promise.resolve();
+  // Mark saving immediately so the indicator pill flips before the
+  // store is reset (the indicator unmounts with the editor anyway —
+  // this is mostly so the resume-list refetch on the dashboard sees
+  // the latest snapshot reliably).
+  useEditorStore.setState({ saveStatus: "saving", saveError: null });
+  return saveResumeData(resumeId, data)
+    .then(() => {
+      // The store may have been reset by the time we land here (editor
+      // unmounted on nav). Only write back state if we're still on the
+      // same CV — otherwise we'd corrupt a freshly hydrated row.
+      const cur = useEditorStore.getState();
+      if (cur.resumeId === resumeId) {
+        useEditorStore.setState({
+          saveStatus: "saved",
+          lastSavedAt: new Date().toISOString(),
+        });
+      }
+    })
+    .catch((e) => {
+      const cur = useEditorStore.getState();
+      if (cur.resumeId === resumeId) {
+        useEditorStore.setState({
+          saveStatus: "error",
+          saveError: e instanceof Error ? e.message : "Save failed.",
+        });
+      }
+    });
 }
 
 // ---------- Store ----------

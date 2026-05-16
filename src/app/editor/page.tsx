@@ -144,12 +144,22 @@ function EditorInner() {
     // mid-load; harmless because hydrate-already-resolved checks bail out.
   }, [id, hydrate, router, t]);
 
-  // Reset the store when the editor leaves entirely. We DO NOT flush a
-  // pending save on unmount — auto-save is off, so unsaved changes are
-  // intentionally discarded. The beforeunload prompt above already gave
-  // the user a chance to cancel the navigation.
+  // Reset the store when the editor leaves entirely. Flush any pending
+  // autosave FIRST so edits made within the 800 ms debounce window
+  // before navigating away (e.g. user types something then immediately
+  // hits the back button or clicks a template card on the landing
+  // page) actually commit to Supabase. Without this, reset() would
+  // clear the saveTimer before the scheduled save fires and the edits
+  // would silently disappear — which felt to the user like "the CV
+  // went back to how it was before I touched it." flushPendingSave
+  // captures state synchronously (see editor.ts), so the order
+  // (flush, then reset) is safe even though both are sync calls on
+  // the same tick. The earlier comment ("auto-save is off, unsaved
+  // changes are intentionally discarded") was wrong — auto-save IS on
+  // and discarding pending writes was a data-loss bug, not intent.
   useEffect(() => {
     return () => {
+      void flushPendingSave();
       reset();
     };
   }, [reset]);

@@ -959,6 +959,10 @@ export const TRANSLATIONS = {
   "settings.exportPdfFailed": { en: "PDF export failed.", da: "PDF-eksport mislykkedes." },
   "editor.replacePhoto": { en: "Replace photo", da: "Skift foto" },
   "editor.addPhoto": { en: "Add photo", da: "Tilføj foto" },
+  "settings.exportBgGraphicsHint": {
+    en: "Tip: in the print dialog, enable “Background graphics” so dark page backgrounds and accent colours print. Light templates print the same either way.",
+    da: "Tip: i printdialogen skal du slå ”Baggrundsgrafik” til, så mørke sidebaggrunde og accentfarver kommer med. Lyse skabeloner ser ens ud uanset.",
+  },
   "settings.exportPdfAtsTitle": {
     en: "Vector PDF — ATS-readable",
     da: "Vektor-PDF — ATS-læsbar",

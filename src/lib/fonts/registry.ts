@@ -70,6 +70,7 @@ import {
   JetBrains_Mono,
   Fira_Code,
   Geist_Mono,
+  IBM_Plex_Mono,
   Work_Sans,
   Karla,
   Mulish,
@@ -283,6 +284,20 @@ const geistMono = Geist_Mono({
   display: "swap",
   preload: false,
 });
+// IBM Plex Mono is Carbon's title + body default. Without it in the
+// registry, defaultDesignForTemplate("carbon") returned a font name
+// the next/font CSS-var system didn't host — Carbon's headings fell
+// back to system-ui, font picker swaps to/from Carbon visually did
+// nothing, and the user reported "typography template fonts not
+// working." Multi-weight static (400/500/700) keeps the WOFF2 size
+// reasonable.
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-ibm-plex-mono",
+  display: "swap",
+  preload: false,
+});
 
 // ---- Humanist ----
 const workSans = Work_Sans({
@@ -335,6 +350,7 @@ export const FONT_REGISTRY = {
   "JetBrains Mono": jetbrainsMono,
   "Fira Code": firaCode,
   "Geist Mono": geistMono,
+  "IBM Plex Mono": ibmPlexMono,
   "Work Sans": workSans,
   Karla: karla,
   Mulish: mulish,
@@ -383,7 +399,7 @@ export const FONT_GROUPS: { label: string; fonts: string[] }[] = [
   },
   {
     label: "Monospace",
-    fonts: ["JetBrains Mono", "Fira Code", "Geist Mono"],
+    fonts: ["JetBrains Mono", "Fira Code", "Geist Mono", "IBM Plex Mono"],
   },
   {
     label: "Humanist",

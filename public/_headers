@@ -30,6 +30,15 @@
 # inject a malicious inline script doesn't exist. Worker-src allows
 # blob: because the PDF render uses a web worker spawned from a Blob URL.
 #
+# `'unsafe-eval'` is also accepted because Zod v4's optimised parser
+# compiles validation schemas via `new Function(...)` at runtime
+# (verified in chunk dump 2026-05-16). Without it the library falls
+# back to a slower interpreted path AND emits a console error on every
+# page load — security posture is functionally identical to the
+# inline-script acceptance above (both depend on the same "no
+# user-supplied script content" property), and silencing the error
+# stops it from drowning real diagnostics in the browser console.
+#
 # `Cross-Origin-Opener-Policy` is set to `same-origin-allow-popups` (not
 # the stricter `same-origin`) because the Google OAuth flow opens a
 # pop-up and the strict variant breaks the OAuth callback's
@@ -39,7 +48,7 @@
 # All HTML — never cache, full security headers.
 /*
   Cache-Control: public, max-age=0, no-store, must-revalidate
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

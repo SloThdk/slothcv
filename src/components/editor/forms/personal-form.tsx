@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { UrlInput } from "@/components/ui/url-input";
 import { NO_PHOTO_TEMPLATES } from "@/lib/design-labels";
+import { TEMPLATES_BY_ID } from "@/templates/registry";
 
 export function PersonalForm() {
   const personal = useEditorStore((s) => s.data.personal);
@@ -36,6 +37,14 @@ export function PersonalForm() {
   const photoEnabled = useEditorStore((s) => s.data.design.photo.enabled);
   const setDesign = useEditorStore((s) => s.setDesign);
   const templateSkipsPhoto = NO_PHOTO_TEMPLATES.has(activeTemplate);
+  // Driving licence (kørekort) is a Danish-CV norm only. The field
+  // surfaces only on Danish-language templates so users on Berlin /
+  // Eclipse / etc. don't type into a control whose value the active
+  // template's renderer will silently ignore. Stored value is preserved
+  // when swapping templates — swap to a Danish template and the field
+  // (and its data) come back.
+  const templateIsDanish =
+    TEMPLATES_BY_ID[activeTemplate]?.language === "da";
 
   /** Auto-enable photo on a photo-capable template when the user supplies
    *  one. The factory defaults turn `photo.enabled` off on most templates;
@@ -142,28 +151,32 @@ export function PersonalForm() {
           placeholder={t("personal.locationPlaceholder")}
         />
       </div>
-      {/* Kørekort — dansk CV-felt. Vist altid i formularen (også på
-          engelske templates) men kun renderet i preview når feltet er
-          fyldt UD og det aktive template er en dansk template (de
-          engelske templates ignorerer feltet). Holder formularen
-          enkel — ingen template-betinget vise/skjule logik der ville
-          forvirre brugeren der lige har valgt en dansk template. */}
-      <div>
-        <Label htmlFor="p-koreekort">{t("personal.koreekort")}</Label>
-        <Input
-          id="p-koreekort"
-          value={personal.koreekort ?? ""}
-          onChange={(e) =>
-            setPersonal({
-              koreekort: e.target.value.trim() ? e.target.value : undefined,
-            })
-          }
-          placeholder={t("personal.koreekortPlaceholder")}
-        />
-        <p className="mt-1 text-[11px] text-subtle">
-          {t("personal.koreekortHint")}
-        </p>
-      </div>
+      {/* Kørekort — dansk CV-felt. Only shown on Danish templates,
+          because no English template renders `personal.koreekort`. The
+          earlier "always show" UX was confusing — users on Berlin /
+          Eclipse / etc. typed in the field, saw nothing change in the
+          preview, and reported it as a bug. Stored value is preserved
+          when swapping to an English template (the data stays in
+          personal.koreekort), so swapping back to a Danish template
+          brings the field + content back. */}
+      {templateIsDanish && (
+        <div>
+          <Label htmlFor="p-koreekort">{t("personal.koreekort")}</Label>
+          <Input
+            id="p-koreekort"
+            value={personal.koreekort ?? ""}
+            onChange={(e) =>
+              setPersonal({
+                koreekort: e.target.value.trim() ? e.target.value : undefined,
+              })
+            }
+            placeholder={t("personal.koreekortPlaceholder")}
+          />
+          <p className="mt-1 text-[11px] text-subtle">
+            {t("personal.koreekortHint")}
+          </p>
+        </div>
+      )}
       {/* Photo block — hidden entirely on templates that don't render
           photos by design (Helsinki / Cambridge / Boston / classical
           academic layouts). Showing the upload UI + a "this template

@@ -870,7 +870,27 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
             value={design.watermarkText ?? ""}
             placeholder='e.g. "CV", initials, "RESUME"'
             maxLength={40}
-            onChange={(e) => setDesign({ watermarkText: e.target.value })}
+            onChange={(e) => {
+              const next = e.target.value;
+              // Auto-promote position from "off" to a sensible default the
+              // first time the user types a watermark — without this, text
+              // gets saved but the renderer skips it (see frame.tsx:204
+              // `if (!text || pos === "off") return null`) and the user
+              // sees nothing change. Symmetric: clearing the text drops
+              // position back to "off" so the watermark fully disappears.
+              const currentPos = design.watermarkPosition ?? "off";
+              const trimmed = next.trim();
+              if (trimmed && currentPos === "off") {
+                setDesign({
+                  watermarkText: next,
+                  watermarkPosition: "bottom-right",
+                });
+              } else if (!trimmed && currentPos !== "off") {
+                setDesign({ watermarkText: next, watermarkPosition: "off" });
+              } else {
+                setDesign({ watermarkText: next });
+              }
+            }}
           />
         </div>
         <ChipRow

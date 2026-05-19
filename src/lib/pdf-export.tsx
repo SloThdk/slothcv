@@ -169,12 +169,12 @@ export async function exportPdf(
     letterSpacing: innerComputed.letterSpacing,
     color: innerComputed.color,
   };
-  // The intrinsic width/height in CSS pixels — same values used by
-  // the live editor before its transform: scale() is applied. We
-  // pin the clone to these so the print engine measures glyphs
-  // against the exact same column width the user authored.
-  const intrinsicW = innerEl.offsetWidth;
-  const intrinsicH = innerEl.offsetHeight;
+  // Page-size mm constants are needed BEFORE we pin the clone width
+  // (we want clone.style.width in mm so the browser does one
+  // consistent mm -> device-units conversion across @page and the
+  // content box — see below). Hoisted from its later position so
+  // it's defined when we set clone.style.width.
+  const mm = PAGE_MM[data.design.pageSize] ?? PAGE_MM.A4;
 
   // Clone the page-content into a NEW top-level container at body
   // root. Cloning rather than re-parenting keeps the live editor
@@ -190,14 +190,26 @@ export async function exportPdf(
   // template inline style, the clone still prints unscaled.
   clone.style.transform = "none";
   clone.style.transformOrigin = "top left";
-  // Pin the clone to the original's intrinsic CSS-px size. Without
-  // explicit width, the clone might inherit a different basis from
-  // body/print container and the line-wrap algorithm would re-flow
-  // every paragraph at a slightly-different column width. Forcing
-  // the same width as the editor's own page-sheet eliminates that
-  // class of drift entirely.
-  clone.style.width = `${intrinsicW}px`;
-  clone.style.height = `${intrinsicH}px`;
+  // Pin the clone width in mm — identical to the @page width below.
+  //
+  // The earlier approach used `${innerEl.offsetWidth}px` which is
+  // INTEGER-rounded by the browser (A4: editor renders at the float
+  // `mmToPx(210) = 793.7008px`, but offsetWidth returns 794). The
+  // clone was then 0.3px wider than the @page (`210mm = 793.7008px`)
+  // and the browser had to either scale-to-fit (0.04% horizontal
+  // shrink — broke pixel-perfect 1:1 alignment between editor and
+  // PDF) or surface a phantom horizontal scrollbar in print preview.
+  //
+  // Setting the width in mm directly means the browser does ONE
+  // conversion (mm -> device units) and both the clone and the @page
+  // resolve to the exact same physical width. Shapes positioned at
+  // CSS px inside the clone then map to the same mm position the
+  // editor renders at, modulo zero subpixel drift.
+  //
+  // The CSS-spec 96 DPI ratio means the column-wrap engine still
+  // measures glyphs against the same intrinsic mm width the user
+  // authored in the editor — line-break decisions are identical.
+  clone.style.width = `${mm.w}mm`;
   // Apply the original's computed font properties to the clone so
   // descendant text inherits IDENTICAL metrics to what was rendered
   // on screen. Each descendant element keeps its own class-based
@@ -231,8 +243,8 @@ export async function exportPdf(
   // The HEIGHT is patched again below once we've measured the
   // clone's natural content extent — the initial value is a
   // placeholder so the style tag exists in the DOM at the right
-  // place in the cascade.
-  const mm = PAGE_MM[data.design.pageSize] ?? PAGE_MM.A4;
+  // place in the cascade. (`mm` is hoisted above the clone-creation
+  // block since clone.style.width also needs it.)
   const styleEl = document.createElement("style");
   styleEl.id = "slothcv-print-style";
   styleEl.textContent = `
@@ -417,9 +429,32 @@ export async function exportPdf(
   //      sit at the visible bottom of the printed page, not at the
   //      bottom of the flow content. Restoring to page height puts
   //      it where the user expects.
+  // Two unit-paths depending on single-page vs multi-page:
+  //
+  //   Single-page (content fits inside one printed sheet, including
+  //   the portrait-floor case where the floor exceeds content):
+  //     Use mm directly. The browser converts `${finalPageHeightMm}mm`
+  //     via the same 96 DPI ratio it applies to `@page { size: ... }`,
+  //     so TemplateFrame's min-height resolves to EXACTLY the printed
+  //     page height. Setting in px instead means `Math.ceil` rounds
+  //     up sub-pixel — finalPageHeightPx for 252mm is 952.44, ceil is
+  //     953 — and TemplateFrame ends up 0.56px taller than the @page,
+  //     which can trigger a phantom second page in some print engines.
+  //     mm units side-step the rounding entirely.
+  //
+  //   Multi-page (`maxBottomPx > one printed page`): TemplateFrame
+  //   MUST exceed the page so the browser paginates content naturally
+  //   across multiple sheets. Use px (`ceil(maxBottomPx)`) so the
+  //   restored height matches the content's actual extent in the
+  //   coordinate space shapes are positioned in. (Last-page-partial
+  //   trim is a separate scope.)
+  //
   // Same 96-DPI ratio as `mmToPx` in templates/shared.ts.
   const finalPageHeightPx = (finalPageHeightMm / 25.4) * 96;
-  const restoredHeight = `${Math.ceil(Math.max(finalPageHeightPx, maxBottomPx))}px`;
+  const restoredHeight =
+    maxBottomPx > finalPageHeightPx
+      ? `${Math.ceil(maxBottomPx)}px`
+      : `${finalPageHeightMm}mm`;
   collapsedEls.forEach((el) => {
     el.style.minHeight = restoredHeight;
   });

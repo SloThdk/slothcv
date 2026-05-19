@@ -367,15 +367,30 @@ export async function exportPdf(
   // fractional glyph row at the page edge.
   const contentHeightMm = Math.ceil((maxBottomPx / 96) * 25.4);
 
+  // Page-shape floor: clamp trimmed height so the printed page
+  // never reads as a wide rectangle / landscape banner. Without
+  // this, a sparse CV (e.g. partly-filled template defaults at
+  // ~180mm of content) trims A4 to 210x180 — wider than tall —
+  // and the result no longer looks like a CV. 85% of the natural
+  // page height empirically keeps a portrait shape (A4 floors at
+  // ~252mm, ratio 1:1.20) while still allowing a meaningful trim
+  // when content nearly fills the page (a 280mm CV still trims
+  // to 280mm, removing the 17mm blank bottom).
+  const PORTRAIT_FLOOR_RATIO = 0.85;
+  const portraitFloorMm = Math.round(mm.h * PORTRAIT_FLOOR_RATIO);
+
   // Multi-page split logic: if content fits inside ONE standard
-  // page, trim @page to content. Otherwise keep standard page
-  // size so the browser paginates naturally — handing a single
-  // "very tall page" to the print engine produces a single huge
-  // PDF page that won't fit on real paper or scale well in PDF
-  // readers, so multi-page CVs keep A4/Letter/Legal. (Last-page-
-  // partial trim is harder — separate follow-up.)
+  // page, trim @page to content (subject to the portrait floor
+  // above). Otherwise keep standard page size so the browser
+  // paginates naturally — handing a single "very tall page" to
+  // the print engine produces a single huge PDF page that won't
+  // fit on real paper or scale well in PDF readers, so multi-page
+  // CVs keep A4/Letter/Legal. (Last-page-partial trim is harder
+  // — separate follow-up.)
   const finalPageHeightMm =
-    contentHeightMm > 0 && contentHeightMm < mm.h ? contentHeightMm : mm.h;
+    contentHeightMm > 0 && contentHeightMm < mm.h
+      ? Math.max(contentHeightMm, portraitFloorMm)
+      : mm.h;
 
   styleEl.textContent = `
     @page {

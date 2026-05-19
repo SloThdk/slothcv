@@ -227,6 +227,11 @@ export async function exportPdf(
   // editor's screen render isn't permanently affected (none of the
   // rules below have `@media screen` so they wouldn't paint
   // anyway, but keeping the head clean is good hygiene).
+  //
+  // The HEIGHT is patched again below once we've measured the
+  // clone's natural content extent — the initial value is a
+  // placeholder so the style tag exists in the DOM at the right
+  // place in the cascade.
   const mm = PAGE_MM[data.design.pageSize] ?? PAGE_MM.A4;
   const styleEl = document.createElement("style");
   styleEl.id = "slothcv-print-style";
@@ -271,6 +276,129 @@ export async function exportPdf(
   // Two RAFs for layout to settle after the clone mounts and the
   // afore styles + image-loads cascade.
   await nextFrame();
+  await nextFrame();
+
+  // Trim the @page height to the clone's actual content extent so
+  // a short CV doesn't print onto a full A4 sheet with half the
+  // page blank.
+  //
+  // # Why this is more involved than `height: auto`
+  //
+  // Two layers pin the printed sheet to full A4 height:
+  //   1. The page-content div in preview.tsx sets `height:
+  //      mmToPx(dims.h)` so the editor preview always shows a
+  //      recognisable A4 rectangle.
+  //   2. TemplateFrame's outer wrapper (frame.tsx, `fixedSize=true`
+  //      path) sets `style.minHeight = mmToPx(dims.h) + "px"` —
+  //      this is what every premade template is mounted inside.
+  //
+  // Only zero-ing (1) is not enough. The clone's
+  // `getBoundingClientRect().height` still measures ≥ A4 because
+  // TemplateFrame's `min-height` inline style props it up. So we
+  // walk every descendant of the clone, zero any inline pixel
+  // min-height at or above the full-page threshold (see Phase 1
+  // below — calibrated so legitimate template-design min-heights
+  // like marina's 180/420 are NOT touched), record them, then
+  // measure. After measurement we expand those same elements back
+  // to `maxBottomPx` — that's load-bearing for absolute-positioned
+  // descendants like the custom-elements layer and corner
+  // watermark, which size to TemplateFrame's box. If we leave
+  // TemplateFrame collapsed to flow content while a user placed a
+  // custom shape at y = 900px, the custom would be visually
+  // clipped by TemplateFrame's `overflow: hidden`.
+  //
+  // # What counts as "content"
+  //
+  // `clone.getBoundingClientRect().height` after the collapse =
+  // natural flow content (top padding + flowing children + bottom
+  // padding from `marginMm`). Absolute-positioned descendants
+  // (user-placed customs, watermark) don't add to the parent's
+  // intrinsic height, so we sweep them separately and take the max
+  // bottom edge. The blank/scratch template has zero flow content
+  // and only customs — same code path handles it: maxBottomPx =
+  // lowest custom's bottom edge.
+  clone.style.height = "auto";
+  clone.style.minHeight = "0";
+
+  // Phase 1: collapse the forced template wrapper min-height so
+  // measurement reflects natural content. Track what we touched
+  // so we can restore those exact elements after measurement.
+  //
+  // Threshold = 1000 px. This is calibrated to ONLY catch
+  // TemplateFrame's full-page `mmToPx(dims.h)` inline minHeight
+  // (A4 ≈ 1122 px, Letter ≈ 1056 px, Legal ≈ 1344 px — all > 1000)
+  // while leaving template-design min-heights untouched
+  // (e.g. marina header band `minHeight: 180`, marina body grid
+  // `minHeight: 420` — both legitimate visual constraints set by
+  // template authors to maintain proportion when content is
+  // sparse). Zeroing those would distort the template's look in
+  // the export.
+  const PAGE_MIN_HEIGHT_THRESHOLD_PX = 1000;
+  const collapsedEls: HTMLElement[] = [];
+  clone.querySelectorAll<HTMLElement>("*").forEach((el) => {
+    const mh = el.style.minHeight;
+    if (!mh || !mh.endsWith("px")) return;
+    const v = parseFloat(mh);
+    if (!Number.isFinite(v) || v < PAGE_MIN_HEIGHT_THRESHOLD_PX) return;
+    el.style.minHeight = "0";
+    collapsedEls.push(el);
+  });
+
+  await nextFrame();
+
+  // Phase 2: measure natural content height + any absolute custom
+  // positions.
+  const cloneRect = clone.getBoundingClientRect();
+  let maxBottomPx = cloneRect.height;
+  const absoluteSelector =
+    '[data-element-id^="custom."], [data-element-id="design.watermark"]';
+  const absoluteEls = clone.querySelectorAll<HTMLElement>(absoluteSelector);
+  absoluteEls.forEach((el) => {
+    const r = el.getBoundingClientRect();
+    const bottomRelativeToClone = r.bottom - cloneRect.top;
+    if (bottomRelativeToClone > maxBottomPx) {
+      maxBottomPx = bottomRelativeToClone;
+    }
+  });
+
+  // px → mm at the CSS-spec 96 DPI used throughout slothcv
+  // (matches `mmToPx` in templates/shared.ts; inversing the same
+  // ratio keeps round-trip exact). `Math.ceil` so we never crop a
+  // fractional glyph row at the page edge.
+  const contentHeightMm = Math.ceil((maxBottomPx / 96) * 25.4);
+
+  // Multi-page split logic: if content fits inside ONE standard
+  // page, trim @page to content. Otherwise keep standard page
+  // size so the browser paginates naturally — handing a single
+  // "very tall page" to the print engine produces a single huge
+  // PDF page that won't fit on real paper or scale well in PDF
+  // readers, so multi-page CVs keep A4/Letter/Legal. (Last-page-
+  // partial trim is harder — separate follow-up.)
+  const finalPageHeightMm =
+    contentHeightMm > 0 && contentHeightMm < mm.h ? contentHeightMm : mm.h;
+
+  styleEl.textContent = `
+    @page {
+      size: ${mm.w}mm ${finalPageHeightMm}mm;
+      margin: 0;
+    }
+  `;
+
+  // Phase 3: re-expand the elements we collapsed so absolute-
+  // positioned children (custom-elements layer, watermark, atlas's
+  // continent backdrop, capitol's column divider, etc.) lay out
+  // against the same height the printed page will be. Without
+  // this the layer stays collapsed at flow-content height while
+  // the page is taller, and any custom shape positioned past the
+  // flow content gets clipped by TemplateFrame's `overflow:
+  // hidden`.
+  const restoredHeight = `${Math.ceil(maxBottomPx)}px`;
+  collapsedEls.forEach((el) => {
+    el.style.minHeight = restoredHeight;
+  });
+
+  // One more frame so the @page change + min-height restore
+  // settle before print().
   await nextFrame();
 
   // Pop the print dialog. window.print() blocks the JS thread

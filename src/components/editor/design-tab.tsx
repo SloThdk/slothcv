@@ -129,6 +129,7 @@ export interface DesignTabProps {
 export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const design = useEditorStore((s) => s.data.design);
   const setDesign = useEditorStore((s) => s.setDesign);
+  const setElementPosition = useEditorStore((s) => s.setElementPosition);
   const template = useEditorStore((s) => s.data.meta.template);
   // Runtime signals — re-read from store so the Design tab reacts to
   // user actions in real time. If a user uploads a photo on a template
@@ -360,6 +361,16 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
     };
   }, [scrollTo, onScrolled]);
 
+  /** Drop any free-drag offset stored against `design.watermark` so a
+   *  fresh placement preset, group-reset, or text auto-toggle lands
+   *  the watermark in its canonical corner instead of inheriting a
+   *  stale `translate(dx, dy)` from a previous drag (frame.tsx's
+   *  Watermark spreads `elementStyle(data, id)` on top of the corner
+   *  class, so the offset survives every position change otherwise). */
+  function clearWatermarkDragOffset() {
+    setElementPosition("design.watermark", undefined);
+  }
+
   /** Reset using the CURRENT template's factory design — Aurora goes
    *  back to dark/mint, Eclipse to amber/black, etc. The user stays on
    *  whatever template they picked; only the design values within that
@@ -428,6 +439,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           watermarkPosition: factory.watermarkPosition,
           watermarkColor: factory.watermarkColor,
         });
+        clearWatermarkDragOffset();
         break;
     }
   }
@@ -907,8 +919,10 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
                   watermarkText: next,
                   watermarkPosition: "bottom-right",
                 });
+                clearWatermarkDragOffset();
               } else if (!trimmed && currentPos !== "off") {
                 setDesign({ watermarkText: next, watermarkPosition: "off" });
+                clearWatermarkDragOffset();
               } else {
                 setDesign({ watermarkText: next });
               }
@@ -925,7 +939,10 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
             "top-left",
             "top-right",
           ] as WatermarkPosition[]}
-          onChange={(v) => setDesign({ watermarkPosition: v })}
+          onChange={(v) => {
+            setDesign({ watermarkPosition: v });
+            clearWatermarkDragOffset();
+          }}
         />
         <div>
           <Label>Watermark color</Label>

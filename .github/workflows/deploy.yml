@@ -83,7 +83,7 @@ jobs:
         # a future wrangler breaking change in this repo's deps can't
         # silently break the deploy pipeline. `--branch master` makes
         # the deploy a Production deployment (not a preview).
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

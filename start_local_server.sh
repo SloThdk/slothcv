@@ -61,12 +61,49 @@ if [ ! -d "node_modules" ]; then
     fi
 fi
 
-# Auto-copy .env.example to .env if .env is missing.
+# Auto-copy .env.example to .env if .env is missing. Note: all .env*
+# files are in .gitignore (verified) and never committed to git history.
+# Your local credentials stay on YOUR machine.
 if [ ! -f ".env" ] && [ -f ".env.example" ]; then
     echo "[setup] .env not found - copying .env.example to .env..."
     cp ".env.example" ".env"
-    echo "[setup] Created .env. Edit it if any values need filling in."
+    echo "[setup] Created .env from the example template."
 fi
+
+# Credential-doctor: warn about placeholder Supabase values so users
+# know what to fill in for full functionality. Local dev partially works
+# without real Supabase credentials (UI renders, but persistence is a
+# no-op). Real credentials unlock the actual CV-save + AI-edit features.
+print_credential_status() {
+    [ -f ".env" ] || return 0
+    local needs=()
+    local supabase_url
+    supabase_url=$(grep "^NEXT_PUBLIC_SUPABASE_URL=" .env | cut -d= -f2- || true)
+    local supabase_anon
+    supabase_anon=$(grep "^NEXT_PUBLIC_SUPABASE_ANON_KEY=" .env | cut -d= -f2- || true)
+    local supabase_service
+    supabase_service=$(grep "^SUPABASE_SERVICE_ROLE_KEY=" .env | cut -d= -f2- || true)
+
+    [[ "$supabase_url" == *YOUR_PROJECT_REF* ]] || [ -z "$supabase_url" ] && needs+=("NEXT_PUBLIC_SUPABASE_URL|Supabase project URL (https://YOUR_REF.supabase.co)")
+    [[ "$supabase_anon" == your-* ]] || [ -z "$supabase_anon" ] && needs+=("NEXT_PUBLIC_SUPABASE_ANON_KEY|Supabase anon key (Dashboard -> Project Settings -> API)")
+    [[ "$supabase_service" == your-* ]] || [ -z "$supabase_service" ] && needs+=("SUPABASE_SERVICE_ROLE_KEY|Supabase service role key (Dashboard -> Project Settings -> API)")
+
+    if [ ${#needs[@]} -gt 0 ]; then
+        echo
+        echo "  ⚠️  Your .env has placeholder Supabase values."
+        echo "      Local dev: UI loads but persistence is no-op without real keys."
+        echo "      To enable CV-save + AI-edit, get real values from:"
+        echo "        https://supabase.com -> create free project -> Project Settings -> API"
+        echo "      Then set in .env:"
+        for n in "${needs[@]}"; do
+            IFS='|' read -r var purpose <<<"$n"
+            printf "        %-32s  %s\n" "$var" "$purpose"
+        done
+        echo
+    fi
+}
+
+print_credential_status
 
 # 1. Free port.
 echo "[1/3] Killing any process listening on port $PORT..."

@@ -399,15 +399,27 @@ export async function exportPdf(
     }
   `;
 
-  // Phase 3: re-expand the elements we collapsed so absolute-
-  // positioned children (custom-elements layer, watermark, atlas's
-  // continent backdrop, capitol's column divider, etc.) lay out
-  // against the same height the printed page will be. Without
-  // this the layer stays collapsed at flow-content height while
-  // the page is taller, and any custom shape positioned past the
-  // flow content gets clipped by TemplateFrame's `overflow:
-  // hidden`.
-  const restoredHeight = `${Math.ceil(maxBottomPx)}px`;
+  // Phase 3: re-expand the elements we collapsed to the FINAL page
+  // height — which may be larger than `maxBottomPx` when the portrait
+  // floor clamps a sparse CV. Two reasons to use the page height,
+  // not the content extent:
+  //   1. TemplateFrame paints `design.pageBg` on its own box. If we
+  //      restore only to content extent, the area between content
+  //      and page bottom shows whatever's underneath — body bg in
+  //      print, which is `var(--color-bg)` and goes dark when the
+  //      editor is in dark mode. Visible as a black footer band on
+  //      every trimmed-with-floor export. Restoring to page height
+  //      makes TemplateFrame paint the user's chosen pageBg across
+  //      the full sheet, no matter what theme the editor is in.
+  //   2. Absolute-positioned descendants (watermark in bottom-X
+  //      corner, atlas's continent backdrop, etc.) lay out against
+  //      the box dimensions. The watermark in bottom-right should
+  //      sit at the visible bottom of the printed page, not at the
+  //      bottom of the flow content. Restoring to page height puts
+  //      it where the user expects.
+  // Same 96-DPI ratio as `mmToPx` in templates/shared.ts.
+  const finalPageHeightPx = (finalPageHeightMm / 25.4) * 96;
+  const restoredHeight = `${Math.ceil(Math.max(finalPageHeightPx, maxBottomPx))}px`;
   collapsedEls.forEach((el) => {
     el.style.minHeight = restoredHeight;
   });

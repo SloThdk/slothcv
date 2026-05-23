@@ -7,9 +7,11 @@ import type { VolunteerSection } from "@/types/resume";
 import { defaultVolunteerItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, BulletsEditor, ItemRow, moveItem } from "./shared";
 
 export function VolunteerForm({ section }: { section: VolunteerSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: VolunteerSection["items"]) =>
     update<VolunteerSection>(section.id, { items });
@@ -24,6 +26,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
+          fieldId={`section.${section.id}.item.${it.id}`}
           title={it.role || "(role)"}
           subtitle={it.organization ? `· ${it.organization}` : undefined}
           visible={it.visible}
@@ -37,14 +40,14 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Role</Label>
+                <Label>{t("form.role")}</Label>
                 <Input
                   value={it.role}
                   onChange={(e) => patchItem(idx, { role: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Organization</Label>
+                <Label>{t("form.organization")}</Label>
                 <Input
                   value={it.organization}
                   onChange={(e) => patchItem(idx, { organization: e.target.value })}
@@ -52,7 +55,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
               </div>
             </div>
             <div>
-              <Label>Location</Label>
+              <Label>{t("form.location")}</Label>
               <Input
                 value={it.location}
                 onChange={(e) => patchItem(idx, { location: e.target.value })}
@@ -60,7 +63,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Start</Label>
+                <Label>{t("form.start")}</Label>
                 <Input
                   value={it.startDate}
                   onChange={(e) => patchItem(idx, { startDate: e.target.value })}
@@ -68,7 +71,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
                 />
               </div>
               <div>
-                <Label>End</Label>
+                <Label>{t("form.end")}</Label>
                 <Input
                   value={it.endDate}
                   onChange={(e) => patchItem(idx, { endDate: e.target.value })}
@@ -85,7 +88,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
               Currently volunteering
             </label>
             <div>
-              <Label>Bullets</Label>
+              <Label>{t("form.bullets")}</Label>
               <BulletsEditor
                 bullets={it.bullets}
                 onChange={(bullets) => patchItem(idx, { bullets })}
@@ -95,7 +98,7 @@ export function VolunteerForm({ section }: { section: VolunteerSection }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add volunteer entry"
+        label={t("form.addVolunteer")}
         onClick={() => setItems([...section.items, defaultVolunteerItem()])}
       />
     </div>

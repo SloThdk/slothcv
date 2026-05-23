@@ -49,8 +49,8 @@ export default function PrivacyPage(): JSX.Element {
         <Section title={isDa ? "Hvem står bag" : "Who is behind this"}>
           <p>
             {isDa
-              ? "SlothCV drives af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Du kan kontakte mig direkte på "
-              : "SlothCV is operated by Philip Sloth, a sole proprietorship based in Denmark. You can contact me directly at "}
+              ? "SlothCV drives af Philip Sloth med base i Danmark. Du kan kontakte mig direkte på "
+              : "SlothCV is operated by Philip Sloth, based in Denmark. You can contact me directly at "}
             <a className="underline underline-offset-4" href="mailto:philipsloth1@gmail.com">
               philipsloth1@gmail.com
             </a>

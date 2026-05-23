@@ -103,18 +103,30 @@ export function AuroraTemplate({ data, fixedSize, skipOverlay }: Props) {
           )}
           <DefaultContactLine data={data} />
         </div>
-        {design.photo.enabled && personal.photoUrl && (
+        {design.photo.enabled && (
           <div
             data-element-id="personal.photo"
             className="cursor-grab"
             style={elementStyle(data, "personal.photo")}
           >
-            <Photo
-              src={personal.photoUrl}
-              shape={design.photo.shape}
-              accent={design.accentColor}
-              design={design}
-            />
+            {personal.photoUrl ? (
+              <Photo
+                src={personal.photoUrl}
+                shape={design.photo.shape}
+                accent={design.accentColor}
+                design={design}
+              />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="grid h-full w-full place-items-center bg-[color-mix(in_srgb,currentColor_8%,transparent)] text-[color-mix(in_srgb,currentColor_45%,transparent)]"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                </svg>
+              </div>
+            )}
           </div>
         )}
       </header>

@@ -97,6 +97,7 @@ export function LanguagesForm({ section }: { section: LanguagesSection }) {
               key={it.id}
               item={it}
               showLevel={showLevel}
+              fieldId={`section.${section.id}.item.${it.id}`}
               onChange={(patch) => {
                 const next = [...section.items];
                 next[idx] = { ...it, ...patch };
@@ -129,11 +130,14 @@ function SortableLanguageRow({
   showLevel,
   onChange,
   onRemove,
+  fieldId,
 }: {
   item: LanguagesSection["items"][number];
   showLevel: boolean;
   onChange: (patch: Partial<LanguagesSection["items"][number]>) => void;
   onRemove: () => void;
+  /** Click-to-jump target matching the chip's template element-id. */
+  fieldId?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
@@ -141,6 +145,7 @@ function SortableLanguageRow({
   return (
     <div
       ref={setNodeRef}
+      data-field-id={fieldId}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,

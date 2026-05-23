@@ -121,24 +121,36 @@ export function MidnightTemplate({ data, fixedSize, skipOverlay }: Props) {
             </p>
           )}
           <MidnightContact data={data} />
-          {design.photo.enabled && personal.photoUrl && (
+          {design.photo.enabled && (
             <div
               data-element-id="personal.photo"
               className="mx-auto mt-5 cursor-grab"
               style={elementStyle(data, "personal.photo")}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={personal.photoUrl}
-                alt=""
-                referrerPolicy="no-referrer"
-                draggable={false}
-                className="mx-auto h-24 w-24 rounded-full object-cover"
-                style={{
-                  // box-shadow + design.photo.borderColor override (Design → Photo → Border)
-                  boxShadow: `0 0 0 3px transparent, 0 0 0 4px ${data.design.photo.borderColor || GOLD}`,
-                }}
-              />
+              {personal.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={personal.photoUrl}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  draggable={false}
+                  className="mx-auto h-24 w-24 rounded-full object-cover"
+                  style={{
+                    // box-shadow + design.photo.borderColor override (Design → Photo → Border)
+                    boxShadow: `0 0 0 3px transparent, 0 0 0 ${data.design.photo.borderWidth ?? 4}px ${data.design.photo.borderColor || GOLD}`,
+                  }}
+                />
+              ) : (
+                <div
+                  aria-hidden="true"
+                  className="grid h-full w-full place-items-center bg-[color-mix(in_srgb,currentColor_8%,transparent)] text-[color-mix(in_srgb,currentColor_45%,transparent)]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                  </svg>
+                </div>
+              )}
             </div>
           )}
         </header>

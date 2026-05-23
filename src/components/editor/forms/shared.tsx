@@ -99,6 +99,7 @@ export function ItemRow({
   canMoveUp,
   canMoveDown,
   children,
+  fieldId,
 }: {
   title: string;
   subtitle?: string;
@@ -110,9 +111,17 @@ export function ItemRow({
   canMoveUp: boolean;
   canMoveDown: boolean;
   children: React.ReactNode;
+  /** Optional `data-field-id` matching the template-emitted element-id
+   *  (typically `section.<sid>.item.<iid>`). When present, click-to-jump
+   *  from the preview lands on this row's wrapper instead of the section
+   *  row header. */
+  fieldId?: string;
 }) {
   return (
-    <div className="rounded-md border border-border bg-surface">
+    <div
+      data-field-id={fieldId}
+      className="rounded-md border border-border bg-surface"
+    >
       <div className="flex items-center gap-1 border-b border-border bg-surface-hover px-2 py-1.5">
         <div className="flex-1 truncate text-xs font-medium text-fg">
           {title || "(untitled)"}

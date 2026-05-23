@@ -70,7 +70,14 @@ type ZoomMode = "50" | "75" | "100" | "fit";
 
 const JUMP_EVENT = "slothcv:jump-to-section";
 const DRAG_THRESHOLD = 4; // pixels of movement before a press becomes a drag
-const POSITION_BOUND = 400; // matches the Zod max in the schema
+// Element-drag offset bound (px). Pre 2026-05-21 this was 400 which felt
+// like a "hard snap" wall — users dragging a header photo toward the
+// page bottom hit the clamp mid-motion. 1200 covers full A4 width
+// (794 px) and most of the height (1123 px), letting the photo or any
+// flow element land anywhere the user pushes it. Schema's
+// `elementOffsetSchema` (lib/schemas/resume.ts) carries the same
+// number so the server-side validator doesn't reject the wider range.
+const POSITION_BOUND = 1200;
 
 /** Walk up from a clicked element to the nearest ancestor carrying a
  *  given data-attribute. Returns the attribute's value or null. */
@@ -210,48 +217,68 @@ export function Preview() {
       const wasStaticPosition = computed.position === "static";
       const originalInlinePosition = wrapper.style.position;
       if (wasStaticPosition) wrapper.style.position = "relative";
+      // NOTE — earlier this block also injected a transparent
+      // "hit-extender" child + flipped wrapper.overflow to visible so the
+      // ~4 px box-shadow border ring outside the wrapper would be
+      // clickable. Reverted 2026-05-21 because:
+      //   (a) The imperative `wrapper.style.overflow = "visible"` got
+      //       silently overwritten on every React re-render of the
+      //       wrapper (style prop replaces the inline declaration), so
+      //       the extension was only intermittent anyway.
+      //   (b) The 2-4 px ring is too narrow for users to deliberately
+      //       click — the bug it solved was theoretical.
+      //   (c) The hit-extender's stacking interfered with the photo's
+      //       box-shadow ring on some templates ("border isn't doing
+      //       anything", Philip 2026-05-21).
+      // The photo wrapper's NORMAL click flow (mousedown on the IMG
+      // bubbles to the data-element-id'd wrapper, drag init fires
+      // through onPointerDown) is preserved without any of this.
       const btn = document.createElement("button");
       btn.setAttribute("data-replace-photo-btn", "true");
       btn.type = "button";
       btn.title = labelText;
       btn.setAttribute("aria-label", labelText);
-      // Full-photo overlay pattern (Canva / Figma style) — covers the
-      // entire wrapper with a centred dark scrim + icon + label on
-      // hover. The earlier top-right pill (4 px offset, fixed padding)
-      // overflowed photos smaller than the label width (Aabenraa /
-      // Berlin sidebar photos are only ~80–90 px square). An overlay
-      // scales with the wrapper, so a 60 px tiny photo gets a 60 px
-      // hover layer — never bleeds outside the photo bounds.
+      // Always-visible CORNER PILL at the top-right of the photo —
+      // discoverable without hover. On hover (or focus-visible) it
+      // expands into a full-photo overlay with the localised label, so
+      // power users still get the prominent Canva-style affordance.
+      // The pill is small enough (24×24) not to obscure the photo at
+      // any size, but large enough to be tappable on mobile. CSS in
+      // frame.tsx handles the hover-grows-into-full-overlay transition.
       btn.style.cssText = [
         "position: absolute",
-        "inset: 0",
+        "top: 4px",
+        "right: 4px",
+        "width: 24px",
+        "height: 24px",
+        "padding: 0",
         "display: flex",
-        "flex-direction: column",
         "align-items: center",
         "justify-content: center",
         "gap: 4px",
-        "padding: 4px",
         "border: 0",
-        "border-radius: var(--cv-photo-radius, 0)",
-        "background: rgba(15,23,42,0.6)",
+        "border-radius: 999px",
+        "background: rgba(15,23,42,0.7)",
         "color: #ffffff",
         "font: 500 10px/1.15 system-ui, -apple-system, sans-serif",
         "cursor: pointer",
-        "z-index: 5",
+        "z-index: 6",
         "white-space: nowrap",
         "user-select: none",
         "text-align: center",
-        // Browser-native font smoothing reads cleaner over a dark scrim.
+        "overflow: hidden",
         "-webkit-font-smoothing: antialiased",
+        // Smooth transition between corner-pill and full-overlay states.
+        // We animate ALL the geometry properties; the CSS rule in
+        // frame.tsx flips them on hover.
+        "transition: inset 160ms ease-out, width 160ms ease-out, height 160ms ease-out, border-radius 160ms ease-out, padding 160ms ease-out, top 160ms ease-out, right 160ms ease-out, background 160ms ease-out",
       ].join(";");
       // Lucide Camera glyph inlined as SVG so we don't need to React-render
-      // an icon component into a non-React subtree. 18 px reads at every
-      // photo size — small enough not to dominate a 60 px tiny avatar,
-      // large enough to be the legible primary affordance on a 300 px
-      // hero photo.
+      // an icon component into a non-React subtree. 14 px in the corner
+      // pill, scales up via CSS on hover for the full-overlay state.
       btn.innerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>' +
-        `<span data-replace-photo-label>${labelText}</span>`;
+        '<svg data-replace-photo-icon xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>' +
+        `<span data-replace-photo-label style="display:none">${labelText}</span>`;
       const onClick = (e: Event) => {
         // Stop the click from bubbling to the wrapper's drag/jump
         // handlers — without this, replace-click would also dispatch the
@@ -1214,13 +1241,21 @@ export function Preview() {
             const sectionEl = wrap?.closest("[data-section-id]");
             const sid = sectionEl?.getAttribute("data-section-id");
             if (sid) {
+              // Carry the element-id alongside the section-id so the
+              // inspector lands on the precise field the user clicked
+              // (e.g. `personal.email`, `section.<sid>.item.<iid>`),
+              // matching the hover ring's element-level precision.
               window.dispatchEvent(
-                new CustomEvent(JUMP_EVENT, { detail: { id: sid } }),
+                new CustomEvent(JUMP_EVENT, {
+                  detail: { id: sid, fieldId: drag.id },
+                }),
               );
             }
           }
         } else if (drag.kind === "section") {
           selectElement(null);
+          // Section-as-a-whole click: no field target. The section row
+          // flashes at row level, same as before.
           window.dispatchEvent(
             new CustomEvent(JUMP_EVENT, { detail: { id: drag.id } }),
           );
@@ -1403,6 +1438,15 @@ export function Preview() {
         ref={containerRef}
         className="preview-stage flex-1 select-none overflow-auto bg-[color:var(--color-canvas)] p-4 transition-colors"
         onPointerDown={onPointerDown}
+        // Kill the browser's native HTML5 image / link drag. Without this,
+        // pointerdown on the photo's <img> ALSO fires `dragstart` and the
+        // browser spawns its built-in drag-ghost (the translucent preview
+        // floating with the cursor) — interferes with our custom
+        // pointer-based drag and looks broken. One stage-level handler
+        // catches every img/anchor in every template; no need to touch
+        // 56 template files. The capture phase is intentional so we
+        // beat any child handler that might re-enable it.
+        onDragStartCapture={(e) => e.preventDefault()}
         onDoubleClick={(e) => {
           // Find the most-specific element-id ancestor of the click.
           // If a lens is registered for it, enter inline-edit mode by

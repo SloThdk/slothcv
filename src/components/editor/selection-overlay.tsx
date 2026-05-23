@@ -203,6 +203,30 @@ export function SelectionOverlay({ pageWidth, pageHeight }: Props) {
       const y = (elRect.top - svgRect.top) / scale;
       const w = elRect.width / scale;
       const h = elRect.height / scale;
+      // Shape-aware ring: read the element's painted border-radius and
+      // apply it as the SVG rect's rx/ry so circular photos get a
+      // circular ring, rounded panels get rounded rings, sharp text
+      // elements get a sharp ring. Without this every hover painted
+      // a rectangle even over a `rounded-full` avatar, which looked
+      // wrong + felt unpolished (Philip flagged 2026-05-21).
+      //
+      // CSS border-radius computes to absolute px in pre-transform
+      // space — the same space as the SVG viewBox — so no scale
+      // division needed. `parseFloat` discards the "px" suffix; we
+      // take the MAX of the four corners (asymmetric shapes like the
+      // arch photo crop don't paint perfectly with a single radius,
+      // but max-of-corners is far closer than rectangular). Final
+      // clamp to `min(w/2, h/2)` so `rounded-full` (9999 px) becomes
+      // a true circle/pill rather than an oversized SVG-internal value.
+      const cs = getComputedStyle(target.el);
+      const cornerRadii = [
+        parseFloat(cs.borderTopLeftRadius) || 0,
+        parseFloat(cs.borderTopRightRadius) || 0,
+        parseFloat(cs.borderBottomLeftRadius) || 0,
+        parseFloat(cs.borderBottomRightRadius) || 0,
+      ];
+      const requestedRadius = Math.max(...cornerRadii);
+      const ringRadius = Math.min(w / 2, h / 2, requestedRadius);
       // Round to 0.5 px (the actual paint-rounding threshold across
       // every modern browser at typical DPRs) to avoid sub-pixel
       // jitter when the cursor moves but the element didn't.
@@ -213,6 +237,8 @@ export function SelectionOverlay({ pageWidth, pageHeight }: Props) {
         "height",
         String(Math.max(0, Math.round(h * 2) / 2)),
       );
+      rect.setAttribute("rx", String(Math.max(0, Math.round(ringRadius * 2) / 2)));
+      rect.setAttribute("ry", String(Math.max(0, Math.round(ringRadius * 2) / 2)));
       // Show the overlay. Opacity transitions on the SVG itself are
       // cheap (compositor-only) — no paint cost regardless of how
       // often we toggle them.

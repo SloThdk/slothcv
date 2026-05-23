@@ -3,7 +3,7 @@
  *
  * Plain-language, written to match the actual service:
  *   - free CV builder
- *   - up to 10 CVs per account
+ *   - up to 5 CVs per account
  *   - vector PDF export
  *   - no watermarks, no signup wall to export
  *   - account auth via magic link or Google OAuth
@@ -39,15 +39,15 @@ export default function TermsPage(): JSX.Element {
 
         <p className="mt-8 text-base text-[color:var(--color-text-muted)] sm:text-lg">
           {isDa
-            ? "SlothCV er en gratis CV-bygger drevet af Philip Sloth, enkeltmandsvirksomhed med base i Danmark. Ved at oprette en konto eller bruge sitet accepterer du disse vilkår. De er korte med vilje."
-            : "SlothCV is a free CV builder operated by Philip Sloth, a sole proprietorship based in Denmark. By creating an account or using the site, you agree to these terms. They are short on purpose."}
+            ? "SlothCV er en gratis CV-bygger drevet af Philip Sloth med base i Danmark. Ved at oprette en konto eller bruge sitet accepterer du disse vilkår. De er korte med vilje."
+            : "SlothCV is a free CV builder operated by Philip Sloth, based in Denmark. By creating an account or using the site, you agree to these terms. They are short on purpose."}
         </p>
 
         <Section title={isDa ? "Hvad SlothCV er" : "What SlothCV is"}>
           <p>
             {isDa
-              ? "Et værktøj til at bygge et CV i browseren og eksportere det som PDF. Gratis at bruge. Ingen vandmærker, ingen tilmeldingsmur for at hente, ingen prøveperioder der laver sig selv om til abonnementer. Du kan have op til 10 CV'er på din konto."
-              : "A tool to build a CV in the browser and export it as a PDF. Free to use. No watermarks, no signup wall to export, no trials that turn into subscriptions. You can keep up to 10 CVs on your account."}
+              ? "Et værktøj til at bygge et CV i browseren og eksportere det som PDF. Gratis at bruge. Ingen vandmærker, ingen tilmeldingsmur for at hente, ingen prøveperioder der laver sig selv om til abonnementer. Du kan have op til 5 CV'er på din konto."
+              : "A tool to build a CV in the browser and export it as a PDF. Free to use. No watermarks, no signup wall to export, no trials that turn into subscriptions. You can keep up to 5 CVs on your account."}
           </p>
         </Section>
 
@@ -99,8 +99,8 @@ export default function TermsPage(): JSX.Element {
         <Section title={isDa ? "Fremtidig prissætning" : "Future pricing"}>
           <p>
             {isDa
-              ? "SlothCV er gratis i dag. Jeg forbeholder mig retten til at introducere betalte tiers i fremtiden for at dække omkostninger når brugen vokser. Hvis jeg introducerer betaling, vil de eksisterende gratis-funktioner — op til 10 CV'er per konto, vektor-PDF-eksport, ingen vandmærker — forblive gratis for konti oprettet inden den dato, uden tvungen migration. Eventuelle nye funktioner (fx ubegrænsede CV'er, AI-assisteret skrivning, premium-skabeloner) kan kræve en betalt plan. Du kan altid eksportere alle dine CV'er som PDF og slette din konto med ét klik via "
-              : "SlothCV is free today. I reserve the right to introduce paid tiers in the future to cover costs as usage grows. If I introduce payment, the existing free features — up to 10 CVs per account, vector PDF export, no watermarks — will remain free for accounts created before that date, with no forced migration. Any new features (e.g. unlimited CVs, writing assistance, premium templates) may require a paid plan. You can always export all your CVs as PDF and delete your account with one click via "}
+              ? "SlothCV er gratis i dag. Jeg forbeholder mig retten til at introducere betalte tiers i fremtiden for at dække omkostninger når brugen vokser. Hvis jeg introducerer betaling, vil de eksisterende gratis-funktioner — op til 5 CV'er per konto, vektor-PDF-eksport, ingen vandmærker — forblive gratis for konti oprettet inden den dato, uden tvungen migration. Eventuelle nye funktioner (fx ubegrænsede CV'er, AI-assisteret skrivning, premium-skabeloner) kan kræve en betalt plan. Du kan altid eksportere alle dine CV'er som PDF og slette din konto med ét klik via "
+              : "SlothCV is free today. I reserve the right to introduce paid tiers in the future to cover costs as usage grows. If I introduce payment, the existing free features — up to 5 CVs per account, vector PDF export, no watermarks — will remain free for accounts created before that date, with no forced migration. Any new features (e.g. unlimited CVs, writing assistance, premium templates) may require a paid plan. You can always export all your CVs as PDF and delete your account with one click via "}
             <Link href="/account" className="underline underline-offset-4">/account</Link>
             {isDa ? "." : "."}
           </p>

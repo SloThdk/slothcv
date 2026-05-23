@@ -131,6 +131,14 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
   const setDesign = useEditorStore((s) => s.setDesign);
   const setElementPosition = useEditorStore((s) => s.setElementPosition);
   const template = useEditorStore((s) => s.data.meta.template);
+  // Watermark offset (drives the "(custom position)" indicator in the
+  // Watermark section). Read from the per-element overrides map: the
+  // canvas drag handler writes here via `setElementPosition("design.
+  // watermark", { dx, dy })` whenever the user free-drags the corner
+  // letters; clearing it returns the watermark to the pure corner.
+  const watermarkOffset = useEditorStore(
+    (s) => s.data.elementOverrides?.["design.watermark"],
+  );
   // Runtime signals — re-read from store so the Design tab reacts to
   // user actions in real time. If a user uploads a photo on a template
   // that doesn't render one by default, we still want to surface the
@@ -899,7 +907,7 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
           control surface (position, colour, clear). */}
       <Section title={t("design.watermark")} onReset={() => onResetGroup("watermark")} sectionRef={watermarkRef} flash={wmFlash}>
         <div>
-          <Label>Watermark text</Label>
+          <Label>{t("design.watermarkText")}</Label>
           <Input
             value={design.watermarkText ?? ""}
             placeholder='e.g. "CV", initials, "RESUME"'
@@ -944,8 +952,44 @@ export function DesignTab({ scrollTo, onScrolled }: DesignTabProps = {}) {
             clearWatermarkDragOffset();
           }}
         />
+        {/* "(custom position)" affordance — when the user has free-dragged
+            the watermark on the canvas, the chip row's selected corner is
+            misleading on its own (it's the BASE position, but the visible
+            letters are translated +X/+Y from there). Surface the offset
+            with a reset button so the user has an explicit path back to
+            the pure corner without having to re-pick it. Plus the drag
+            hint underneath, so users discover that free-drag is even a
+            thing — Philip's flag 2026-05-21: "I thought the corner picker
+            was the only positioning option." */}
+        {design.watermarkPosition && design.watermarkPosition !== "off" && (
+          <div className="-mt-1 flex items-baseline justify-between text-[11px] leading-relaxed">
+            {watermarkOffset &&
+            (watermarkOffset.dx !== 0 || watermarkOffset.dy !== 0) ? (
+              <>
+                <span className="text-muted">
+                  {t("design.watermarkOffset", {
+                    x: watermarkOffset.dx ?? 0,
+                    y: watermarkOffset.dy ?? 0,
+                  })}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearWatermarkDragOffset}
+                  className="inline-flex items-center gap-1 font-medium uppercase tracking-wider text-muted hover:text-fg"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  {t("design.resetWatermarkPosition")}
+                </button>
+              </>
+            ) : (
+              <span className="text-subtle">
+                {t("design.watermarkDragHint")}
+              </span>
+            )}
+          </div>
+        )}
         <div>
-          <Label>Watermark color</Label>
+          <Label>{t("design.watermarkColor")}</Label>
           <div className="flex items-center gap-2">
             <input
               type="color"

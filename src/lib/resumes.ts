@@ -30,12 +30,20 @@ export interface ResumeRow {
 }
 
 /**
- * Hard cap on CVs per user. MUST stay in sync with the trigger function in
- * `supabase/migrations/00000000000002_cv_count_limit.sql`. The DB is the
- * source of truth; this constant is only used for client-side UX (showing
- * "X / 10" counters and disabling the New CV button before the round-trip).
+ * Hard cap on CVs per user. MUST stay in sync with the trigger function —
+ * latest authoritative migration is
+ * `supabase/migrations/00000000000022_cv_count_limit_reduce_to_5.sql`
+ * which dropped the cap from 10 → 5 on 2026-05-21. The DB is the source
+ * of truth; this constant is only used for client-side UX (showing
+ * "X / 5" counters and disabling the New CV button before the round-trip).
+ *
+ * Why 5 and not 10: with no paid tier yet a free cap is purely friction-
+ * vs-delight signalling. 5 is the standard freemium template (Resume.io,
+ * Enhancv, Novoresume) and pre-stages an upgrade funnel for when the
+ * paid plan ships. We picked 5 NOW because going DOWN later is
+ * impossible without orphaning users who'd already accumulated 6-10.
  */
-export const MAX_CVS_PER_USER = 10;
+export const MAX_CVS_PER_USER = 5;
 
 /**
  * Sentinel error class for the cap rejection. Lets the dashboard pattern-

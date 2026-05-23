@@ -151,9 +151,9 @@ function DashboardInner() {
   // (the template-picker page) so the user has to deliberately commit
   // to a template before any DB row is created. This stops the
   // "browse templates → leave with phantom Untitled CV" flow that ate
-  // 10-CV-cap slots without the user noticing. The cap check stays
-  // here so we don't even bother sending them to /new when they're
-  // already maxed out.
+  // CV-cap slots without the user noticing. The cap check stays here
+  // so we don't even bother sending them to /new when they're already
+  // maxed out.
   function onNewCv() {
     if (atLimit) {
       toast.error(t("dashboard.limitTitle", { n: MAX_CVS_PER_USER }));

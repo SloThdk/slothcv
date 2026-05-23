@@ -7,9 +7,11 @@ import type { ReferencesSection } from "@/types/resume";
 import { defaultReferenceItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, ItemRow, moveItem } from "./shared";
 
 export function ReferencesForm({ section }: { section: ReferencesSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: ReferencesSection["items"]) =>
     update<ReferencesSection>(section.id, { items });
@@ -21,7 +23,13 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
 
   return (
     <div className="space-y-2.5">
-      <label className="flex items-center gap-2 text-sm text-fg">
+      {/* When `onRequest` is true, templates render a single
+          `section.<id>.body` line ("Available on request."). Clicking
+          it in the preview lands here on the toggle that controls it. */}
+      <label
+        data-field-id={`section.${section.id}.body`}
+        className="flex items-center gap-2 text-sm text-fg"
+      >
         <input
           type="checkbox"
           checked={section.onRequest}
@@ -29,7 +37,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
             update<ReferencesSection>(section.id, { onRequest: e.target.checked })
           }
         />
-        Show &ldquo;References available on request&rdquo; instead of a list
+        {t("form.referencesOnRequestToggle")}
       </label>
 
       {!section.onRequest && (
@@ -37,6 +45,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
           {section.items.map((it, idx) => (
             <ItemRow
               key={it.id}
+              fieldId={`section.${section.id}.item.${it.id}`}
               title={it.name || "(name)"}
               subtitle={it.role ? `· ${it.role}` : undefined}
               visible={it.visible}
@@ -50,14 +59,14 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>Name</Label>
+                    <Label>{t("form.name")}</Label>
                     <Input
                       value={it.name}
                       onChange={(e) => patchItem(idx, { name: e.target.value })}
                     />
                   </div>
                   <div>
-                    <Label>Role</Label>
+                    <Label>{t("form.role")}</Label>
                     <Input
                       value={it.role}
                       onChange={(e) => patchItem(idx, { role: e.target.value })}
@@ -65,7 +74,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
                   </div>
                 </div>
                 <div>
-                  <Label>Company</Label>
+                  <Label>{t("form.company")}</Label>
                   <Input
                     value={it.company}
                     onChange={(e) => patchItem(idx, { company: e.target.value })}
@@ -73,7 +82,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label>Email</Label>
+                    <Label>{t("form.email")}</Label>
                     <Input
                       type="email"
                       value={it.email}
@@ -81,7 +90,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
                     />
                   </div>
                   <div>
-                    <Label>Phone</Label>
+                    <Label>{t("form.phone")}</Label>
                     <Input
                       value={it.phone}
                       onChange={(e) => patchItem(idx, { phone: e.target.value })}
@@ -92,7 +101,7 @@ export function ReferencesForm({ section }: { section: ReferencesSection }) {
             </ItemRow>
           ))}
           <AddEntryButton
-            label="Add reference"
+            label={t("form.addReference")}
             onClick={() => setItems([...section.items, defaultReferenceItem()])}
           />
         </>

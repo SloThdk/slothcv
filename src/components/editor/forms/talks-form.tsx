@@ -7,9 +7,11 @@ import type { TalksSection } from "@/types/resume";
 import { defaultTalkItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, ItemRow, moveItem } from "./shared";
 
 export function TalksForm({ section }: { section: TalksSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: TalksSection["items"]) =>
     update<TalksSection>(section.id, { items });
@@ -24,6 +26,7 @@ export function TalksForm({ section }: { section: TalksSection }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
+          fieldId={`section.${section.id}.item.${it.id}`}
           title={it.title || "(talk)"}
           subtitle={it.venue ? `· ${it.venue}` : undefined}
           visible={it.visible}
@@ -36,7 +39,7 @@ export function TalksForm({ section }: { section: TalksSection }) {
         >
           <div className="space-y-2">
             <div>
-              <Label>Title</Label>
+              <Label>{t("form.title")}</Label>
               <Input
                 value={it.title}
                 onChange={(e) => patchItem(idx, { title: e.target.value })}
@@ -44,14 +47,14 @@ export function TalksForm({ section }: { section: TalksSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Venue</Label>
+                <Label>{t("form.venue")}</Label>
                 <Input
                   value={it.venue}
                   onChange={(e) => patchItem(idx, { venue: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Date</Label>
+                <Label>{t("form.date")}</Label>
                 <Input
                   value={it.date}
                   onChange={(e) => patchItem(idx, { date: e.target.value })}
@@ -72,7 +75,7 @@ export function TalksForm({ section }: { section: TalksSection }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add talk"
+        label={t("form.addTalk")}
         onClick={() => setItems([...section.items, defaultTalkItem()])}
       />
     </div>

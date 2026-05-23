@@ -118,6 +118,11 @@ export function SectionList() {
   //   2. Survives StrictMode double-mount in dev — the store is the
   //      source of truth, no listener bookkeeping required.
   const pendingJumpId = useEditorStore((s) => s.pendingJumpId);
+  // Optional precise sub-target inside the row — the `data-element-id`
+  // of the exact element the user clicked in the preview. Carried so
+  // the inspector flash lands on the matching field input (Name, Email,
+  // a specific Experience item) instead of the section row header.
+  const pendingJumpFieldId = useEditorStore((s) => s.pendingJumpFieldId);
   const requestJumpToSection = useEditorStore((s) => s.requestJumpToSection);
 
   useEffect(() => {
@@ -131,20 +136,59 @@ export function SectionList() {
     // the one their canvas click matched. Without the flash the
     // scroll happened silently and (per Philip 2026-05-16 UX brief)
     // users couldn't tell WHICH row corresponded to their click.
+    //
+    // When a `fieldId` accompanies the section id (precise click on a
+    // specific element in the preview — e.g. the email line or a
+    // particular Experience item), prefer scrolling + flashing the
+    // matching `[data-field-id]` inside the row over the row header
+    // itself. This matches the hover ring's element-level precision so
+    // click feedback feels as targeted as hover feedback. Falls back
+    // to row-level when no matching field id is present (covers
+    // section-as-a-whole clicks and any form that hasn't tagged the
+    // element-id in question — graceful degradation).
+    // `cancelled` guards the raf chain against firing after the effect
+    // re-runs (deps changed) or the component unmounts. Without it, a
+    // stale raf could call `requestJumpToSection(null)` AFTER the user
+    // has clicked something else that set a NEW pending jump — clobbering
+    // it before the next mount of this effect has a chance to honour the
+    // new request. React StrictMode's double-mount in dev makes this
+    // race common enough to matter.
+    let cancelled = false;
     let flashTimeoutId: number | undefined;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const el = listRef.current?.querySelector(
+        if (cancelled) return;
+        const row = listRef.current?.querySelector(
           `[data-row-id="${pendingJumpId}"]`,
-        );
-        if (el && "scrollIntoView" in el) {
-          (el as HTMLElement).scrollIntoView({
+        ) as HTMLElement | null;
+        if (!row) {
+          requestJumpToSection(null);
+          return;
+        }
+        // Prefer the inner field if the click resolved to one and we
+        // can find a tagged input wrapper for it. window.CSS.escape
+        // guards against ids that contain `.` / `:` — every id we emit
+        // has dots (`personal.email`, `section.<sid>.item.<iid>`). Use
+        // the browser global explicitly because `CSS` is shadowed by
+        // the @dnd-kit/utilities import elsewhere in this module.
+        const fieldEl: HTMLElement | null = pendingJumpFieldId
+          ? (row.querySelector(
+              `[data-field-id="${window.CSS.escape(pendingJumpFieldId)}"]`,
+            ) as HTMLElement | null)
+          : null;
+        const target: HTMLElement = fieldEl ?? row;
+        if ("scrollIntoView" in target) {
+          // `nearest` for field-level — don't yank the panel if the
+          // field is already visible. `start` for row-level — original
+          // behaviour, keeps the row pinned to the top so the user
+          // sees its contents.
+          target.scrollIntoView({
             behavior: "smooth",
-            block: "start",
+            block: fieldEl ? "nearest" : "start",
           });
-          (el as HTMLElement).classList.add("slothcv-bg-flash");
+          target.classList.add("slothcv-bg-flash");
           flashTimeoutId = window.setTimeout(() => {
-            (el as HTMLElement).classList.remove("slothcv-bg-flash");
+            target.classList.remove("slothcv-bg-flash");
           }, 1400);
         }
         // Clear the pending jump so a re-render doesn't re-scroll.
@@ -152,9 +196,20 @@ export function SectionList() {
       });
     });
     return () => {
+      cancelled = true;
       if (flashTimeoutId !== undefined) window.clearTimeout(flashTimeoutId);
     };
-  }, [pendingJumpId, requestJumpToSection]);
+    // `requestJumpToSection` is a stable zustand store method (created once
+    // in the store factory, never re-bound on `set()` calls) so it's safe
+    // to read via closure. Leaving it OUT of deps prevents the linter from
+    // ever flagging this — and guards against any future change that
+    // accidentally makes the selector return a fresh reference each render,
+    // which would re-fire this effect after every `requestJumpToSection(null)`
+    // clear inside the rAF chain → infinite update loop. Plain values
+    // (pendingJumpId / pendingJumpFieldId) stay in deps because they're
+    // the actual triggers we want the effect to react to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingJumpId, pendingJumpFieldId]);
 
   // Pointer sensor only triggers after 5px of movement so plain clicks on
   // child controls (eye, trash) don't accidentally start a drag.

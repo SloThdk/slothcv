@@ -7,9 +7,11 @@ import type { PublicationsSection } from "@/types/resume";
 import { defaultPublicationItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, ItemRow, moveItem } from "./shared";
 
 export function PublicationsForm({ section }: { section: PublicationsSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: PublicationsSection["items"]) =>
     update<PublicationsSection>(section.id, { items });
@@ -24,6 +26,7 @@ export function PublicationsForm({ section }: { section: PublicationsSection }) 
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
+          fieldId={`section.${section.id}.item.${it.id}`}
           title={it.title || "(publication)"}
           visible={it.visible}
           onToggleVisible={() => patchItem(idx, { visible: !it.visible })}
@@ -35,14 +38,14 @@ export function PublicationsForm({ section }: { section: PublicationsSection }) 
         >
           <div className="space-y-2">
             <div>
-              <Label>Title</Label>
+              <Label>{t("form.title")}</Label>
               <Input
                 value={it.title}
                 onChange={(e) => patchItem(idx, { title: e.target.value })}
               />
             </div>
             <div>
-              <Label>Authors</Label>
+              <Label>{t("form.authors")}</Label>
               <Input
                 value={it.authors}
                 onChange={(e) => patchItem(idx, { authors: e.target.value })}
@@ -51,7 +54,7 @@ export function PublicationsForm({ section }: { section: PublicationsSection }) 
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Venue</Label>
+                <Label>{t("form.venue")}</Label>
                 <Input
                   value={it.venue}
                   onChange={(e) => patchItem(idx, { venue: e.target.value })}
@@ -59,7 +62,7 @@ export function PublicationsForm({ section }: { section: PublicationsSection }) 
                 />
               </div>
               <div>
-                <Label>Date</Label>
+                <Label>{t("form.date")}</Label>
                 <Input
                   value={it.date}
                   onChange={(e) => patchItem(idx, { date: e.target.value })}
@@ -81,7 +84,7 @@ export function PublicationsForm({ section }: { section: PublicationsSection }) 
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add publication"
+        label={t("form.addPublication")}
         onClick={() => setItems([...section.items, defaultPublicationItem()])}
       />
     </div>

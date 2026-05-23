@@ -19,8 +19,8 @@
  * The `before delete on auth.users` trigger in migration 0015/0016
  * catches the WHOLE-account scenario (entire `<uid>/` folder is purged
  * when the user is deleted). What it does NOT catch is the much more
- * common per-CV deletion: a user with 10 CVs deletes one of them. That
- * row's photos become orphans.
+ * common per-CV deletion: a user with several CVs deletes one of them.
+ * That row's photos become orphans.
  *
  * This module computes "which storage paths can I safely delete after
  * this row is gone" and gets called from `deleteResume()` and

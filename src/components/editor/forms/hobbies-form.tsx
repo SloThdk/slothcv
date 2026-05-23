@@ -47,7 +47,10 @@ export function HobbiesForm({ section }: { section: HobbiesSection }) {
   }
 
   return (
-    <div className="space-y-1.5">
+    // Templates render hobbies as one joined `section.<id>.body` line —
+    // there's no per-hobby element-id in the preview, so the whole list
+    // is the precise click target.
+    <div className="space-y-1.5" data-field-id={`section.${section.id}.body`}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

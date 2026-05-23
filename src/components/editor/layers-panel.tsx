@@ -166,7 +166,18 @@ function elementLabel(
 
 export function LayersPanel() {
   const { t } = useLanguage();
-  const customElements = useEditorStore((s) => s.data.customElements ?? []);
+  // Pull the raw value from the store FIRST, then fall back to `[]` at
+  // the useMemo call site. The earlier shape
+  // `(s) => s.data.customElements ?? []` generated a BRAND-NEW `[]`
+  // reference inside the selector each render when customElements was
+  // undefined — zustand's `Object.is` check saw the new reference and
+  // re-rendered, the selector re-fired and made ANOTHER new `[]`,
+  // infinite update loop (React #185, the crash Philip hit when opening
+  // the Lag tab). This pattern is the canonical zustand footgun. Doing
+  // the fallback OUTSIDE the selector lets the selector return the SAME
+  // `undefined` reference across renders so zustand stays quiet.
+  // ⚠️ NEVER refactor this back to `?? []` inside the selector.
+  const customElementsRaw = useEditorStore((s) => s.data.customElements);
   const sections = useEditorStore((s) => s.data.sections);
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const selectElement = useEditorStore((s) => s.selectElement);
@@ -179,9 +190,15 @@ export function LayersPanel() {
   // (highest z, nearest to the viewer) appears at the TOP of the list,
   // matching Photoshop / Figma / Sketch / Affinity convention. Reverse
   // of how `customElements` is stored (which is insertion order).
+  // Memo deps on the RAW selector value (stable across renders) so we
+  // don't recompute on every parent re-render when customElements is
+  // still undefined.
   const floatingSorted = useMemo(
-    () => [...customElements].sort((a, b) => b.z - a.z),
-    [customElements],
+    () =>
+      customElementsRaw
+        ? [...customElementsRaw].sort((a, b) => b.z - a.z)
+        : [],
+    [customElementsRaw],
   );
 
   const sensors = useSensors(

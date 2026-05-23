@@ -55,7 +55,7 @@ Supabase project. Every push to `master` rebuilds and redeploys via
 | CF Pages headers file  | [`public/_headers`](public/_headers) — caching + security policy in one place                  |
 | RLS policies           | [`supabase/migrations/00000000000001_init.sql`](supabase/migrations/00000000000001_init.sql)   |
 | Provider-mixing block  | [`supabase/migrations/00000000000009_strict_provider_separation.sql`](supabase/migrations/)    |
-| 10-CV cap trigger      | [`supabase/migrations/00000000000002_cv_count_limit.sql`](supabase/migrations/)                |
+| 5-CV cap trigger       | [`supabase/migrations/00000000000022_cv_count_limit_reduce_to_5.sql`](supabase/migrations/) (supersedes [`00000000000002_cv_count_limit.sql`](supabase/migrations/)) |
 | Storage-cleanup cascade | [`supabase/migrations/00000000000015_cascade_storage_on_user_delete.sql`](supabase/migrations/) |
 
 End-to-end smoke test (run from your laptop):
@@ -187,7 +187,7 @@ For the threat model and explicit non-goals, see [`SECURITY.md`](SECURITY.md).
        │   │   - public.profiles (RLS)                │   │
        │   │   - auth.identities + provider-mixing    │   │
        │   │     trigger (migration 0009)             │   │
-       │   │   - 10-CV cap trigger (migration 0002)   │   │
+       │   │   - 5-CV cap trigger (migrations 0002/0022)│   │
        │   │   - account-delete cascade (0015/0016)   │   │
        │   ├──────────────────────────────────────────┤   │
        │   │  Storage: avatars bucket                 │   │
@@ -424,12 +424,14 @@ it. Nothing on this list is decorative.
 
 #### Postgres triggers as enforcement points
 
-- **10-CV per-user cap (migration 0002):** SECURITY DEFINER trigger on
+- **5-CV per-user cap (migrations 0002 → 0022):** SECURITY DEFINER trigger on
   `INSERT INTO public.resumes` raises `check_violation` (SQLSTATE 23514) when
-  the caller's row count >= 10. Cost-control rail for the Free-tier 500 MB
+  the caller's row count >= 5. Cost-control rail for the Free-tier 500 MB
   database — bounds worst-case database growth at
-  `registered_users × 10 × ~10 KB` (~5,000 fully-saturated users before the
-  project pauses).
+  `registered_users × 5 × ~10 KB` (~10,000 fully-saturated users before the
+  project pauses). Cap dropped from 10 → 5 on 2026-05-21 pre-launch to bake
+  in the standard freemium template (5 free + future paid for unlimited)
+  before any user accumulated above the new ceiling.
 - **Strict provider separation (migration 0009):** trigger on
   `auth.identities` rejects any second-identity insert against an existing
   `user_id`. Closes the third direction of provider-mixing (`existing-magic-
@@ -579,7 +581,7 @@ prose above when you want to know why each line is there.
 - **Auth** — Supabase Auth (GoTrue) for magic-link · Cloudflare Pages
   Function for the DIY Google OAuth handshake (PKCE + state + nonce)
 - **Database** — Supabase Postgres 16 (EU region) with RLS on every user-
-  data table · 16 migrations · trigger-enforced 10-CV cap and provider
+  data table · 22 migrations · trigger-enforced 5-CV cap and provider
   separation
 - **Storage** — Supabase Storage `avatars` bucket (per-user-folder write
   isolation; public read because the URL is the access secret for shared
@@ -654,7 +656,7 @@ Don't trust marketing copy. Read the source:
 #    creates one ships with ENABLE ROW LEVEL SECURITY in the same file:
 grep -rn "ENABLE ROW LEVEL SECURITY\|auth.uid() = user_id" supabase/migrations/
 
-# 2. The 10-CV cap and provider-mixing block are Postgres triggers, not
+# 2. The 5-CV cap and provider-mixing block are Postgres triggers, not
 #    application checks:
 grep -rn "CREATE TRIGGER\|cv_limit_reached\|prevent_provider_mixing" supabase/migrations/
 

@@ -7,9 +7,11 @@ import type { EducationSection } from "@/types/resume";
 import { defaultEducationItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, BulletsEditor, ItemRow, moveItem } from "./shared";
 
 export function EducationForm({ section }: { section: EducationSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: EducationSection["items"]) =>
     update<EducationSection>(section.id, { items });
@@ -24,7 +26,8 @@ export function EducationForm({ section }: { section: EducationSection }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
-          title={it.degree || "(degree)"}
+          fieldId={`section.${section.id}.item.${it.id}`}
+          title={it.degree || `(${t("form.degree").toLowerCase()})`}
           subtitle={it.institution ? `· ${it.institution}` : undefined}
           visible={it.visible}
           onToggleVisible={() => patchItem(idx, { visible: !it.visible })}
@@ -37,7 +40,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Degree</Label>
+                <Label>{t("form.degree")}</Label>
                 <Input
                   value={it.degree}
                   onChange={(e) => patchItem(idx, { degree: e.target.value })}
@@ -45,7 +48,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
                 />
               </div>
               <div>
-                <Label>Field</Label>
+                <Label>{t("form.field")}</Label>
                 <Input
                   value={it.field}
                   onChange={(e) => patchItem(idx, { field: e.target.value })}
@@ -54,7 +57,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
               </div>
             </div>
             <div>
-              <Label>Institution</Label>
+              <Label>{t("form.institution")}</Label>
               <Input
                 value={it.institution}
                 onChange={(e) => patchItem(idx, { institution: e.target.value })}
@@ -63,7 +66,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Location</Label>
+                <Label>{t("form.location")}</Label>
                 <Input
                   value={it.location}
                   onChange={(e) => patchItem(idx, { location: e.target.value })}
@@ -83,7 +86,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Start</Label>
+                <Label>{t("form.start")}</Label>
                 <Input
                   value={it.startDate}
                   onChange={(e) => patchItem(idx, { startDate: e.target.value })}
@@ -91,7 +94,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
                 />
               </div>
               <div>
-                <Label>End</Label>
+                <Label>{t("form.end")}</Label>
                 <Input
                   value={it.endDate}
                   onChange={(e) => patchItem(idx, { endDate: e.target.value })}
@@ -106,10 +109,10 @@ export function EducationForm({ section }: { section: EducationSection }) {
                 checked={it.current}
                 onChange={(e) => patchItem(idx, { current: e.target.checked })}
               />
-              Currently studying
+              {t("form.currentlyStudyHere")}
             </label>
             <div>
-              <Label>Bullets (coursework, achievements)</Label>
+              <Label>{t("form.bullets")}</Label>
               <BulletsEditor
                 bullets={it.bullets}
                 onChange={(bullets) => patchItem(idx, { bullets })}
@@ -119,7 +122,7 @@ export function EducationForm({ section }: { section: EducationSection }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add education"
+        label={t("form.addEducation")}
         onClick={() => setItems([...section.items, defaultEducationItem()])}
       />
     </div>

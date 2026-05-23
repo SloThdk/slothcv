@@ -23,7 +23,7 @@ type TFn = (
 export class TranslatableError extends Error {
   /** The translation key used to render the message in the user's language. */
   public readonly key: TranslationKey;
-  /** Optional interpolation params (e.g. `{ n: 10 }` for the CV limit). */
+  /** Optional interpolation params (e.g. `{ n: 5 }` for the CV limit). */
   public readonly params?: Record<string, string | number>;
 
   constructor(

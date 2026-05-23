@@ -6,9 +6,10 @@
  * user clicked `+ New CV`, then dropped them into the editor with a
  * default template. A user who was just browsing — picking templates
  * in the editor's Templates tab to see what they liked — left behind
- * an `Untitled CV` row in their account that counted toward the 10-CV
- * cap. Tire-kickers ate slots they never asked to use, and the
- * dashboard filled with phantom CVs.
+ * an `Untitled CV` row in their account that counted toward the per-user
+ * CV cap (5 at the time of writing — see `MAX_CVS_PER_USER`).
+ * Tire-kickers ate slots they never asked to use, and the dashboard
+ * filled with phantom CVs.
  *
  * The fix: separate "browse templates" from "create a CV". This page
  * is the browse phase. No DB row is created on mount, on hover, or on
@@ -27,7 +28,7 @@
  * get bounced to /login. After sign-in they return to /new and can
  * keep browsing.
  *
- * Cap: if the user is already at 10 CVs the picker still renders so
+ * Cap: if the user is already at the per-user CV cap the picker still renders so
  * they can see what's available, but every "Use this template"
  * button is disabled and an amber banner explains why. The trigger
  * on the resumes table is the actual gate; the client-side check
@@ -218,7 +219,7 @@ function NewCvPage() {
         </div>
       </div>
 
-      {/* Cap banner — only shows when the user is already at 10 CVs.
+      {/* Cap banner — only shows when the user is already at the cap.
           We DON'T hide the gallery, because seeing what's available is
           part of deciding which CV to delete to make room. We just
           disable every "Use this template" button. */}

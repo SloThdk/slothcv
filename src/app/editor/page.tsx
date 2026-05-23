@@ -102,8 +102,32 @@ function EditorInner() {
       router.replace("/dashboard");
       return;
     }
+    // Clear any leftover error / title from the PREVIOUS load synchronously,
+    // BEFORE the async fetch starts. Without this, switching from a failed
+    // CV (showing "Dette CV findes ikke" early-return) to a working one
+    // keeps the error visible for the 200-500 ms window before the new
+    // fetch resolves — users see "stuck on this error" and assume the
+    // second CV is also broken. Setting both to null upfront paints the
+    // loading placeholder during that window instead, which is honest
+    // about "we're fetching, don't panic".
+    setError(null);
+    setTitle("");
     let cancelled = false;
-    getResumeParsed(id)
+    // Tiny retry helper. Freshly-created rows (dashboard "+ New CV" →
+    // /editor?id=NEW) occasionally come back null on the first read
+    // because Supabase's connection pool can route the read at a moment
+    // when the user's session-bound RLS context hasn't propagated yet.
+    // A single 250 ms retry catches ~all of these without delaying the
+    // common path (existing CV, hits cache). If the second attempt is
+    // also null, the row genuinely doesn't exist OR the user truly
+    // doesn't have access — show the error.
+    const loadWithRetry = async () => {
+      const first = await getResumeParsed(id);
+      if (first) return first;
+      await new Promise((r) => setTimeout(r, 250));
+      return getResumeParsed(id);
+    };
+    loadWithRetry()
       .then((res) => {
         if (cancelled) return;
         if (!res) {
@@ -140,9 +164,13 @@ function EditorInner() {
       // call reset only when the id actually changes by triggering it on next
       // hydrate above.
     };
-    // t included in deps so the not-found message reflects language switches
-    // mid-load; harmless because hydrate-already-resolved checks bail out.
-  }, [id, hydrate, router, t]);
+    // `t` deliberately NOT in deps — a language switch should never re-fetch
+    // the CV (would waste a DB round-trip + reset the title state we just
+    // populated). The "error message renders in the old language until next
+    // CV switch" quirk is acceptable; the alternative was a re-fetch storm
+    // every time the user toggled DA/EN in the header.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, hydrate, router]);
 
   // Reset the store when the editor leaves entirely. Flush any pending
   // autosave FIRST so edits made within the 800 ms debounce window
@@ -176,7 +204,7 @@ function EditorInner() {
   // they were on before clicking — explicit navigation wins.
   useEffect(() => {
     function onJump(e: Event) {
-      const detail = (e as CustomEvent<{ id: string }>).detail;
+      const detail = (e as CustomEvent<{ id: string; fieldId?: string }>).detail;
       if (!detail?.id) return;
       setTab("content");
       setMobilePane("edit");
@@ -184,7 +212,10 @@ function EditorInner() {
       // Persist the intent in the store so SectionList can pick it up
       // when it (re)mounts. Avoids the previous race where the window
       // event fired before SectionList had attached its listener.
-      requestJumpToSection(detail.id);
+      // `fieldId` (optional) carries the precise element the user
+      // clicked so SectionList can scroll + flash the exact form field
+      // instead of just the section row header.
+      requestJumpToSection(detail.id, detail.fieldId ?? null);
     }
     function onOpenDesign() {
       setTab("design");

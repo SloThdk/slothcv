@@ -74,6 +74,14 @@ interface EditorState {
    *  THEN SectionList mounts, by which time a window event would already
    *  be lost. Persisting the intent in the store survives the mount race. */
   pendingJumpId: string | null;
+  /** Optional precise field target inside the expanded section row.
+   *  Carries the clicked element's `data-element-id` (e.g.
+   *  `personal.email`, `section.<sid>.title`, `section.<sid>.item.<iid>`,
+   *  `section.<sid>.body`). When set, SectionList scrolls + flashes the
+   *  matching `[data-field-id]` inside the row instead of the row itself
+   *  — same precision as the hover ring. Falls back to row-level when
+   *  null OR when no matching `[data-field-id]` exists in the form. */
+  pendingJumpFieldId: string | null;
   /** Element-id currently being inline-edited via double-click. Read by
    *  `<InlineTextEditor>` to render the textarea overlay. Set by the
    *  preview's onDoubleClick handler when the lens supports the id. */
@@ -114,8 +122,12 @@ interface EditorState {
   addItemToSection: (sectionId: string) => string | null;
 
   /** Request the section list to scroll/expand a given section id when
-   *  it mounts (or immediately if already mounted). Pass null to clear. */
-  requestJumpToSection: (id: string | null) => void;
+   *  it mounts (or immediately if already mounted). Pass null to clear.
+   *  Optional `fieldId` carries a precise sub-target (a `data-element-id`
+   *  emitted by the templates) so the row's form scrolls + flashes the
+   *  matching input wrapper instead of the row itself — matches the
+   *  hover-ring's element-level precision. */
+  requestJumpToSection: (id: string | null, fieldId?: string | null) => void;
   /** Set / clear the inline-edit target. Pass null to exit edit mode. */
   setEditingElementId: (id: string | null) => void;
 
@@ -353,6 +365,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedElementId: null,
   clipboard: null,
   pendingJumpId: null,
+  pendingJumpFieldId: null,
   editingElementId: null,
   history: [defaultResumeData()],
   historyIndex: 0,
@@ -368,6 +381,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       saveError: null,
       selectedElementId: null,
       pendingJumpId: null,
+      pendingJumpFieldId: null,
       editingElementId: null,
       history: [structuredClone(data)],
       historyIndex: 0,
@@ -392,6 +406,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       saveError: null,
       selectedElementId: null,
       pendingJumpId: null,
+      pendingJumpFieldId: null,
       editingElementId: null,
       history: [structuredClone(fresh)],
       historyIndex: 0,
@@ -455,8 +470,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return s.historyIndex < s.history.length - 1;
   },
 
-  requestJumpToSection(id) {
-    set({ pendingJumpId: id });
+  requestJumpToSection(id, fieldId) {
+    // Set both atomically so SectionList's effect sees the pair on a
+    // single render — avoids a two-pass scroll (section first, field
+    // second) that would jitter the panel for users with smooth-scroll.
+    // Passing only `id` clears any prior fieldId so a section-level
+    // click after an element-level click doesn't reuse the stale target.
+    set({
+      pendingJumpId: id,
+      pendingJumpFieldId: id == null ? null : (fieldId ?? null),
+    });
   },
 
   setEditingElementId(id) {
@@ -712,7 +735,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       saveStatus: "dirty",
       // Surface the section in the left rail so the user can fill in
       // the new entry's fields. Same pattern as click-on-preview-jump.
+      // Also target the just-appended item's row inside the form so the
+      // flash lands on the new entry (not just the section header) —
+      // makes "+ Add experience" visibly drop the user in the new row.
       pendingJumpId: sectionId,
+      pendingJumpFieldId: `section.${sectionId}.item.${newItem.id}`,
     }));
     scheduleSave();
     return newItem.id;

@@ -102,8 +102,15 @@ export function PersonalForm() {
   }
 
   return (
+    // Every editable surface carries a `data-field-id` matching the
+    // `data-element-id` the templates emit (e.g. `personal.name`,
+    // `personal.email`). SectionList uses it to scroll + flash the
+    // exact field the user clicked in the preview — element-level
+    // precision instead of section-level. The CSS flash applies to
+    // whatever element gets the class, so wrapper-level is enough; no
+    // need to tag individual inputs.
     <div className="space-y-3">
-      <div>
+      <div data-field-id="personal.name">
         <Label htmlFor="p-name">{t("personal.fullName")}</Label>
         <Input
           id="p-name"
@@ -112,7 +119,7 @@ export function PersonalForm() {
           placeholder={t("personal.fullNamePlaceholder")}
         />
       </div>
-      <div>
+      <div data-field-id="personal.headline">
         <Label htmlFor="p-headline">{t("personal.headline")}</Label>
         <Input
           id="p-headline"
@@ -122,7 +129,7 @@ export function PersonalForm() {
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <div>
+        <div data-field-id="personal.email">
           <Label htmlFor="p-email">{t("personal.email")}</Label>
           <Input
             id="p-email"
@@ -132,7 +139,7 @@ export function PersonalForm() {
             placeholder={t("personal.emailPlaceholder")}
           />
         </div>
-        <div>
+        <div data-field-id="personal.phone">
           <Label htmlFor="p-phone">{t("personal.phone")}</Label>
           <Input
             id="p-phone"
@@ -142,7 +149,7 @@ export function PersonalForm() {
           />
         </div>
       </div>
-      <div>
+      <div data-field-id="personal.location">
         <Label htmlFor="p-loc">{t("personal.location")}</Label>
         <Input
           id="p-loc"
@@ -160,7 +167,7 @@ export function PersonalForm() {
           personal.koreekort), so swapping back to a Danish template
           brings the field + content back. */}
       {templateIsDanish && (
-        <div>
+        <div data-field-id="personal.koreekort">
           <Label htmlFor="p-koreekort">{t("personal.koreekort")}</Label>
           <Input
             id="p-koreekort"
@@ -189,7 +196,7 @@ export function PersonalForm() {
           / Aurora / Marina / etc.) brings the upload UI and the
           existing photo back. */}
       {!templateSkipsPhoto && (
-        <div>
+        <div data-field-id="personal.photo">
           <Label>{t("personal.photo")}</Label>
           <div className="flex items-center gap-3">
             {personal.photoUrl ? (
@@ -297,8 +304,11 @@ export function PersonalForm() {
             // wider ones, so a long pasted URL doesn't push the trash icon
             // off-screen. The URL field is a UrlInput (auto-growing,
             // validating textarea) so multi-line URLs stay fully visible.
+            // `data-field-id` matches the template's `personal.links.<id>`
+            // so clicking a specific link in the preview lands here.
             <div
               key={link.id}
+              data-field-id={`personal.links.${link.id}`}
               className="flex flex-wrap items-start gap-1.5 sm:flex-nowrap"
             >
               <Input

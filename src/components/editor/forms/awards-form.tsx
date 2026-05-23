@@ -8,9 +8,11 @@ import { defaultAwardItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, ItemRow, moveItem } from "./shared";
 
 export function AwardsForm({ section }: { section: AwardsSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: AwardsSection["items"]) =>
     update<AwardsSection>(section.id, { items });
@@ -25,6 +27,7 @@ export function AwardsForm({ section }: { section: AwardsSection }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
+          fieldId={`section.${section.id}.item.${it.id}`}
           title={it.name || "(award)"}
           subtitle={it.issuer ? `· ${it.issuer}` : undefined}
           visible={it.visible}
@@ -38,14 +41,14 @@ export function AwardsForm({ section }: { section: AwardsSection }) {
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Name</Label>
+                <Label>{t("form.name")}</Label>
                 <Input
                   value={it.name}
                   onChange={(e) => patchItem(idx, { name: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Issuer</Label>
+                <Label>{t("form.issuer")}</Label>
                 <Input
                   value={it.issuer}
                   onChange={(e) => patchItem(idx, { issuer: e.target.value })}
@@ -53,7 +56,7 @@ export function AwardsForm({ section }: { section: AwardsSection }) {
               </div>
             </div>
             <div>
-              <Label>Date</Label>
+              <Label>{t("form.date")}</Label>
               <Input
                 value={it.date}
                 onChange={(e) => patchItem(idx, { date: e.target.value })}
@@ -61,7 +64,7 @@ export function AwardsForm({ section }: { section: AwardsSection }) {
               />
             </div>
             <div>
-              <Label>Description</Label>
+              <Label>{t("form.description")}</Label>
               <Textarea
                 value={it.description}
                 onChange={(e) => patchItem(idx, { description: e.target.value })}
@@ -72,7 +75,7 @@ export function AwardsForm({ section }: { section: AwardsSection }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add award"
+        label={t("form.addAward")}
         onClick={() => setItems([...section.items, defaultAwardItem()])}
       />
     </div>

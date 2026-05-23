@@ -464,8 +464,15 @@ const resumeMetaSchema = z.object({
  *  elements is already deep into "you should redesign your CV" territory)
  *  but bounded so a bad payload can't OOM the parser. */
 const elementOffsetSchema = z.object({
-  dx: z.number().min(-400).max(400).optional(),
-  dy: z.number().min(-400).max(400).optional(),
+  // ±1200 px covers full A4 width (794) + most of the height (1123) so
+  // a flow element (photo, contact row, watermark) can land anywhere on
+  // the page without hitting a clamp mid-drag. The preview's
+  // `POSITION_BOUND` constant carries the same number — keep them in
+  // lockstep so server-side validation never rejects what the editor
+  // produced. Pre 2026-05-21 this was ±400 which felt like a "hard snap
+  // wall" when users tried to move the header photo down to the body.
+  dx: z.number().min(-1200).max(1200).optional(),
+  dy: z.number().min(-1200).max(1200).optional(),
   rotate: z.number().min(-360).max(360).optional(),
 });
 

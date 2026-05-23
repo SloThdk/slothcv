@@ -8,6 +8,7 @@ import { defaultExperienceItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddEntryButton, BulletsEditor, ItemRow, moveItem } from "./shared";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // Accepts both Experience and CareerBreak sections — both carry
 // `items: ExperienceItem[]`, so the form's surface is identical. The
@@ -17,6 +18,7 @@ type SectionLike = ExperienceSection | CareerBreakSection;
 
 export function ExperienceForm({ section }: { section: SectionLike }) {
   const update = useEditorStore((s) => s.updateSection);
+  const { t } = useLanguage();
   const setItems = (items: SectionLike["items"]) =>
     update<SectionLike>(section.id, { items });
   const patchItem = (idx: number, patch: Partial<SectionLike["items"][number]>) => {
@@ -30,7 +32,8 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
-          title={it.role || "(role)"}
+          fieldId={`section.${section.id}.item.${it.id}`}
+          title={it.role || `(${t("form.role").toLowerCase()})`}
           subtitle={it.company ? `· ${it.company}` : undefined}
           visible={it.visible}
           onToggleVisible={() => patchItem(idx, { visible: !it.visible })}
@@ -43,7 +46,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Role</Label>
+                <Label>{t("form.role")}</Label>
                 <Input
                   value={it.role}
                   onChange={(e) => patchItem(idx, { role: e.target.value })}
@@ -51,7 +54,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
                 />
               </div>
               <div>
-                <Label>Company</Label>
+                <Label>{t("form.company")}</Label>
                 <Input
                   value={it.company}
                   onChange={(e) => patchItem(idx, { company: e.target.value })}
@@ -60,7 +63,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
               </div>
             </div>
             <div>
-              <Label>Location</Label>
+              <Label>{t("form.location")}</Label>
               <Input
                 value={it.location}
                 onChange={(e) => patchItem(idx, { location: e.target.value })}
@@ -69,7 +72,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Start date</Label>
+                <Label>{t("form.startDate")}</Label>
                 <Input
                   value={it.startDate}
                   onChange={(e) => patchItem(idx, { startDate: e.target.value })}
@@ -77,7 +80,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
                 />
               </div>
               <div>
-                <Label>End date</Label>
+                <Label>{t("form.endDate")}</Label>
                 <Input
                   value={it.endDate}
                   onChange={(e) => patchItem(idx, { endDate: e.target.value })}
@@ -92,10 +95,10 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
                 checked={it.current}
                 onChange={(e) => patchItem(idx, { current: e.target.checked })}
               />
-              I currently work here
+              {t("form.currentlyWorkHere")}
             </label>
             <div>
-              <Label>Bullets</Label>
+              <Label>{t("form.bullets")}</Label>
               <BulletsEditor
                 bullets={it.bullets}
                 onChange={(bullets) => patchItem(idx, { bullets })}
@@ -105,7 +108,7 @@ export function ExperienceForm({ section }: { section: SectionLike }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add experience"
+        label={t("form.addExperience")}
         onClick={() => setItems([...section.items, defaultExperienceItem()])}
       />
     </div>

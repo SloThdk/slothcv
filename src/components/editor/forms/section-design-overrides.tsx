@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DESIGN_HINT, designLabel } from "@/lib/design-labels";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const ACCENT_PRESETS = [
   "#0f172a",
@@ -53,6 +54,7 @@ const ACCENT_PRESETS = [
 
 export function SectionDesignOverrides({ section }: { section: Section }) {
   const updateSection = useEditorStore((s) => s.updateSection);
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pickingColor, setPickingColor] = useState(false);
   const ov = section.overrides ?? {};
@@ -87,7 +89,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
           <ChevronRight className="h-3.5 w-3.5 text-subtle" />
         )}
         <Sparkles className="h-3.5 w-3.5 text-subtle" />
-        <span className="flex-1">Style this section</span>
+        <span className="flex-1">{t("sectionDesign.title")}</span>
         {overrideCount > 0 && (
           <span className="rounded-full bg-[color:var(--color-text)] px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--color-bg)]">
             {overrideCount}
@@ -100,7 +102,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
           {/* Accent color override */}
           <div className="mb-3">
             <div className="flex items-baseline justify-between">
-              <Label>Accent color</Label>
+              <Label>{t("sectionDesign.accent")}</Label>
               {ov.accentColor !== undefined && (
                 <button
                   type="button"
@@ -108,7 +110,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                   className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted hover:text-fg"
                 >
                   <RotateCcw className="h-3 w-3" />
-                  Use template default
+                  {t("sectionDesign.useTemplateDefault")}
                 </button>
               )}
             </div>
@@ -118,11 +120,11 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                 onClick={() => setPickingColor((v) => !v)}
                 className="h-9 w-9 shrink-0 rounded-md border border-strong"
                 style={{ background: ov.accentColor ?? "transparent" }}
-                aria-label="Open color picker"
+                aria-label={t("sectionDesign.openColorPicker")}
               />
               <Input
                 value={ov.accentColor ?? ""}
-                placeholder="Using template default"
+                placeholder={t("sectionDesign.usingTemplateDefault")}
                 onChange={(e) =>
                   patch(
                     "accentColor",
@@ -139,14 +141,13 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                     onClick={() => patch("accentColor", p)}
                     className="h-5 w-5 rounded border border-strong"
                     style={{ background: p }}
-                    aria-label={`Set accent to ${p}`}
+                    aria-label={t("sectionDesign.setAccentTo", { color: p })}
                   />
                 ))}
               </div>
             </div>
             <p className="mt-1 text-[10px] leading-relaxed text-subtle">
-              {DESIGN_HINT.accentColor} Only changes THIS section — other
-              sections keep using the template&rsquo;s palette.
+              {DESIGN_HINT.accentColor} {t("sectionDesign.accentScope")}
             </p>
             {pickingColor && (
               <div className="mt-2">
@@ -171,7 +172,8 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
 
           {/* Header style override */}
           <Row
-            label="Section title style"
+            label={t("sectionDesign.sectionTitle")}
+            resetLabel={t("sectionDesign.useTemplateDefault")}
             hint={DESIGN_HINT.headerStyle}
             present={ov.headerStyle !== undefined}
             onReset={() => patch("headerStyle", undefined)}
@@ -191,7 +193,8 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
 
           {/* Bullet style override */}
           <Row
-            label="Bullet glyph"
+            label={t("sectionDesign.bullet")}
+            resetLabel={t("sectionDesign.useTemplateDefault")}
             hint={DESIGN_HINT.bulletStyle}
             present={ov.bulletStyle !== undefined}
             onReset={() => patch("bulletStyle", undefined)}
@@ -208,7 +211,8 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
               read this for non-skills). */}
           {section.type === "skills" && (
             <Row
-              label="Skill display"
+              label={t("sectionDesign.skill")}
+              resetLabel={t("sectionDesign.useTemplateDefault")}
               hint={DESIGN_HINT.skillBarStyle}
               present={ov.skillBarStyle !== undefined}
               onReset={() => patch("skillBarStyle", undefined)}
@@ -238,7 +242,7 @@ export function SectionDesignOverrides({ section }: { section: Section }) {
                 className="text-[11px]"
               >
                 <RotateCcw className="h-3 w-3" />
-                Reset all overrides
+                {t("sectionDesign.resetAll")}
               </Button>
             </div>
           )}
@@ -255,6 +259,7 @@ function PositionRow({
   section: Section;
   updateSection: <T extends Section>(id: string, patch: Partial<T>) => void;
 }) {
+  const { t } = useLanguage();
   const pos = section.position ?? { x: 0, y: 0 };
   // Mutable refs for the sliders + their value labels so the preview's
   // drag handler can update them directly during drag — no React rerender,
@@ -305,7 +310,7 @@ function PositionRow({
         <Label>
           <span className="inline-flex items-center gap-1">
             <Move className="h-3 w-3" />
-            Position &amp; rotate
+            {t("sectionDesign.positionRotate")}
           </span>
         </Label>
         {(isCustom || rotation !== 0) && (
@@ -318,7 +323,7 @@ function PositionRow({
             className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted hover:text-fg"
           >
             <RotateCcw className="h-3 w-3" />
-            reset
+            {t("sectionDesign.reset")}
           </button>
         )}
       </div>
@@ -356,7 +361,7 @@ function PositionRow({
       </div>
       <div className="mt-2">
         <div className="mb-0.5 text-[11px] text-muted">
-          Rotate <span>{rotation}°</span>
+          {t("sectionDesign.rotate")} <span>{rotation}°</span>
         </div>
         <input
           type="range"
@@ -369,8 +374,7 @@ function PositionRow({
         />
       </div>
       <p className="mt-1 text-[10px] text-subtle">
-        Drag the section in the preview to move it. Rotate spins it around
-        its center. Sliders + drag stay synced through the saved state.
+        {t("sectionDesign.dragHint")}
       </p>
     </div>
   );
@@ -385,12 +389,19 @@ function Row({
   present,
   onReset,
   children,
+  resetLabel,
 }: {
   label: string;
   hint?: string;
   present: boolean;
   onReset: () => void;
   children: React.ReactNode;
+  /** Pre-translated copy for the reset button. Threaded as a prop (rather
+   *  than calling useLanguage() here) so this presentational helper stays
+   *  hook-free — keeps the render path predictable + makes the row easy
+   *  to reuse in storybook / test contexts that don't mount the i18n
+   *  provider. */
+  resetLabel: string;
 }) {
   return (
     <div className="mb-3">
@@ -403,7 +414,7 @@ function Row({
             className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted hover:text-fg"
           >
             <RotateCcw className="h-3 w-3" />
-            Use template default
+            {resetLabel}
           </button>
         )}
       </div>

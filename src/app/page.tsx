@@ -36,6 +36,7 @@ import {
   type TemplateRegion,
 } from "@/components/templates/template-filter";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/lib/auth-context";
 import {
   EASE,
   staggerContainer,
@@ -71,6 +72,12 @@ const HERO_HEADLINE = {
 
 export default function LandingPage() {
   const { t } = useLanguage();
+  // Auth state drives the hero's secondary CTA. When the user is already
+  // signed in, "Sign in" is nonsensical — swap it to "Til oversigt" /
+  // "Go to overview" pointing at /dashboard. While auth is still
+  // resolving we render the "Sign in" copy as the static fallback so
+  // there's no layout shift mid-paint.
+  const { user, loading: authLoading } = useAuth();
   // Router is used by the template gallery cards. We deliberately route
   // programmatically instead of wrapping each card in a <Link>, because
   // the rendered <TemplatePreview> contains its own <a> tags for the
@@ -187,9 +194,19 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/login" className="w-full sm:w-auto">
+            {/* Secondary CTA — auth-aware. Signed-in users get a
+                "Go to overview" path (dashboard); anonymous users get
+                "Sign in". During the initial auth-loading flicker we
+                show the "Sign in" copy so layout doesn't jump when
+                the auth state resolves a beat later. */}
+            <Link
+              href={user && !authLoading ? "/dashboard" : "/login"}
+              className="w-full sm:w-auto"
+            >
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                {t("landing.signIn")}
+                {user && !authLoading
+                  ? t("landing.goToDashboard")
+                  : t("landing.signIn")}
               </Button>
             </Link>
           </div>

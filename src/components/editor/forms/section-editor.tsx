@@ -14,6 +14,7 @@ import { useEditorStore } from "@/lib/store/editor";
 import type { Section } from "@/types/resume";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { SummaryForm } from "./summary-form";
 import { ExperienceForm } from "./experience-form";
 import { EducationForm } from "./education-form";
@@ -32,11 +33,15 @@ import { SectionDesignOverrides } from "./section-design-overrides";
 
 export function SectionEditor({ section }: { section: Section }) {
   const updateSection = useEditorStore((s) => s.updateSection);
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-3">
-      <div>
-        <Label htmlFor={`title-${section.id}`}>Section title</Label>
+      {/* `data-field-id` matches the template's `section.<id>.title`
+          element so clicking the section heading in the preview flashes
+          the title input here. */}
+      <div data-field-id={`section.${section.id}.title`}>
+        <Label htmlFor={`title-${section.id}`}>{t("form.sectionTitle")}</Label>
         <Input
           id={`title-${section.id}`}
           value={section.title}

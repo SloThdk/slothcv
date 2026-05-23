@@ -7,9 +7,11 @@ import type { ProjectsSection } from "@/types/resume";
 import { defaultProjectItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, BulletsEditor, ItemRow, moveItem } from "./shared";
 
 export function ProjectsForm({ section }: { section: ProjectsSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: ProjectsSection["items"]) =>
     update<ProjectsSection>(section.id, { items });
@@ -24,7 +26,8 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
-          title={it.name || "(project)"}
+          fieldId={`section.${section.id}.item.${it.id}`}
+          title={it.name || `(${t("form.projectName").toLowerCase()})`}
           subtitle={it.role ? `· ${it.role}` : undefined}
           visible={it.visible}
           onToggleVisible={() => patchItem(idx, { visible: !it.visible })}
@@ -36,7 +39,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
         >
           <div className="space-y-2">
             <div>
-              <Label>Project name</Label>
+              <Label>{t("form.projectName")}</Label>
               <Input
                 value={it.name}
                 onChange={(e) => patchItem(idx, { name: e.target.value })}
@@ -45,7 +48,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Role</Label>
+                <Label>{t("form.role")}</Label>
                 <Input
                   value={it.role}
                   onChange={(e) => patchItem(idx, { role: e.target.value })}
@@ -64,7 +67,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
               </div>
             </div>
             <div>
-              <Label>Tech stack</Label>
+              <Label>{t("form.techStack")}</Label>
               <Input
                 value={it.techStack}
                 onChange={(e) => patchItem(idx, { techStack: e.target.value })}
@@ -73,7 +76,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Start</Label>
+                <Label>{t("form.start")}</Label>
                 <Input
                   value={it.startDate}
                   onChange={(e) => patchItem(idx, { startDate: e.target.value })}
@@ -81,7 +84,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
                 />
               </div>
               <div>
-                <Label>End</Label>
+                <Label>{t("form.end")}</Label>
                 <Input
                   value={it.endDate}
                   onChange={(e) => patchItem(idx, { endDate: e.target.value })}
@@ -99,7 +102,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
               Ongoing
             </label>
             <div>
-              <Label>Bullets</Label>
+              <Label>{t("form.bullets")}</Label>
               <BulletsEditor
                 bullets={it.bullets}
                 onChange={(bullets) => patchItem(idx, { bullets })}
@@ -109,7 +112,7 @@ export function ProjectsForm({ section }: { section: ProjectsSection }) {
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add project"
+        label={t("form.addProject")}
         onClick={() => setItems([...section.items, defaultProjectItem()])}
       />
     </div>

@@ -6,12 +6,16 @@ import { useEditorStore } from "@/lib/store/editor";
 import type { SummarySection } from "@/types/resume";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function SummaryForm({ section }: { section: SummarySection }) {
   const update = useEditorStore((s) => s.updateSection);
+  const { t } = useLanguage();
   return (
-    <div>
-      <Label htmlFor={`sum-${section.id}`}>Summary text</Label>
+    // Templates render the summary as a single `section.<id>.body`
+    // element — click-to-jump from the preview lands here.
+    <div data-field-id={`section.${section.id}.body`}>
+      <Label htmlFor={`sum-${section.id}`}>{t("form.summary")}</Label>
       <Textarea
         id={`sum-${section.id}`}
         value={section.body}

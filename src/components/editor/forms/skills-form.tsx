@@ -92,6 +92,7 @@ export function SkillsForm({ section }: { section: SkillsSection }) {
               key={it.id}
               item={it}
               showLevel={showLevel}
+              fieldId={`section.${section.id}.item.${it.id}`}
               onChange={(patch) => {
                 const next = [...section.items];
                 next[idx] = { ...it, ...patch };
@@ -145,17 +146,22 @@ function SortableSkillRow({
   showLevel,
   onChange,
   onRemove,
+  fieldId,
 }: {
   item: SkillsSection["items"][number];
   showLevel: boolean;
   onChange: (patch: Partial<SkillsSection["items"][number]>) => void;
   onRemove: () => void;
+  /** `data-field-id` matching the chip's template-emitted element-id —
+   *  click-to-jump from the preview lands on this row. */
+  fieldId?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
   return (
     <div
       ref={setNodeRef}
+      data-field-id={fieldId}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,

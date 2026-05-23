@@ -116,20 +116,32 @@ export function GraphiteTemplate({ data, fixedSize, skipOverlay }: Props) {
           className="rounded-lg p-5"
           style={{ background: CHARCOAL }}
         >
-          {design.photo.enabled && personal.photoUrl && (
+          {design.photo.enabled && (
             <div
               data-element-id="personal.photo"
               className="mb-5 cursor-grab"
               style={elementStyle(data, "personal.photo")}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={personal.photoUrl}
-                alt=""
-                referrerPolicy="no-referrer"
-                draggable={false}
-                className="h-32 w-32 rounded-md object-cover"
-              />
+              {personal.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={personal.photoUrl}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  draggable={false}
+                  className="h-32 w-32 rounded-md object-cover"
+                />
+              ) : (
+                <div
+                  aria-hidden="true"
+                  className="grid h-full w-full place-items-center bg-[color-mix(in_srgb,currentColor_8%,transparent)] text-[color-mix(in_srgb,currentColor_45%,transparent)]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                  </svg>
+                </div>
+              )}
             </div>
           )}
 

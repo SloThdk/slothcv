@@ -7,9 +7,11 @@ import type { CertificationsSection } from "@/types/resume";
 import { defaultCertificationItem } from "@/lib/resume-defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AddEntryButton, ItemRow, moveItem } from "./shared";
 
 export function CertificationsForm({ section }: { section: CertificationsSection }) {
+  const { t } = useLanguage();
   const update = useEditorStore((s) => s.updateSection);
   const setItems = (items: CertificationsSection["items"]) =>
     update<CertificationsSection>(section.id, { items });
@@ -24,6 +26,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
       {section.items.map((it, idx) => (
         <ItemRow
           key={it.id}
+          fieldId={`section.${section.id}.item.${it.id}`}
           title={it.name || "(certification)"}
           subtitle={it.issuer ? `· ${it.issuer}` : undefined}
           visible={it.visible}
@@ -37,7 +40,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Name</Label>
+                <Label>{t("form.name")}</Label>
                 <Input
                   value={it.name}
                   onChange={(e) => patchItem(idx, { name: e.target.value })}
@@ -45,7 +48,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
                 />
               </div>
               <div>
-                <Label>Issuer</Label>
+                <Label>{t("form.issuer")}</Label>
                 <Input
                   value={it.issuer}
                   onChange={(e) => patchItem(idx, { issuer: e.target.value })}
@@ -55,7 +58,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Date</Label>
+                <Label>{t("form.date")}</Label>
                 <Input
                   value={it.date}
                   onChange={(e) => patchItem(idx, { date: e.target.value })}
@@ -63,7 +66,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
                 />
               </div>
               <div>
-                <Label>Expiry (optional)</Label>
+                <Label>{t("form.expiry")}</Label>
                 <Input
                   value={it.expiry ?? ""}
                   onChange={(e) =>
@@ -75,7 +78,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Credential ID</Label>
+                <Label>{t("form.credentialId")}</Label>
                 <Input
                   value={it.credentialId ?? ""}
                   onChange={(e) =>
@@ -98,7 +101,7 @@ export function CertificationsForm({ section }: { section: CertificationsSection
         </ItemRow>
       ))}
       <AddEntryButton
-        label="Add certification"
+        label={t("form.addCertification")}
         onClick={() => setItems([...section.items, defaultCertificationItem()])}
       />
     </div>

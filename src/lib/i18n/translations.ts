@@ -49,17 +49,117 @@ export const TRANSLATIONS = {
 
   // ─── Landing page ─────────────────────────────────────────────────
   "landing.eyebrow": {
-    en: "Free CV builder, no dark patterns",
-    da: "Gratis CV-bygger, ingen mørke mønstre",
+    en: "Free CV builder",
+    da: "Gratis CV-bygger",
   },
   "landing.headlineA": { en: "Beautiful CVs.", da: "Smukke CV'er." },
-  "landing.headlineB": { en: "Free up to 10 CVs.", da: "Gratis op til 10 CV'er." },
+  "landing.headlineB": { en: "Free up to 5 CVs.", da: "Gratis op til 5 CV'er." },
   "landing.body": {
     en: "Pick a template, fill it in, and download a vector PDF. No watermark, no $1-trial-into-$30/month, no signup wall to export. Your work auto-saves the second you stop typing.",
     da: "Vælg en skabelon, udfyld den, og hent en vektor-PDF. Intet vandmærke, ingen $1-prøveperiode-til-$30/måned, ingen tilmeldingsmur for at hente. Dit arbejde gemmes automatisk det øjeblik du holder pause.",
   },
   "landing.startBuilding": { en: "Start building", da: "Begynd at bygge" },
   "landing.signIn": { en: "Sign in", da: "Log ind" },
+  "landing.goToDashboard": { en: "Go to overview", da: "Til oversigt" },
+
+  // ─── Section design overrides (Indhold → expanded section → "Style this") ──
+  "sectionDesign.title": { en: "Style this section", da: "Stil for denne sektion" },
+  "sectionDesign.accent": { en: "Accent color", da: "Accentfarve" },
+  "sectionDesign.useTemplateDefault": {
+    en: "Use template default",
+    da: "Brug skabelonens standard",
+  },
+  "sectionDesign.usingTemplateDefault": {
+    en: "Using template default",
+    da: "Bruger skabelonens standard",
+  },
+  "sectionDesign.openColorPicker": {
+    en: "Open color picker",
+    da: "Åbn farvevælger",
+  },
+  "sectionDesign.setAccentTo": {
+    en: "Set accent to {color}",
+    da: "Sæt accent til {color}",
+  },
+  "sectionDesign.accentScope": {
+    en: "Only changes THIS section — other sections keep using the template's palette.",
+    da: "Ændrer kun DENNE sektion — andre sektioner bruger stadig skabelonens palet.",
+  },
+  "sectionDesign.sectionTitle": {
+    en: "Section title style",
+    da: "Stil for sektionstitel",
+  },
+  "sectionDesign.bullet": { en: "Bullet glyph", da: "Punkt-symbol" },
+  "sectionDesign.skill": { en: "Skill display", da: "Visning af færdigheder" },
+  "sectionDesign.resetAll": {
+    en: "Reset all overrides",
+    da: "Nulstil alle tilpasninger",
+  },
+  "sectionDesign.positionRotate": {
+    en: "Position & rotate",
+    da: "Position & rotation",
+  },
+  "sectionDesign.reset": { en: "reset", da: "nulstil" },
+  "sectionDesign.rotate": { en: "Rotate", da: "Rotér" },
+  "sectionDesign.dragHint": {
+    en: "Drag the section in the preview to move it. Rotate spins it around its center. Sliders + drag stay synced through the saved state.",
+    da: "Træk sektionen i forhåndsvisningen for at flytte den. Rotation drejer den om dens centrum. Slidere og træk holdes synkroniseret via den gemte tilstand.",
+  },
+
+  // ─── Form field labels (shared across section-editor + per-section forms) ──
+  "form.sectionTitle": { en: "Section title", da: "Sektionstitel" },
+  "form.role": { en: "Role", da: "Rolle" },
+  "form.company": { en: "Company", da: "Virksomhed" },
+  "form.location": { en: "Location", da: "Lokation" },
+  "form.startDate": { en: "Start date", da: "Startdato" },
+  "form.endDate": { en: "End date", da: "Slutdato" },
+  "form.start": { en: "Start", da: "Start" },
+  "form.end": { en: "End", da: "Slut" },
+  "form.bullets": { en: "Bullets", da: "Punkter" },
+  "form.degree": { en: "Degree", da: "Uddannelse" },
+  "form.field": { en: "Field", da: "Fagområde" },
+  "form.institution": { en: "Institution", da: "Institution" },
+  "form.description": { en: "Description", da: "Beskrivelse" },
+  "form.name": { en: "Name", da: "Navn" },
+  "form.issuer": { en: "Issuer", da: "Udsteder" },
+  "form.date": { en: "Date", da: "Dato" },
+  "form.title": { en: "Title", da: "Titel" },
+  "form.authors": { en: "Authors", da: "Forfattere" },
+  "form.venue": { en: "Venue", da: "Sted" },
+  "form.organization": { en: "Organization", da: "Organisation" },
+  "form.techStack": { en: "Tech stack", da: "Teknologier" },
+  "form.projectName": { en: "Project name", da: "Projektnavn" },
+  "form.credentialId": { en: "Credential ID", da: "Certifikat-ID" },
+  "form.expiry": { en: "Expiry (optional)", da: "Udløb (valgfri)" },
+  "form.url": { en: "URL", da: "URL" },
+  "form.email": { en: "Email", da: "Email" },
+  "form.phone": { en: "Phone", da: "Telefon" },
+  "form.summary": { en: "Summary text", da: "Resumétekst" },
+  "form.body": { en: "Body (optional)", da: "Brødtekst (valgfri)" },
+  "form.currentlyWorkHere": {
+    en: "I currently work here",
+    da: "Jeg arbejder her i øjeblikket",
+  },
+  "form.currentlyStudyHere": {
+    en: "I currently study here",
+    da: "Jeg studerer her i øjeblikket",
+  },
+  "form.addExperience": { en: "Add experience", da: "Tilføj erfaring" },
+  "form.addEducation": { en: "Add education", da: "Tilføj uddannelse" },
+  "form.addProject": { en: "Add project", da: "Tilføj projekt" },
+  "form.addCertification": { en: "Add certification", da: "Tilføj certifikat" },
+  "form.addAward": { en: "Add award", da: "Tilføj pris" },
+  "form.addPublication": { en: "Add publication", da: "Tilføj publikation" },
+  "form.addVolunteer": {
+    en: "Add volunteer entry",
+    da: "Tilføj frivilligt arbejde",
+  },
+  "form.addTalk": { en: "Add talk", da: "Tilføj foredrag" },
+  "form.addReference": { en: "Add reference", da: "Tilføj reference" },
+  "form.referencesOnRequestToggle": {
+    en: "Show “References available on request” instead of a list",
+    da: "Vis “Referencer kan oplyses ved forespørgsel” i stedet for en liste",
+  },
 
   "features.pdfTitle": { en: "Vector PDF export", da: "Vektor-PDF-eksport" },
   "features.pdfBody": {
@@ -73,8 +173,8 @@ export const TRANSLATIONS = {
   },
   "features.watermarkTitle": { en: "No watermark, ever", da: "Aldrig nogen vandmærker" },
   "features.watermarkBody": {
-    en: "No surprise charges, no trial trap. Up to 10 CVs per account stays free.",
-    da: "Ingen overraskelses-gebyrer, ingen prøveperiode-fælde. Op til 10 CV'er per konto er gratis.",
+    en: "No surprise charges, no trial trap. Up to 5 CVs per account stays free.",
+    da: "Ingen overraskelses-gebyrer, ingen prøveperiode-fælde. Op til 5 CV'er per konto er gratis.",
   },
 
   "templates.title": { en: "Templates to start from", da: "Skabeloner at starte fra" },
@@ -397,8 +497,8 @@ export const TRANSLATIONS = {
   // ─── Signup ───────────────────────────────────────────────────────
   "signup.title": { en: "Create your SlothCV account", da: "Opret din SlothCV-konto" },
   "signup.subtitle": {
-    en: "Free. Build up to 10 CVs, no credit card needed.",
-    da: "Gratis. Lav op til 10 CV'er, uden betalingskort.",
+    en: "Free. Build up to 5 CVs, no credit card needed.",
+    da: "Gratis. Lav op til 5 CV'er, uden betalingskort.",
   },
   "signup.firstName": { en: "First name", da: "Fornavn" },
   "signup.firstNamePlaceholder": { en: "Philip", da: "Philip" },
@@ -896,6 +996,20 @@ export const TRANSLATIONS = {
   "design.borderColor": { en: "Photo border colour", da: "Fotokantens farve" },
   "design.borderWidth": { en: "Photo border width", da: "Fotokantens tykkelse" },
   "design.borderColorAuto": { en: "auto (accent)", da: "auto (accent)" },
+  "design.watermarkText": { en: "Watermark text", da: "Vandmærketekst" },
+  "design.watermarkColor": { en: "Watermark color", da: "Vandmærkefarve" },
+  "design.watermarkDragHint": {
+    en: "Drag the watermark on the canvas to fine-tune its position. The corner above is the starting point.",
+    da: "Træk vandmærket på lærredet for at finjustere placeringen. Hjørnet ovenfor er udgangspunktet.",
+  },
+  "design.watermarkOffset": {
+    en: "Custom offset: {x}px, {y}px",
+    da: "Tilpasset forskydning: {x}px, {y}px",
+  },
+  "design.resetWatermarkPosition": {
+    en: "Reset to corner",
+    da: "Nulstil til hjørne",
+  },
   "design.borderHint": {
     en: "Empty colour falls back to the template accent. Width 0 hides the border entirely.",
     da: "Tom farve bruger skabelonens accent-farve. Bredde 0 skjuler kanten helt.",

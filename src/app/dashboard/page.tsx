@@ -87,6 +87,23 @@ function DashboardInner() {
   const [resumes, setResumes] = useState<ResumeRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // TERMINAL flag for the `?template=` auto-create. Set once the request is
+  // resolved one way or another — created + navigated away, at the cap, the
+  // insert failed, or it hung. While false the "preparing your CV…" splash
+  // shows; once true the splash is GONE for the rest of this mount and the
+  // dashboard list (with its at-limit banner) renders instead.
+  //
+  // Two bugs this shape defends against, both seen in the wild:
+  //   1. `router.replace("/dashboard")` in the catch does NOT reliably strip
+  //      `?template=` / re-fire `useSearchParams()` in the static export, so
+  //      gating the splash on the URL param left at-cap users stranded on
+  //      "Preparing your CV…" forever. → gate on this state flag instead.
+  //   2. Gating the splash on a LIVE `!atLimit` re-showed the splash the
+  //      moment the user deleted a CV (atLimit flips false) — but the
+  //      one-shot `autoCreateFiredRef` guard meant no insert ever re-ran, so
+  //      it spun on "Preparing your Scratch CV…" after a delete. → the
+  //      decision must be TERMINAL, never re-derived from the live cap state.
+  const [autoCreateSettled, setAutoCreateSettled] = useState(false);
   // Guard so the auto-create path runs at most once per mount even if the
   // search params re-fire (StrictMode double-mount, hydration, etc.).
   const autoCreateFiredRef = useRef(false);
@@ -116,28 +133,71 @@ function DashboardInner() {
     // user.id triggers a refetch if the signed-in user actually changes.
   }, [user?.id]);
 
-  // Auto-create-and-forward when ?template=<id> is present. We wait until the
-  // user is loaded (signed-in) so the insert hits RLS as the right identity.
+  // Auto-create-and-forward when ?template=<id> is present. We wait until:
+  //   1. the user is loaded (signed-in) so the insert hits RLS as the right
+  //      identity, AND
+  //   2. the resume list has been fetched (`resumes !== null`) so we know the
+  //      current CV count and can pre-empt the per-account cap with a friendly
+  //      message instead of firing a doomed insert and stranding the user on
+  //      the splash.
   useEffect(() => {
     if (!requestedTemplate) return;
     if (!user) return; // AuthGate is still resolving; effect will re-fire.
+    if (resumes === null) return; // wait for the count before deciding.
     if (autoCreateFiredRef.current) return;
     autoCreateFiredRef.current = true;
+
+    // Snapshot the cap decision at fire time. We intentionally do NOT re-read
+    // `resumes` after this point: once we've decided what to do with this
+    // ?template= request the decision is terminal for the mount. (Deleting a
+    // CV later flips the live cap state, but it must NOT resurrect the splash.)
+    const atCapNow = resumes.length >= MAX_CVS_PER_USER;
+
     void (async () => {
+      // All setState below lives inside this async IIFE rather than the effect
+      // body, so none of it is a synchronous-in-effect call.
+
+      // Already at the cap → don't fire an insert the trigger will reject.
+      // Surface the limit and settle; the splash clears to the dashboard list
+      // whose at-limit banner explains why, and STAYS cleared even after the
+      // user deletes a CV to make room.
+      if (atCapNow) {
+        toast.error(t("dashboard.limitTitle", { n: MAX_CVS_PER_USER }));
+        setAutoCreateSettled(true);
+        return;
+      }
+
+      // Safety net for a hung insert: Supabase's fetch has no built-in
+      // timeout, so on a flaky mobile connection createResume() could pend
+      // indefinitely and keep the splash up. After 20s we settle with a
+      // generic error instead of spinning forever. `done` guards against the
+      // timeout and the real result both firing.
+      let done = false;
+      const bail = setTimeout(() => {
+        if (done) return;
+        done = true;
+        toast.error(t("dashboard.toastNewFailed"));
+        setAutoCreateSettled(true);
+      }, 20_000);
       try {
         const id = await createResume(requestedTemplate);
+        if (done) return; // timed out already — don't double-navigate.
+        done = true;
+        clearTimeout(bail);
         router.replace(`/editor?id=${id}`);
       } catch (e) {
-        // CvLimitReachedError is a TranslatableError; translateError
-        // resolves it to the localized "You can have at most {n} CVs"
-        // copy automatically — no special branch needed.
+        if (done) return;
+        done = true;
+        clearTimeout(bail);
+        // CvLimitReachedError is a TranslatableError; translateError resolves
+        // it to the localized "You can have at most {n} CVs" copy
+        // automatically — no special branch needed. Any other error falls
+        // back to its message / the generic key.
         toast.error(translateError(e, t, "dashboard.toastNewFailed"));
-        // Drop the query string so a retry click on "New CV" doesn't re-loop.
-        router.replace("/dashboard");
-        autoCreateFiredRef.current = false;
+        setAutoCreateSettled(true);
       }
     })();
-  }, [requestedTemplate, user, router]);
+  }, [requestedTemplate, user, router, resumes, t]);
 
   async function refresh() {
     try {
@@ -330,8 +390,13 @@ function DashboardInner() {
   const atLimit =
     Array.isArray(resumes) && resumes.length >= MAX_CVS_PER_USER;
 
-  // Show a focused "preparing your CV…" splash while the auto-create runs.
-  if (requestedTemplate) {
+  // Show a focused "preparing your CV…" splash WHILE the auto-create is still
+  // pending. The moment it settles (created + navigating away, at cap, failed,
+  // or hung) `autoCreateSettled` flips and we fall through to the dashboard
+  // list below. Gating ONLY on the terminal flag — never on the live
+  // `atLimit` — is what stops the splash from resurrecting when the user
+  // deletes a CV to make room.
+  if (requestedTemplate && !autoCreateSettled) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-24 text-center">
         <div className="text-sm font-medium text-fg">

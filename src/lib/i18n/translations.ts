@@ -759,6 +759,14 @@ export const TRANSLATIONS = {
   "layers.unnamedIcon": { en: "Icon", da: "Ikon" },
   "editor.mobile.edit": { en: "Edit", da: "Rediger" },
   "editor.mobile.preview": { en: "Preview", da: "Forhåndsvisning" },
+  "editor.desktopOnly.title": {
+    en: "Best experienced on a computer",
+    da: "Bedst på en computer",
+  },
+  "editor.desktopOnly.body": {
+    en: "SlothCV's editor is built for a larger screen — the live preview and layout controls need the room, so there's no editing on a phone. Open this page on a laptop or desktop to build and edit your CV. You can still manage your CVs from the dashboard on mobile.",
+    da: "SlothCVs editor er bygget til en større skærm — den live forhåndsvisning og layout-kontrollerne har brug for pladsen, så der er ingen redigering på en telefon. Åbn denne side på en bærbar eller stationær computer for at oprette og redigere dit CV. Du kan stadig administrere dine CV'er fra oversigten på mobil.",
+  },
 
   // ─── Save indicator ───────────────────────────────────────────────
   "save.saving": { en: "Saving…", da: "Gemmer…" },

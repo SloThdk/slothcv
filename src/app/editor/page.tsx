@@ -23,6 +23,7 @@ import {
   Eye,
   FileText,
   Layers,
+  Monitor,
   Plus,
   Redo2,
   Save,
@@ -615,7 +616,69 @@ function SaveNowButton({ resumeId }: { resumeId: string | null }) {
   );
 }
 
-export default function EditorPage() {
+/**
+ * Phones get a "use a computer" notice instead of the editor. The two-pane
+ * builder (structured form + live A4 preview + drag-to-arrange) is genuinely
+ * unusable at phone widths, so we don't render it there at all.
+ *
+ * The 767px cutoff is one pixel below Tailwind's `md` (768px) — the exact
+ * breakpoint the editor's own layout switches on — so there's never a gap
+ * where a cramped single-pane editor could leak through.
+ *
+ * Returns `null` until mounted so the prerendered HTML and the first client
+ * render agree (no hydration mismatch); the effect resolves it immediately
+ * after, and keeps it live so resizing the window across the breakpoint
+ * flips between the editor and the notice.
+ */
+function useIsPhoneViewport(): boolean | null {
+  const [isPhone, setIsPhone] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsPhone(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isPhone;
+}
+
+function DesktopOnlyNotice() {
+  const { t } = useLanguage();
+  return (
+    <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-surface-hover text-fg">
+        <Monitor className="h-7 w-7" aria-hidden="true" />
+      </div>
+      <h1 className="text-lg font-semibold text-fg">
+        {t("editor.desktopOnly.title")}
+      </h1>
+      <p className="mt-3 text-sm leading-relaxed text-muted">
+        {t("editor.desktopOnly.body")}
+      </p>
+      <Link href="/dashboard" className="mt-6">
+        <Button variant="outline">
+          <ArrowLeft className="h-4 w-4" />
+          {t("editor.backToDashboard")}
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function EditorGate() {
+  const isPhone = useIsPhoneViewport();
+  const { t } = useLanguage();
+  // Pre-hydration placeholder — same neutral "loading" the rest of the app
+  // uses, so neither the notice nor the editor flashes before we know the
+  // viewport.
+  if (isPhone === null) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-16 text-center text-sm text-subtle">
+        {t("common.loading")}
+      </div>
+    );
+  }
+  if (isPhone) return <DesktopOnlyNotice />;
   return (
     <AuthGate>
       <Suspense
@@ -629,4 +692,8 @@ export default function EditorPage() {
       </Suspense>
     </AuthGate>
   );
+}
+
+export default function EditorPage() {
+  return <EditorGate />;
 }

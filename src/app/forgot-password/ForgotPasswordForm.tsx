@@ -49,6 +49,19 @@ export function ForgotPasswordForm() {
     return () => clearTimeout(timer);
   }, [captchaToken, captchaError]);
 
+  // A spent recovery link bounces here as ?error=link_expired (see
+  // /auth/callback). Surface it once, then strip the param. history.replaceState
+  // (not setState) so there's no effect-setState churn.
+  useEffect(() => {
+    if (searchParams.get("error") === "link_expired") {
+      toast.error(t("login.errExpiredLink"));
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
+  }, []);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const cleanEmail = email.trim();

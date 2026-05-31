@@ -525,6 +525,18 @@ export const TRANSLATIONS = {
     en: "At least one number (recommended)",
     da: "Mindst ét tal (anbefales)",
   },
+  // Repeat-password field (industry standard — catches typos in a masked
+  // field before the account is created / password is changed). Shared by
+  // signup + reset so the label + mismatch copy never drift.
+  "auth.repeatPassword": { en: "Repeat password", da: "Gentag adgangskode" },
+  "auth.repeatPasswordPlaceholder": {
+    en: "Re-enter your password",
+    da: "Indtast adgangskoden igen",
+  },
+  "auth.errPasswordMismatch": {
+    en: "The two passwords don't match.",
+    da: "De to adgangskoder er ikke ens.",
+  },
 
   // ─── Signup ───────────────────────────────────────────────────────
   "signup.title": { en: "Create your SlothCV account", da: "Opret din SlothCV-konto" },
@@ -643,13 +655,8 @@ export const TRANSLATIONS = {
     da: "Vælg en stærk adgangskode, du kan huske.",
   },
   "reset.newPassword": { en: "New password", da: "Ny adgangskode" },
-  "reset.confirmPassword": { en: "Confirm password", da: "Bekræft adgangskode" },
   "reset.submit": { en: "Update password", da: "Opdater adgangskode" },
   "reset.submitting": { en: "Updating…", da: "Opdaterer…" },
-  "reset.errMismatch": {
-    en: "The two passwords don't match.",
-    da: "De to adgangskoder er ikke ens.",
-  },
   "reset.success": {
     en: "Password updated. You're signed in.",
     da: "Adgangskode opdateret. Du er logget ind.",

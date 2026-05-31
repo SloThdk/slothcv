@@ -48,7 +48,7 @@ export function ResetPasswordForm() {
       return;
     }
     if (password !== confirm) {
-      toast.error(t("reset.errMismatch"));
+      toast.error(t("auth.errPasswordMismatch"));
       return;
     }
 
@@ -131,7 +131,7 @@ export function ResetPasswordForm() {
         </div>
 
         <div>
-          <Label htmlFor="confirm">{t("reset.confirmPassword")}</Label>
+          <Label htmlFor="confirm">{t("auth.repeatPassword")}</Label>
           <Input
             id="confirm"
             type={showPassword ? "text" : "password"}
@@ -144,7 +144,7 @@ export function ResetPasswordForm() {
           />
           {confirm.length > 0 && confirm !== password && (
             <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-              {t("reset.errMismatch")}
+              {t("auth.errPasswordMismatch")}
             </p>
           )}
         </div>

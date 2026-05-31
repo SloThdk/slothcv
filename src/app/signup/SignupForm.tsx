@@ -63,6 +63,7 @@ export function SignupForm() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submittingEmail, setSubmittingEmail] = useState(false);
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
@@ -143,6 +144,10 @@ export function SignupForm() {
     }
     if (!passwordMeetsPolicy(password)) {
       toast.error(t("auth.pwTooWeak", { n: PASSWORD_MIN_LENGTH }));
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error(t("auth.errPasswordMismatch"));
       return;
     }
 
@@ -444,6 +449,25 @@ export function SignupForm() {
                 <PasswordStrength password={password} />
               </div>
             </div>
+            <div>
+              <Label htmlFor="confirm_password">{t("auth.repeatPassword")}</Label>
+              <Input
+                id="confirm_password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={PASSWORD_MIN_LENGTH}
+                placeholder={t("auth.repeatPasswordPlaceholder")}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={submittingEmail || submittingGoogle}
+              />
+              {confirmPassword.length > 0 && confirmPassword !== password && (
+                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                  {t("auth.errPasswordMismatch")}
+                </p>
+              )}
+            </div>
             {/* Cloudflare Turnstile — required on every signUp call. */}
             {TURNSTILE_SITE_KEY && (
               <div className="flex flex-col items-center gap-2">
@@ -495,6 +519,7 @@ export function SignupForm() {
                 !email ||
                 !firstName.trim() ||
                 !passwordMeetsPolicy(password) ||
+                password !== confirmPassword ||
                 (!!TURNSTILE_SITE_KEY && !captchaToken)
               }
             >

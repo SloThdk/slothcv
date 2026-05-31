@@ -13,6 +13,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { processLock } from "@supabase/auth-js";
 
 // Explicit type so the memoized client retains its full Supabase generics
 // (otherwise destructuring `{ data }` from `getSession` widens to `any`).
@@ -29,6 +30,21 @@ export function createClient(): SupabaseClient {
     // a misconfigured deploy never silently degrades to "no auth".
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        // Use the in-memory processLock instead of the default
+        // navigator.locks-based lock. `signUp()` under @supabase/ssr + PKCE
+        // stalls on navigator.locks: the POST /auth/v1/signup returns 200
+        // (user row created + confirmation e-mail sent) but the lock-wrapped
+        // promise NEVER settles, so the signup UI spins forever — while
+        // signInWithPassword + resetPasswordForEmail are unaffected. processLock
+        // serialises auth calls within the tab without the navigator.locks API,
+        // which clears the stall. @supabase/ssr spreads `auth` before its own
+        // overrides and never sets `lock`, so this passes through.
+        // See rules/supabase-signup-promise-stall-guard.md.
+        lock: processLock,
+      },
+    },
   );
   return cached;
 }

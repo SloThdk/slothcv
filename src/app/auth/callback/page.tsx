@@ -107,7 +107,11 @@ function CallbackInner() {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (cancelled) return;
-        router.replace(user ? safeNext : "/login?error=missing_code");
+        // Already signed in → hard-nav to the gated destination so it loads
+        // with fresh auth state. Not signed in → a soft redirect to /login
+        // is fine (login is client-reactive; there's no session to reflect).
+        if (user) window.location.assign(safeNext);
+        else router.replace("/login?error=missing_code");
       })();
       return;
     }
@@ -139,7 +143,14 @@ function CallbackInner() {
 
       if (!error) {
         setMessage("Signed in. Redirecting…");
-        router.replace(safeNext);
+        // HARD navigation, not router.replace: the destination must do a
+        // full load so the AuthProvider re-reads the freshly-persisted
+        // @supabase/ssr session on mount. A soft nav can land on the gated
+        // page before the async SIGNED_IN event commits to context, which
+        // makes AuthGate see {loading:false, user:null} and bounce the user
+        // back to /login — the "I have to refresh before it logs me in"
+        // symptom. See rules/ssr-auth-state-hard-nav.md.
+        window.location.assign(safeNext);
         return;
       }
 
@@ -160,7 +171,11 @@ function CallbackInner() {
       } = await supabase.auth.getUser();
       if (cancelled) return;
       if (existing) {
-        router.replace(safeNext);
+        // Valid session despite the failed exchange (double-clicked link /
+        // refreshed success page) — hard-nav so the destination loads
+        // logged-in instead of racing the soft-nav. See
+        // rules/ssr-auth-state-hard-nav.md.
+        window.location.assign(safeNext);
         return;
       }
 

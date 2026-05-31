@@ -205,7 +205,13 @@ function FinalizeInner() {
       }
 
       setMessage("Signed in. Redirecting…");
-      router.replace(safeNext);
+      // HARD navigation, not router.replace: the destination must do a full
+      // load so the AuthProvider re-reads the freshly-minted session on
+      // mount. A soft nav can land on the gated page before the async
+      // SIGNED_IN event commits, making AuthGate bounce the user back to
+      // /login (stale logged-out state until a manual refresh). See
+      // rules/ssr-auth-state-hard-nav.md.
+      window.location.assign(safeNext);
     })();
 
     return () => {

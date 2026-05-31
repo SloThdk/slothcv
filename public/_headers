@@ -1,4 +1,4 @@
-# Cloudflare Pages headers config for slothcv.pages.dev.
+# Cloudflare Pages headers config for slothcv (https://slothcv.philipsloth.com).
 #
 # This file applies HTTP headers to every response Cloudflare Pages emits.
 # Pages has no per-request middleware on a static export, so this file is

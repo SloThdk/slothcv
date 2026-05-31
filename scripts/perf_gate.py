@@ -6,7 +6,7 @@ best-practices, SEO), prints a clean before/after-style table, and exits
 non-zero if any score drops below the per-route budget defined in
 PERF.md.
 
-Defaults audit the deployed origin (https://slothcv.pages.dev) for the
+Defaults audit the deployed origin (https://slothcv.philipsloth.com) for the
 landing page, the dashboard, and the editor. Override with `--url` for
 ad-hoc audits. Override the entire route list with `--route landing
 --route dashboard ...` to gate fewer routes during local dev.
@@ -290,7 +290,7 @@ def main(argv: Iterable[str]) -> int:
     )
     parser.add_argument(
         "--base",
-        default="https://slothcv.pages.dev",
+        default="https://slothcv.philipsloth.com",
         help="Base URL for routes (no trailing slash).",
     )
     parser.add_argument(

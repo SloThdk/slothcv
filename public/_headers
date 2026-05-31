@@ -56,8 +56,14 @@
 # origin so the popups variant is the right balance.
 
 # All HTML — never cache, full security headers.
+# `no-store` is the operative directive (never write a copy to any cache);
+# `no-cache, must-revalidate, max-age=0` are the belt-and-suspenders companions
+# for intermediaries that parse the set inconsistently. `public` was dropped —
+# it contradicts `no-store` and some parsers honour the wrong half. Clients
+# that ignore this anyway (bfcache, data-saver, a stale pre-fix copy) are
+# caught at runtime by VersionGuard (src/components/version-guard.tsx).
 /*
-  Cache-Control: public, max-age=0, no-store, must-revalidate
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff

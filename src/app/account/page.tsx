@@ -141,9 +141,13 @@ function AccountInner() {
     }
     setDeleting(true);
     try {
+      // deleteMyAccount() deletes the row AND signs out (clears local session).
       await deleteMyAccount();
-      toast.success(t("account.toastAccountDeleted"));
-      router.replace("/");
+      // Hard-nav home with a marker; <AccountDeletedToast> in the root layout
+      // fires the "Konto slettet!" toast AFTER the load. A toast fired here
+      // would be wiped by the reload, and a hard nav is required so the header
+      // re-renders logged-out. See rules/account-delete-confirm-toast.md.
+      window.location.href = "/?deleted=1";
     } catch (e) {
       toast.error(translateError(e, t, "account.toastDeleteFailed"));
       setDeleting(false);

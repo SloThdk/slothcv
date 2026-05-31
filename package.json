@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "node scripts/copy-functions-into-out.mjs",
+    "postbuild": "node scripts/copy-functions-into-out.mjs && node scripts/write-version.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

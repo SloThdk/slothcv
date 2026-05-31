@@ -19,6 +19,8 @@ import { CookieBanner } from "@/components/cookie-banner";
 import { BackToTop } from "@/components/back-to-top";
 import { RouteTransition } from "@/components/motion/route-transition";
 import { JsonLd } from "@/components/seo/json-ld";
+import { VersionGuard } from "@/components/version-guard";
+import { AccountDeletedToast } from "@/components/account-deleted-toast";
 import {
   SITE_URL,
   SITE_NAME,
@@ -132,6 +134,11 @@ export default function RootLayout({
       className={`${LANDING_FONT_VARIABLE_CLASSES} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
+        {/* Self-heals a stale deploy: if this page's HTML was served from a
+            browser/proxy cache older than the live build, reload once to the
+            current version. No-op for up-to-date clients. See
+            src/components/version-guard.tsx. */}
+        <VersionGuard />
         {/* schema.org structured data (Organization + WebSite +
             SoftwareApplication). Server-rendered; derives from site.ts. */}
         <JsonLd />
@@ -169,6 +176,10 @@ export default function RootLayout({
                       window scroll is 0) never see it. */}
                   <BackToTop />
                   <Toaster richColors position="top-center" />
+                  {/* Reads ?deleted=1 (set by the account-deletion hard-nav)
+                      and fires the "Konto slettet!" toast post-load, then
+                      strips the marker. See rules/account-delete-confirm-toast. */}
+                  <AccountDeletedToast />
                 </PromptProvider>
               </ConfirmProvider>
             </AuthProvider>

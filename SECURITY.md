@@ -90,7 +90,7 @@ In scope:
 
 - This repository's code (anything under `src/`, `supabase/migrations/`,
   `scripts/`, `functions/`, `public/`)
-- The deployed service at <https://slothcv.pages.dev>
+- The deployed service at <https://slothcv.philipsloth.com>
 
 Out of scope for the **security** disclosure channel (different routes apply):
 

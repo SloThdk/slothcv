@@ -1118,6 +1118,10 @@ export const TRANSLATIONS = {
     da: 'Skriv DELETE for at bekræfte.',
   },
   "account.toastAccountDeleted": { en: "Account deleted.", da: "Konto slettet." },
+  "account.toastAccountDeletedBody": {
+    en: "Your account and all your data have been permanently deleted. You are now logged out.",
+    da: "Din konto og alle dine data er slettet permanent. Du er logget ud.",
+  },
   "account.toastDeleteFailed": {
     en: "Delete failed.",
     da: "Sletning mislykkedes.",

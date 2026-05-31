@@ -2,9 +2,9 @@
 
 > **A free, no-watermark CV builder. EU-hosted, row-level-security on every row, vector PDF rendered by your browser's print engine — and the full source is open so anyone can audit that claim.**
 
-**Live: <https://slothcv.pages.dev>**
+**Live: <https://slothcv.philipsloth.com>**
 
-[![Live](https://img.shields.io/badge/live-slothcv.pages.dev-success)](https://slothcv.pages.dev)
+[![Live](https://img.shields.io/badge/live-slothcv.philipsloth.com-success)](https://slothcv.philipsloth.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/SloThdk/slothcv/actions/workflows/deploy.yml/badge.svg)](https://github.com/SloThdk/slothcv/actions/workflows/deploy.yml)
 [![Templates: 64](https://img.shields.io/badge/templates-64-success)](src/templates/)
@@ -41,14 +41,14 @@
 
 ## Production deployment
 
-The reference instance lives at **<https://slothcv.pages.dev>**, served from
+The reference instance lives at **<https://slothcv.philipsloth.com>**, served from
 Cloudflare Pages' edge network with the data plane pinned to an EU-region
 Supabase project. Every push to `master` rebuilds and redeploys via
 `.github/workflows/deploy.yml`:
 
 | Verification           | Where                                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------- |
-| TLS (HTTPS / HTTP/3)   | [`https://slothcv.pages.dev`](https://slothcv.pages.dev)                                       |
+| TLS (HTTPS / HTTP/3)   | [`https://slothcv.philipsloth.com`](https://slothcv.philipsloth.com)                                       |
 | Workflow status        | [Actions](https://github.com/SloThdk/slothcv/actions) — Deploy badge above                     |
 | Strict CSP + headers   | DevTools → Network → response includes `Content-Security-Policy`, HSTS, COOP, X-Frame-Options  |
 | robots.txt for authed  | [`public/robots.txt`](public/robots.txt) — `/auth/`, `/dashboard`, `/editor`, `/new` disallowed |
@@ -62,14 +62,14 @@ End-to-end smoke test (run from your laptop):
 
 ```bash
 # 1. Marketing surface returns 200
-curl -fsS https://slothcv.pages.dev | grep -o "<title>.*</title>"
+curl -fsS https://slothcv.philipsloth.com | grep -o "<title>.*</title>"
 
 # 2. CF Pages Function (Google OAuth init) is wired
-curl -sI -X GET "https://slothcv.pages.dev/auth/google/init?next=/dashboard" \
+curl -sI -X GET "https://slothcv.philipsloth.com/auth/google/init?next=/dashboard" \
   | head -1   # → HTTP/2 302
 
 # 3. Open-redirect mitigation rejects protocol-relative `next`
-curl -sI -X GET "https://slothcv.pages.dev/auth/google/init?next=//evil.com" \
+curl -sI -X GET "https://slothcv.philipsloth.com/auth/google/init?next=//evil.com" \
   | grep -i ^location  # → location starts with /, never //evil.com
 ```
 
@@ -210,11 +210,11 @@ bundle. Every page is HTML + bundled JS pre-rendered at build time.
 
 ## Quick start
 
-> **Most visitors should use the live service at <https://slothcv.pages.dev>** — that's where to actually build a CV. Sign in with a magic-link or "Continue with Google", pick a template, edit, export the PDF. The steps below are for developers who want to fork, self-host, or inspect the build locally.
+> **Most visitors should use the live service at <https://slothcv.philipsloth.com>** — that's where to actually build a CV. Sign in with a magic-link or "Continue with Google", pick a template, edit, export the PDF. The steps below are for developers who want to fork, self-host, or inspect the build locally.
 
 ### Try the live deployment
 
-Open **<https://slothcv.pages.dev>**. Magic-link or Google sign-in, pick from ~60 templates, edit with live preview, export a vector PDF in your browser.
+Open **<https://slothcv.philipsloth.com>**. Magic-link or Google sign-in, pick from ~60 templates, edit with live preview, export a vector PDF in your browser.
 
 ### Run it locally (for contribution / fork / self-host)
 
@@ -549,7 +549,7 @@ it. Nothing on this list is decorative.
 
 - **Role:** every push to `master` runs `bun install --frozen-lockfile` →
   `bun run typecheck` → `bun run build` → `wrangler pages deploy` against
-  `slothcv.pages.dev`.
+  `slothcv.philipsloth.com`.
 - **Why this stack:** GitHub Actions is co-located with the source. The
   `oven-sh/setup-bun@v2` action picks up `bun.lock` directly; the build
   is reproducible because the lockfile is frozen. Wrangler does the deploy

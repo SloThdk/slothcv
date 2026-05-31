@@ -18,17 +18,85 @@ import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
 import { BackToTop } from "@/components/back-to-top";
 import { RouteTransition } from "@/components/motion/route-transition";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_TITLE_DEFAULT,
+  SITE_TITLE_TEMPLATE,
+  SITE_DESCRIPTION,
+  SITE_OG_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_OG_LOCALE,
+  INDEXABLE,
+  OG_IMAGE_PATH,
+} from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SlothCV — free, beautiful CVs",
-  description:
-    "Free, beautiful CVs. No signup walls, no watermarks. Drag, drop, design. Export to PDF.",
-  openGraph: {
-    title: "SlothCV",
-    description: "Free, beautiful CVs. No signup walls, no watermarks.",
-    type: "website",
+  // Absolute base for resolving canonical + OG/Twitter image URLs. Derives
+  // from site.ts so the whole metadata tree tracks the domain (see the
+  // "domain switch" note there).
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE_DEFAULT,
+    template: SITE_TITLE_TEMPLATE,
   },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SITE_KEYWORDS,
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  alternates: { canonical: "/" },
+  category: "technology",
+  // The CV form never renders user phone/email/addresses as auto-linkable
+  // text; turn off Safari's aggressive auto-detection to avoid junk links.
+  formatDetection: { telephone: false, email: false, address: false },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE_DEFAULT,
+    description: SITE_OG_DESCRIPTION,
+    url: "/",
+    locale: SITE_OG_LOCALE,
+    images: [
+      {
+        url: OG_IMAGE_PATH,
+        width: 1200,
+        height: 630,
+        alt: "SlothCV — free CV & resume builder",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE_DEFAULT,
+    description: SITE_OG_DESCRIPTION,
+    images: [OG_IMAGE_PATH],
+  },
+  // Index production; noindex preview hosts (see site.ts INDEXABLE). The
+  // googleBot directives unlock rich snippets + large image previews.
+  robots: INDEXABLE
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+          "max-video-preview": -1,
+        },
+      }
+    : { index: false, follow: false },
+  // Renders a Google Search Console verification <meta> only once the token
+  // is set (after the real domain is verified in GSC). No-op until then.
+  verification: process.env.NEXT_PUBLIC_GSC_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION }
+    : undefined,
+  // src/app/{favicon.ico,icon.svg,apple-icon.png} are auto-detected by Next;
+  // no manual icons config needed.
 };
 
 // CRITICAL FOR MOBILE: without this iOS Safari falls back to its legacy
@@ -42,6 +110,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Tint the mobile browser chrome to match the page background per scheme,
+  // so the address bar blends into the site instead of flashing white/black.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafaf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
   // Allow user zoom — accessibility requirement (WCAG 1.4.4 Resize Text).
   // Maximum-scale capped only because Safari double-tap-to-zoom can
   // disorient users mid-edit; user pinch-zoom is unrestricted.
@@ -58,6 +132,9 @@ export default function RootLayout({
       className={`${LANDING_FONT_VARIABLE_CLASSES} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[var(--color-bg)] text-[var(--color-text)]">
+        {/* schema.org structured data (Organization + WebSite +
+            SoftwareApplication). Server-rendered; derives from site.ts. */}
+        <JsonLd />
         {/* Provider order matters: Theme outermost so the rest renders with
             the correct colors immediately. Language next so toasts can use
             translated strings. Auth innermost — only data flows through. */}

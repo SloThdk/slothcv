@@ -106,6 +106,40 @@
 /editor/*
   X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
 
+/new
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/new/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/account
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+/account/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+
+# Auth utility pages — left crawlable (so a stray inbound link resolves) but
+# marked noindex: a thin login / signup / password form has no search value
+# and shouldn't compete with the landing page. robots.ts deliberately does
+# NOT Disallow these, so crawlers fetch them, see noindex, and drop them
+# cleanly instead of leaving a bare URL in the index.
+/login
+  X-Robots-Tag: noindex, nofollow
+/login/*
+  X-Robots-Tag: noindex, nofollow
+/signup
+  X-Robots-Tag: noindex, nofollow
+/signup/*
+  X-Robots-Tag: noindex, nofollow
+/forgot-password
+  X-Robots-Tag: noindex, nofollow
+/forgot-password/*
+  X-Robots-Tag: noindex, nofollow
+/reset-password
+  X-Robots-Tag: noindex, nofollow
+/reset-password/*
+  X-Robots-Tag: noindex, nofollow
+
 # /debug-templates is a developer-only template-render audit page (see
 # the docstring in src/app/debug-templates/page.tsx) that should not
 # appear in search results or any AI training corpus. It currently

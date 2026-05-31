@@ -113,9 +113,16 @@ for /f "tokens=5" %%p in ('netstat -aon ^| findstr :%PORT% ^| findstr LISTENING'
 REM 6. Background browser-opener. Polls dev URL every 500ms; on first 200
 REM    OK, opens /editor in default browser and exits. Hidden window so
 REM    the foreground Next dev output stays clean.
+REM
+REM    Suppress IWR output with `$null = ...` instead of `| Out-Null`.
+REM    The pipe form needs `^|` to survive cmd parsing inside the quoted
+REM    powershell arg, and `^|` then leaks into PowerShell as a literal
+REM    `^` (XOR-style operator) → parse error → opener silently dies and
+REM    the browser never launches. The 2026-05-27 fix sidesteps the
+REM    escape problem entirely by using `$null = ...` (no pipe, no `|`).
 echo [setup] Browser-opener armed (will open %EDITOR_URL% when server responds)...
 start "" /B powershell -NoProfile -WindowStyle Hidden -Command ^
-    "while ($true) { try { Invoke-WebRequest -UseBasicParsing -Uri '%URL%' -TimeoutSec 1 -ErrorAction Stop ^| Out-Null; Start-Process '%EDITOR_URL%'; break } catch { Start-Sleep -Milliseconds 500 } }"
+    "while ($true) { try { $null = Invoke-WebRequest -UseBasicParsing -Uri '%URL%' -TimeoutSec 1 -ErrorAction Stop; Start-Process '%EDITOR_URL%'; break } catch { Start-Sleep -Milliseconds 500 } }"
 
 REM 7. Foreground Next dev so user sees output + Ctrl+C cleanup.
 echo [setup] Starting Next dev on %URL% (Ctrl+C to stop)...

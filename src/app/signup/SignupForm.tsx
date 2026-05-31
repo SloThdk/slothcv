@@ -228,21 +228,56 @@ export function SignupForm() {
         },
       });
 
-    let { data, error: err } = await callSignUp(tokenForCall);
+    // supabase-js's signUp promise can STALL after its HTTP request has
+    // already completed (200 → user row created + confirmation email sent).
+    // It's a navigator Web Locks quirk we hit ONLY on the signUp path —
+    // signInWithPassword + resetPasswordForEmail resolve normally (verified
+    // live). Left unguarded the button spins "Opretter konto…" forever even
+    // though the account exists, which reads to the user as a broken signup.
+    // So race signUp against a generous timeout (it normally resolves in
+    // ~2 s); on a stall the request has done its job (the confirmation email
+    // is already out), so we drop into the "check your email" state instead
+    // of hanging. See rules/supabase-signup-promise-stall-guard.md.
+    const SIGNUP_SETTLE_MS = 10000;
+    const HANG = Symbol("signup-hang");
+    const raceSignUp = (token: string | null) =>
+      Promise.race([
+        callSignUp(token),
+        new Promise<typeof HANG>((r) => setTimeout(() => r(HANG), SIGNUP_SETTLE_MS)),
+      ]);
 
-    if (err?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
+    let res = await raceSignUp(tokenForCall);
+
+    // Captcha retry — only when signUp actually RESOLVED with a captcha error
+    // (a stall is handled below, not retried).
+    if (res !== HANG && res.error?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
       turnstileRef.current?.reset();
       setCaptchaToken(null);
       const fresh = await waitForFreshCaptchaToken(captchaResolveRef);
       if (fresh) {
         setCaptchaToken(fresh);
-        ({ data, error: err } = await callSignUp(fresh));
+        res = await raceSignUp(fresh);
       }
     }
 
     turnstileRef.current?.reset();
     setCaptchaToken(null);
     setSubmittingEmail(false);
+
+    if (res === HANG) {
+      // The HTTP request completed (the account was created + the
+      // confirmation email sent) but the SDK promise never settled. Show the
+      // confirmation state — spinning forever would be strictly worse, and
+      // the user genuinely needs to go check their inbox.
+      console.warn(
+        "[signup] signUp promise stalled after the request completed; " +
+          "showing the confirmation state (account created, email sent).",
+      );
+      setSent(true);
+      return;
+    }
+
+    const { data, error: err } = res;
 
     if (err) {
       // email_exists / identity_already_exists → existing-account banner.

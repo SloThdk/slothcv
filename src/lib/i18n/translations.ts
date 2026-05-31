@@ -338,8 +338,17 @@ export const TRANSLATIONS = {
   "login.googleConnecting": { en: "Connecting…", da: "Forbinder…" },
   "login.or": { en: "or", da: "eller" },
   "login.errExpiredLink": {
-    en: "That sign-in link expired. Try again — I'll send a fresh one.",
-    da: "Login-linket udløb. Prøv igen — jeg sender et nyt.",
+    en: "That link has expired. Request a new one to continue.",
+    da: "Linket er udløbet. Bed om et nyt for at fortsætte.",
+  },
+  // POSITIVE notice (green), NOT an error: shown when an email-confirmation
+  // link's code exchange failed locally (verifier lost — link opened in a
+  // different/logged-out browser) but GoTrue already confirmed the account.
+  // The account IS active; the user just needs to log in. See
+  // rules/pkce-email-confirm-cross-browser.md.
+  "login.noticeEmailConfirmed": {
+    en: "Your account is confirmed — log in below to continue.",
+    da: "Din konto er bekræftet — log ind nedenfor for at fortsætte.",
   },
   "login.errExchangeGeneric": {
     en: "Sign-in didn't complete. Try again — request a fresh link if needed.",

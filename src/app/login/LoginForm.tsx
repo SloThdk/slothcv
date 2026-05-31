@@ -55,6 +55,16 @@ export function LoginForm() {
   const next = searchParams.get("next") ?? "/dashboard";
   const error = searchParams.get("error");
 
+  // Positive "your account is confirmed, log in" notice — set by
+  // /auth/callback when an email-confirm link's code exchange failed locally
+  // but the account was already confirmed server-side (PKCE cross-browser
+  // trap). Rendered as a green banner, NOT an error. Read once from the URL
+  // via a lazy initializer (the effect below only strips the param). See
+  // rules/pkce-email-confirm-cross-browser.md.
+  const [confirmedNotice] = useState(
+    () => searchParams.get("notice") === "email_confirmed",
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -83,6 +93,18 @@ export function LoginForm() {
     }
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  // Strip ?notice=email_confirmed from the URL once on mount (the banner
+  // state was already read from it via the lazy initializer above). Uses
+  // history.replaceState, not setState — no re-render, no effect-setState.
+  useEffect(() => {
+    if (confirmedNotice && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("notice");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount
   }, []);
 
   // Hard timeout for a stuck Turnstile widget — if 12 s pass with neither a
@@ -266,6 +288,14 @@ export function LoginForm() {
       transition={{ duration: DUR.base, ease: EASE.out }}
       className="flex flex-col gap-6"
     >
+      {confirmedNotice && (
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-100"
+        >
+          {t("login.noticeEmailConfirmed")}
+        </div>
+      )}
       <form onSubmit={handleLogin} className="flex flex-col gap-3">
         <div>
           <label

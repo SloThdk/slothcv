@@ -1,13 +1,21 @@
 /**
- * /auth/callback — finishes the magic-link / OAuth round-trip.
+ * /auth/callback — finishes the email-confirmation / password-recovery /
+ * OAuth round-trip.
  *
- * Phase 1 ships as a static export, so this is a client component (no
- * Route Handler). Supabase's PKCE flow appends `?code=...` to the redirect;
- * `exchangeCodeForSession` swaps it for a session cookie/local-storage token,
- * after which we navigate to the `next` param the login form passed in.
+ * Static export → client component (no Route Handler). Supabase's PKCE flow
+ * appends `?code=...`; `exchangeCodeForSession` swaps it for a session, then
+ * we hard-nav to `next` (recovery → /reset-password).
  *
- * If anything goes wrong, we send the user back to /login with an error
- * flag — never leave them on a blank screen.
+ * The critical edge case (rules/pkce-email-confirm-cross-browser.md): the
+ * mail link hits GoTrue's /verify FIRST — which CONFIRMS the e-mail — and
+ * THEN redirects here with the code. If the exchange then fails (verifier
+ * lost: confirm link opened in a different / logged-out browser, or code
+ * already used), the account is STILL confirmed. So a failed exchange WITH a
+ * code present is NOT an expired link → we send the user to
+ * /login?notice=email_confirmed (a positive "log in" notice), never a red
+ * "expired" error. "Expired" is only truthful when GoTrue returns
+ * error_code=otp_expired with NO code. Recovery is the exception (it needs
+ * the live session, so a spent recovery link → request a fresh one).
  */
 
 "use client";
@@ -27,6 +35,11 @@ function CallbackInner() {
     const code = params.get("code");
     const next = params.get("next") ?? "/dashboard";
     const errorDescription = params.get("error_description");
+    // GoTrue puts the structured reason in `error_code` (PKCE flow → query
+    // string). `otp_expired` here, with NO `code`, is the ONLY truthful
+    // "link expired" — the verify never ran. See
+    // rules/pkce-email-confirm-cross-browser.md.
+    const errorCode = params.get("error_code");
     // Password-recovery links carry ?type=recovery. After the code exchange
     // the user holds a temporary recovery session — we send them to
     // /reset-password to pick a new password instead of into the app.
@@ -92,6 +105,18 @@ function CallbackInner() {
         // why they're stuck and may keep re-requesting fresh links
         // into a dead end.
         mapped = "account_suspended";
+      } else if (
+        errorCode === "otp_expired" ||
+        lower.includes("expired") ||
+        lower.includes("invalid or has expired")
+      ) {
+        // GoTrue returned an error and issued NO code → the /verify step
+        // never confirmed anything, so the link genuinely expired or was
+        // malformed. This is the ONLY branch where "expired" is truthful.
+        // (A failed exchange WITH a code present is handled below as a
+        // CONFIRMED account, never as "expired".) See
+        // rules/pkce-email-confirm-cross-browser.md.
+        mapped = "link_expired";
       } else if (lower.includes("access_denied") || lower.includes("denied")) {
         // User declined the OAuth consent screen.
         mapped = "oauth_declined";
@@ -186,10 +211,30 @@ function CallbackInner() {
         return;
       }
 
-      // Genuinely no session — bounce with the specific error code so
-      // /login can render the right copy.
+      // Exchange failed AND there's no session — but a `code` WAS present.
+      // Per rules/pkce-email-confirm-cross-browser.md: GoTrue's /verify step
+      // (which the mail link hit BEFORE redirecting here with the code)
+      // ALREADY confirmed the e-mail. Only local PKCE session creation failed
+      // — the code_verifier is gone because the confirm link opened in a
+      // different / logged-out browser, or the code was already consumed.
+      // So the account IS active; "link expired" would be a lie. Branch:
       const errCode = exchangeErrorToCallbackCode(error);
-      router.replace(`/login?error=${errCode}`);
+      if (errCode === "account_exists_use_magic_link" || errCode === "account_suspended") {
+        // Provider-mixing collision / banned account keep their truthful,
+        // specific messages.
+        router.replace(`/login?error=${errCode}`);
+        return;
+      }
+      if (isRecovery) {
+        // Recovery genuinely needs the live session to set a new password —
+        // a spent recovery link means request a fresh one.
+        router.replace("/forgot-password?error=link_expired");
+        return;
+      }
+      // Confirmation flow: the account is confirmed. Send the user to /login
+      // with a POSITIVE "your account is confirmed, log in" notice — never a
+      // red "expired" error.
+      router.replace("/login?notice=email_confirmed");
     })();
 
     return () => {

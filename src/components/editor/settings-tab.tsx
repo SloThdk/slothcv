@@ -2,9 +2,10 @@
  * SettingsTab — rename CV, language picker, export menu, delete CV.
  *
  * Title is the only field that lives outside `data` (it's a top-level column
- * in `resumes`). We update it via the resumes helper and keep a local
- * editable copy + a debounced save mirror so the indicator pill works the
- * same way as the rest of the editor.
+ * in `resumes`, mirrored in the editor store alongside `resumeId`). The
+ * rename field keeps a local draft and commits on blur: it persists via
+ * `renameResume` (DB) and then writes the store `title`, so the editor header
+ * reflects the new name on the same tick — no refresh needed.
  */
 
 "use client";
@@ -22,24 +23,34 @@ import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/ui/confirm-modal";
 import { exportPdf } from "@/lib/pdf-export";
 
-export function SettingsTab({ initialTitle }: { initialTitle: string }) {
+export function SettingsTab() {
   const router = useRouter();
   const resumeId = useEditorStore((s) => s.resumeId);
+  const storeTitle = useEditorStore((s) => s.title);
+  const setStoreTitle = useEditorStore((s) => s.setTitle);
   const data = useEditorStore((s) => s.data);
   const { t } = useLanguage();
   const confirm = useConfirm();
 
-  const [title, setTitle] = useState(initialTitle);
+  // Local draft so each keystroke doesn't rewrite the canonical title (and
+  // the header) before the user commits. Re-syncs whenever the canonical
+  // title changes from elsewhere (first-save naming prompt, re-hydrate).
+  const [title, setTitle] = useState(storeTitle);
   const [savingTitle, setSavingTitle] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => setTitle(initialTitle), [initialTitle]);
+  useEffect(() => setTitle(storeTitle), [storeTitle]);
 
   async function commitTitle() {
-    if (!resumeId || title.trim() === initialTitle.trim() || !title.trim()) return;
+    const trimmed = title.trim();
+    if (!resumeId || !trimmed || trimmed === storeTitle.trim()) return;
     setSavingTitle(true);
     try {
-      await renameResume(resumeId, title);
+      await renameResume(resumeId, trimmed);
+      // Mirror into the single store source so the editor header reflects
+      // the rename immediately — renameResume only writes the DB. This is
+      // the fix for "rename in Settings doesn't show until I refresh".
+      setStoreTitle(trimmed);
     } catch (e) {
       toast.error(translateError(e, t, "settings.cvTitleSavingFailed"));
     } finally {

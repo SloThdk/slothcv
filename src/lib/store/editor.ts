@@ -58,6 +58,13 @@ export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 interface EditorState {
   /** UUID of the row in `resumes`, or null if the editor isn't bound yet. */
   resumeId: string | null;
+  /** The CV's display name. Lives here (not inside `data`) because it's a
+   *  top-level column in `resumes`, separate from the JSONB blob — same as
+   *  `resumeId`. It's rendered in 2+ places (editor header + Settings tab
+   *  input) and is user-mutable, so it MUST live in the single store source,
+   *  not a component's local useState. Persisted via `renameResume`, NOT the
+   *  `data` autosave path — so mutating it does not schedule a data save. */
+  title: string;
   /** The active CV. Always non-null after `hydrate` resolves. */
   data: ResumeData;
   saveStatus: SaveStatus;
@@ -96,8 +103,13 @@ interface EditorState {
   historyIndex: number;
 
   // ---- Lifecycle ----
-  hydrate: (id: string, data: ResumeData) => void;
+  hydrate: (id: string, data: ResumeData, title: string) => void;
   reset: () => void;
+  /** Update the CV's display name in the single store source. Pure UI mirror
+   *  of the persisted `resumes.title` column — callers persist via
+   *  `renameResume` and then call this so the header reflects the new name on
+   *  the same tick instead of waiting for a refresh / dashboard re-fetch. */
+  setTitle: (title: string) => void;
 
   // ---- Mutators ----
   setMeta: (patch: Partial<ResumeData["meta"]>) => void;
@@ -358,6 +370,7 @@ export function flushPendingSave(): Promise<void> {
 
 export const useEditorStore = create<EditorState>((set, get) => ({
   resumeId: null,
+  title: "",
   data: defaultResumeData(),
   saveStatus: "idle",
   lastSavedAt: null,
@@ -370,12 +383,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   history: [defaultResumeData()],
   historyIndex: 0,
 
-  hydrate(id, data) {
+  hydrate(id, data, title) {
     // Reset the history to a single entry on hydrate — the loaded CV
     // becomes the new "step 0" so the user can't undo back into a
-    // previous CV's state.
+    // previous CV's state. Title is set in the SAME atomic update as
+    // resumeId/data so there's never a render where the header shows
+    // the previous CV's name against this CV's content.
     set({
       resumeId: id,
+      title,
       data,
       saveStatus: "idle",
       saveError: null,
@@ -386,6 +402,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       history: [structuredClone(data)],
       historyIndex: 0,
     });
+  },
+
+  setTitle(title) {
+    // No scheduleSave() — the title persists through `renameResume`
+    // (a dedicated `resumes.title` UPDATE), not the `data` autosave
+    // path. This setter only mirrors the persisted value into the
+    // store so every subscriber (header, Settings tab) re-renders.
+    set({ title });
   },
 
   reset() {
@@ -400,6 +424,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const fresh = defaultResumeData();
     set({
       resumeId: null,
+      title: "",
       data: fresh,
       saveStatus: "idle",
       lastSavedAt: null,

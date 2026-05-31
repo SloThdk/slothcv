@@ -65,13 +65,17 @@ function EditorInner() {
   const hydrate = useEditorStore((s) => s.hydrate);
   const reset = useEditorStore((s) => s.reset);
   const resumeId = useEditorStore((s) => s.resumeId);
+  // Title lives in the store (single source) — the header below and the
+  // Settings tab's rename field both read/write it, so a rename reflects
+  // everywhere on the same tick instead of only after a refresh.
+  const title = useEditorStore((s) => s.title);
+  const setTitle = useEditorStore((s) => s.setTitle);
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const setMeta = useEditorStore((s) => s.setMeta);
   const dataLanguage = useEditorStore((s) => s.data.meta.language);
   const requestJumpToSection = useEditorStore((s) => s.requestJumpToSection);
 
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
   const [tab, setTab] = useState<Tab>("content");
   const [mobilePane, setMobilePane] = useState<MobilePane>("edit");
   // "Click empty page → Design tab + scroll" plumbing. State lives in
@@ -136,8 +140,7 @@ function EditorInner() {
           return;
         }
         setError(null);
-        setTitle(res.row.title);
-        hydrate(res.row.id, res.data);
+        hydrate(res.row.id, res.data, res.row.title);
       })
       .catch((e: unknown) => {
         if (!cancelled)
@@ -379,7 +382,7 @@ function EditorInner() {
             {tab === "add" && <ToolshelfTab />}
             {tab === "layers" && <LayersPanel />}
             {tab === "templates" && <TemplatesTab />}
-            {tab === "settings" && <SettingsTab initialTitle={title} />}
+            {tab === "settings" && <SettingsTab />}
           </div>
         </div>
 
@@ -570,6 +573,7 @@ function writeSavedFlag(resumeId: string) {
  */
 function SaveNowButton({ resumeId }: { resumeId: string | null }) {
   const status = useEditorStore((s) => s.saveStatus);
+  const setTitle = useEditorStore((s) => s.setTitle);
   const { t } = useLanguage();
   const prompt = usePrompt();
   const dirtyOrError: SaveStatus[] = ["dirty", "error", "saving"];
@@ -600,6 +604,9 @@ function SaveNowButton({ resumeId }: { resumeId: string | null }) {
             // Cancelled — bail without saving.
             if (!title) return;
             await renameResume(resumeId, title);
+            // Mirror the just-named title into the store so the editor
+            // header updates immediately (renameResume only touches the DB).
+            setTitle(title);
             writeSavedFlag(resumeId);
           }
           await flushPendingSave();

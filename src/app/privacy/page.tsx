@@ -3,7 +3,7 @@
  *
  * GDPR-shaped, written plainly. Every claim here matches what the codebase
  * actually does, not what a generic policy template says:
- *   - Auth: Supabase magic-link + Google OAuth (apps/auth/*)
+ *   - Auth: Supabase email + password + Google OAuth (apps/auth/*)
  *   - Profile data: profiles table (display_name, avatar_url, email)
  *   - User content: resumes table + avatars Storage bucket
  *   - Cookies: only Supabase session cookies (essential)
@@ -64,8 +64,8 @@ export default function PrivacyPage(): JSX.Element {
           <ul className="space-y-3">
             <Item label={isDa ? "Din e-mail" : "Your email address"}>
               {isDa
-                ? "Bruges til at logge ind via magic-link og som unik konto-identifikator. Hvis du logger ind med Google, modtager jeg e-mailen og navnet fra din Google-konto."
-                : "Used to sign in via magic link and as your unique account identifier. If you sign in with Google, I receive the email address and name from your Google account."}
+                ? "Bruges til at logge ind (e-mail og adgangskode) og som unik konto-identifikator. Hvis du logger ind med Google, modtager jeg e-mailen og navnet fra din Google-konto."
+                : "Used to sign in (email and password) and as your unique account identifier. If you sign in with Google, I receive the email address and name from your Google account."}
             </Item>
             <Item label={isDa ? "Visningsnavn og avatar (valgfrit)" : "Display name and avatar (optional)"}>
               {isDa
@@ -157,8 +157,8 @@ export default function PrivacyPage(): JSX.Element {
             </Item>
             <Item label="Resend">
               {isDa
-                ? "Sender transaktions-e-mails (login-links, kontofølsomme beskeder). Ser modtager-e-mail og indhold mens beskeden er undervejs."
-                : "Sends transactional emails (sign-in links, account-sensitive notifications). Sees recipient email and content while the message is in flight."}
+                ? "Sender transaktions-e-mails (bekræftelses- og nulstillingslinks, kontofølsomme beskeder). Ser modtager-e-mail og indhold mens beskeden er undervejs."
+                : "Sends transactional emails (confirmation and password-reset links, account-sensitive notifications). Sees recipient email and content while the message is in flight."}
             </Item>
           </ul>
         </Section>

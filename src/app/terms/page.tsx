@@ -6,7 +6,7 @@
  *   - up to 5 CVs per account
  *   - vector PDF export
  *   - no watermarks, no signup wall to export
- *   - account auth via magic link or Google OAuth
+ *   - account auth via email + password or Google OAuth
  *
  * Bilingual via lang fork rather than 100+ translation keys, mirroring the
  * pattern used on the privacy page.
@@ -54,8 +54,8 @@ export default function TermsPage(): JSX.Element {
         <Section title={isDa ? "Din konto" : "Your account"}>
           <p>
             {isDa
-              ? "Du opretter en konto med din e-mailadresse (magic-link) eller via Google. Du er ansvarlig for at holde adgangen til den tilknyttede e-mail eller Google-konto sikker — jeg kan ikke gendanne adgang hvis den mistes. Én person, én konto. Del den ikke med andre."
-              : "You sign in with your email address (magic link) or via Google. You are responsible for keeping access to the linked email or Google account secure — I cannot recover access if it is lost. One person, one account. Do not share it."}
+              ? "Du opretter en konto med din e-mail og adgangskode eller via Google. Du er ansvarlig for at holde adgangen til din konto og den tilknyttede e-mail eller Google-konto sikker — jeg kan ikke gendanne adgang hvis den mistes. Én person, én konto. Del den ikke med andre."
+              : "You sign in with your email and password, or via Google. You are responsible for keeping access to your account and the linked email or Google account secure — I cannot recover access if it is lost. One person, one account. Do not share it."}
           </p>
         </Section>
 

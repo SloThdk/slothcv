@@ -265,9 +265,10 @@ export function SignupForm() {
       return;
     }
 
-    // Confirmation email sent — show the "check your inbox" state.
+    // Confirmation email sent — show the "check your email to confirm" state.
+    // No toast: the banner communicates it, and a "sign-in link" toast would
+    // be wrong (this is a confirmation email, not a magic link).
     setSent(true);
-    toast.success(t("login.linkSentSuccess"));
   }
 
   function handleGoogle() {

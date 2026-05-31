@@ -315,7 +315,6 @@ export const TRANSLATIONS = {
   },
   "login.email": { en: "Email", da: "E-mail" },
   "login.emailPlaceholder": { en: "you@example.com", da: "dig@eksempel.dk" },
-  "login.sendLink": { en: "Send link", da: "Send link" },
   "login.sending": { en: "Sending…", da: "Sender…" },
   "login.captchaWaiting": {
     en: "Waiting for human-verification to complete…",
@@ -328,11 +327,6 @@ export const TRANSLATIONS = {
   "login.captchaRetry": {
     en: "Retry",
     da: "Prøv igen",
-  },
-  "login.linkSentTo": { en: "I sent a sign-in link to", da: "Jeg sendte et login-link til" },
-  "login.linkSentBody": {
-    en: "Open it on this device to continue.",
-    da: "Åbn det på denne enhed for at fortsætte.",
   },
   "login.googleButton": { en: "Continue with Google", da: "Fortsæt med Google" },
   "login.googleConnecting": { en: "Connecting…", da: "Forbinder…" },
@@ -355,8 +349,8 @@ export const TRANSLATIONS = {
     da: "Login blev ikke gennemført. Prøv igen — bed om et nyt link hvis nødvendigt.",
   },
   "login.errLinkUsed": {
-    en: "That sign-in link has already been used. Request a new one to continue.",
-    da: "Det login-link er allerede brugt. Bed om et nyt for at fortsætte.",
+    en: "That link has already been used. Request a new one to continue.",
+    da: "Det link er allerede brugt. Bed om et nyt for at fortsætte.",
   },
   "login.errDifferentBrowser": {
     en: "Open the sign-in link in the same browser you started in. If your email opened in a different app, copy the link manually into this browser.",
@@ -373,10 +367,6 @@ export const TRANSLATIONS = {
   "login.errGoogleFailed": {
     en: "Google sign-in failed. Try again.",
     da: "Google-login mislykkedes. Prøv igen.",
-  },
-  "login.linkSentSuccess": {
-    en: "Check your inbox for a sign-in link.",
-    da: "Tjek din indbakke for et login-link.",
   },
   "login.loading": { en: "Loading…", da: "Indlæser…" },
   "login.errNoAccount": {
@@ -420,10 +410,6 @@ export const TRANSLATIONS = {
     da: "Har du ikke en konto?",
   },
   "login.signUpLink": { en: "Sign up", da: "Opret konto" },
-  "login.sentWrongEmail": {
-    en: "Wrong email? Try again",
-    da: "Forkert e-mail? Prøv igen",
-  },
   // ── Password sign-in ──────────────────────────────────────────────
   "login.password": { en: "Password", da: "Adgangskode" },
   "login.passwordPlaceholder": { en: "Your password", da: "Din adgangskode" },

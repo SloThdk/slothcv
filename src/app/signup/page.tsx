@@ -1,17 +1,17 @@
 /**
  * /signup — first-time account creation entrypoint.
  *
- * Mirrors /login visually but the underlying call is different:
- *   - Form collects first + last name in addition to email.
- *   - signInWithOtp is called with `shouldCreateUser: true` (default) AND
- *     a `data` payload carrying `full_name`, which Supabase persists to
- *     auth.users.raw_user_meta_data on first signup. The handle_new_user
- *     trigger (migration 0005) then writes it to the profiles row, so the
- *     user lands on /dashboard with their real name pre-populated — same
- *     end-state as Google OAuth.
+ * Mirrors /login visually but collects more:
+ *   - First + last name + email + password (Google OAuth as the alternative).
+ *   - supabase.auth.signUp() carries the name in `options.data`
+ *     (full_name / first_name / last_name) → auth.users.raw_user_meta_data;
+ *     the handle_new_user trigger (migration 0005) writes it onto the
+ *     profiles row, same end-state as Google OAuth.
+ *   - Email confirmation is required (mailer_autoconfirm = false): the user
+ *     must click the link in the confirmation email before they can log in.
  *
- * /login by contrast uses `shouldCreateUser: false` so a typo'd email
- * during sign-in doesn't silently create a fresh empty account.
+ * Provider separation: the email_status probe blocks signup for an email
+ * that already has a confirmed Google or password account (see SignupForm).
  */
 
 "use client";

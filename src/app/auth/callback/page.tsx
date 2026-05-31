@@ -27,6 +27,11 @@ function CallbackInner() {
     const code = params.get("code");
     const next = params.get("next") ?? "/dashboard";
     const errorDescription = params.get("error_description");
+    // Password-recovery links carry ?type=recovery. After the code exchange
+    // the user holds a temporary recovery session — we send them to
+    // /reset-password to pick a new password instead of into the app.
+    const isRecovery = params.get("type") === "recovery";
+    const recoveryTarget = "/reset-password";
 
     // Sanitize `next` once. Only relative paths — never honor a full URL,
     // even if it points at our domain (would be an open-redirect waiting to
@@ -110,7 +115,7 @@ function CallbackInner() {
         // Already signed in → hard-nav to the gated destination so it loads
         // with fresh auth state. Not signed in → a soft redirect to /login
         // is fine (login is client-reactive; there's no session to reflect).
-        if (user) window.location.assign(safeNext);
+        if (user) window.location.assign(isRecovery ? recoveryTarget : safeNext);
         else router.replace("/login?error=missing_code");
       })();
       return;
@@ -150,7 +155,9 @@ function CallbackInner() {
         // makes AuthGate see {loading:false, user:null} and bounce the user
         // back to /login — the "I have to refresh before it logs me in"
         // symptom. See rules/ssr-auth-state-hard-nav.md.
-        window.location.assign(safeNext);
+        // Recovery links route to /reset-password (the user is in a
+        // temporary recovery session and must set a new password).
+        window.location.assign(isRecovery ? recoveryTarget : safeNext);
         return;
       }
 
@@ -175,7 +182,7 @@ function CallbackInner() {
         // refreshed success page) — hard-nav so the destination loads
         // logged-in instead of racing the soft-nav. See
         // rules/ssr-auth-state-hard-nav.md.
-        window.location.assign(safeNext);
+        window.location.assign(isRecovery ? recoveryTarget : safeNext);
         return;
       }
 

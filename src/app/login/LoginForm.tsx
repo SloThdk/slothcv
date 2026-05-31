@@ -1,11 +1,25 @@
 /**
- * LoginForm — magic-link email + Google OAuth.
+ * LoginForm — email + password sign-in, with Google OAuth as the fast path.
  *
- * Both flows complete at `/auth/callback`. The `next` query param is honored
- * so when AuthGate bounces an anonymous visitor here, they land back on the
- * page they were trying to reach after sign-in. Already-signed-in users are
- * forwarded to `next` immediately so the back button doesn't strand them on
- * the login page.
+ * Strict provider separation (shared/playbooks/supabase-auth-provider-
+ * separation.md): before attempting signInWithPassword we probe
+ * `public.email_status(email)` so we can give the right message instead of a
+ * generic "wrong password":
+ *   - !is_registered                 → "no account, sign up first"
+ *   - is_registered, has_google only → "use Continue with Google" (the
+ *                                       account has no password identity)
+ *   - has_email                      → proceed to signInWithPassword
+ * A ban pre-check runs in between so a suspended user sees the real reason.
+ *
+ * On success we HARD-navigate to `next` (window.location.assign) rather than
+ * router.push — the gated destination must do a full load so AuthProvider
+ * re-reads the freshly-persisted session before AuthGate evaluates, otherwise
+ * the soft nav races the SIGNED_IN event and bounces back to /login. See
+ * rules/ssr-auth-state-hard-nav.md.
+ *
+ * Google uses the DIY ID-token flow at /auth/google/init (keeps the consent
+ * screen on our own domain); see handleGoogle. The `next` query param is
+ * honored so AuthGate-bounced visitors land back where they were headed.
  */
 
 "use client";
@@ -13,8 +27,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { LogIn } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -41,50 +56,28 @@ export function LoginForm() {
   const error = searchParams.get("error");
 
   const [email, setEmail] = useState("");
-  // Two distinct submitting states — earlier we shared one `submitting`
-  // flag across both buttons, so clicking "Continue with Google" flipped
-  // the email button's label to "Sending…" too. The two flows have nothing
-  // to do with each other; keep them in their own slots so each button
-  // only reflects its own pending work.
-  const [submittingMagic, setSubmittingMagic] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  // Two distinct submitting states so clicking "Continue with Google" doesn't
+  // flip the password button's label, and vice versa.
+  const [submittingPassword, setSubmittingPassword] = useState(false);
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
-  const [sent, setSent] = useState(false);
   // Cloudflare Turnstile token. null = challenge not yet solved (or expired).
-  // Required by Supabase auth (we enabled SECURITY_CAPTCHA_PROVIDER=turnstile
-  // in dashboard) — every signInWithOtp / signInWithOAuth call MUST include
-  // captchaToken or Supabase returns "captcha_failed". Token is single-use;
-  // we reset the widget after each submit so the next attempt gets a fresh
-  // one. Tokens expire after 5 minutes per Cloudflare default.
+  // Required by Supabase auth (CAPTCHA enabled in the dashboard) — every
+  // signInWithPassword call MUST carry captchaToken. Single-use; we reset the
+  // widget after each submit so the next attempt gets a fresh one.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  // Track whether the widget errored / expired — drives a visible "couldn't
-  // verify you're human" hint + a retry button so the user knows why the
-  // Send Link button is greyed out. Without this, a silent Turnstile failure
-  // (domain not whitelisted in CF dashboard, ad-blocker, network drop,
-  // managed-mode challenge requiring interaction the user didn't see) just
-  // leaves the button disabled with zero feedback — Philip's bug report
-  // 2026-05-16.
   const [captchaError, setCaptchaError] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
-  // Coordinates a "wait for the next fresh token" promise. Used to auto-
-  // retry signInWithOtp after a captcha_failed: reset() + wait for the
-  // widget's next onSuccess (or timeout) instead of bouncing the error
-  // back to the user. A managed-mode token has a 5-minute TTL but
-  // Cloudflare's verifier sometimes rejects tokens that are right at
-  // the edge — auto-retry hides the rough edge.
   const captchaResolveRef = useRef<((token: string) => void) | null>(null);
 
-  // bfcache safety: when the user starts the Google OAuth redirect, the
-  // browser navigates away — but pressing the back arrow can restore this
-  // page from the back-forward cache with React state preserved verbatim.
-  // That left the Google button stuck on its loading state forever (no
-  // code path ran to reset after navigation-away-then-back). Listen for
-  // `pageshow` with `event.persisted=true` (= "this page came from
-  // bfcache") and clear both submitting flags. React effects don't re-run
-  // on bfcache restores, so this listener is the only safe place.
+  // bfcache safety: the Google OAuth redirect navigates away; the back button
+  // can restore this page from bfcache with React state intact, leaving the
+  // Google button stuck loading. pageshow(persisted) clears the flags.
   useEffect(() => {
     function onPageShow(e: PageTransitionEvent) {
       if (e.persisted) {
-        setSubmittingMagic(false);
+        setSubmittingPassword(false);
         setSubmittingGoogle(false);
       }
     }
@@ -92,14 +85,9 @@ export function LoginForm() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
-  // Hard timeout for a stuck Turnstile widget. Managed-mode tokens normally
-  // arrive in 1-2 s, interactive challenges within 5-8 s. If 12 s pass with
-  // neither a token nor an onError call, the widget script is wedged
-  // (network drop, partial ad-blocker, CF challenge-platform glitch) and
-  // the "waiting for human-verification" message would otherwise hang the
-  // page forever. Forcing captchaError exposes the Retry button so the
-  // user has a path out. Cleanup cancels the timer when the token arrives
-  // or the user resets the widget.
+  // Hard timeout for a stuck Turnstile widget — if 12 s pass with neither a
+  // token nor an error, the widget script is wedged; force captchaError so
+  // the Retry button appears instead of a silently greyed-out submit.
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     if (captchaToken || captchaError) return;
@@ -115,47 +103,19 @@ export function LoginForm() {
     }
   }, [loading, user, next, router]);
 
-  // Surface ?error=... once on mount so the user knows the previous attempt
-  // failed. Two important guards:
-  //   1. Wait for `loading` to settle so we know whether the user is
-  //      actually signed in. Firing before then races the auto-redirect
-  //      effect above and shows a toast on the dashboard.
-  //   2. If the user IS signed in, clear the error param silently and
-  //      let the redirect happen — they don't need to see an error for
-  //      a flow that already succeeded (typical case: double-click of a
-  //      magic link → exchange fails on 2nd click but session is valid
-  //      from the 1st).
-  // Mapping lives in lib/auth-errors so SignupForm + future callers stay
-  // in sync. Unknown / tampered codes fall back to generic copy — we
-  // never render raw error strings to the user.
-  //
-  // No decodeURIComponent: useSearchParams.get() already URI-decodes once.
-  // Decoding twice throws URIError on bare `?error=%`.
+  // Surface ?error=... once auth state settles (e.g. provider-mixing bounce
+  // from /auth/google/finalize). Skip the toast if the user is already signed
+  // in — they're being redirected. Strip the param either way so it doesn't
+  // re-fire on language toggle.
   useEffect(() => {
     if (loading) return;
     if (!error) return;
-    // /auth/google/finalize and the magic-link callback can pass the
-    // exact unban timestamp through as `?until=<iso>` alongside the
-    // error code so we can render the dynamic toast with the same
-    // formatBanUntilExact output the pre-send check uses — same
-    // wording whether the user got bounced from a callback or typed
-    // their email and submitted.
     const untilRaw = searchParams.get("until");
-    // Strip both params so neither re-fires on language toggle.
     const url = new URL(window.location.href);
     url.searchParams.delete("error");
     url.searchParams.delete("until");
     router.replace(url.pathname + url.search);
-    // Only TOAST if the user is anonymous. Signed-in users with a stale
-    // ?error= param just get the silent cleanup — they're being redirected.
     if (user) return;
-    // Account-suspended dynamic variant: when /auth/google/finalize
-    // looked up the user's banned_until and passed it through the URL,
-    // render the exact-timestamp toast instead of the generic suspended
-    // copy. Falls through to the generic mapping when until is absent
-    // (magic-link callback path — we don't have the email there, so no
-    // lookup is possible; the user retries via the form and gets the
-    // exact-timestamp toast on the pre-send check).
     if (error === "account_suspended" && untilRaw) {
       const until = formatBanUntilExact(untilRaw, lang);
       if (until) {
@@ -168,70 +128,37 @@ export function LoginForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- guarded one-shot on first non-loading render
   }, [loading]);
 
-  // Build the absolute callback URL on the client so we hit the same origin
-  // we're running on (works in localhost AND on every Pages preview URL).
-  const callback = (() => {
-    if (typeof window === "undefined") return "/auth/callback";
-    const url = new URL("/auth/callback", window.location.origin);
-    url.searchParams.set("next", next);
-    return url.toString();
-  })();
-
-  async function handleMagicLink(e: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Trim whitespace from the email — copy-pasted addresses often carry
-    // leading/trailing spaces that Supabase's email validator rejects.
     const cleanEmail = email.trim();
-    if (!cleanEmail) return;
-    // CAPTCHA gate: Supabase rejects with `captcha_failed` if missing.
-    // Race-safe: if the user submits faster than Turnstile can issue
-    // the FIRST token (common when typing email + Enter on a fresh
-    // page load, or right after a previous submit when the widget is
-    // still mid-reset), enter the loading state and WAIT up to 8s for
-    // the next token instead of bouncing the user back with a
-    // misleading "we couldn't verify you're human" toast. The widget
-    // is managed-mode so a fresh token usually arrives in 1-2s.
-    setSubmittingMagic(true);
+    if (!cleanEmail || !password) return;
+
+    setSubmittingPassword(true);
+
+    // CAPTCHA gate — race-safe: if the user submits before Turnstile issued
+    // its first token, wait up to 8 s for a fresh one before bouncing them.
     let tokenForCall: string | null = captchaToken;
     if (TURNSTILE_SITE_KEY && !tokenForCall) {
       tokenForCall = await waitForFreshCaptchaToken(captchaResolveRef);
       if (!tokenForCall) {
-        // Genuinely no token after the wait — widget probably failed
-        // (network drop, sitekey wrong, etc.). NOW the captcha-failed
-        // toast is appropriate.
-        setSubmittingMagic(false);
+        setSubmittingPassword(false);
         toast.error(t("auth.errCaptchaFailed"));
         return;
       }
       setCaptchaToken(tokenForCall);
     }
+
     const supabase = createClient();
 
-    // ── Step 1: provider-aware existence check via public.email_status ──
-    // RPC returns {is_registered, has_email, has_google}. The trio
-    // drives strict provider separation:
-    //   · !is_registered                 → "no account" toast, no email sent
-    //   · is_registered, has_google only → refuse magic link, point user
-    //                                      at the Google button (account
-    //                                      was created via Google, not
-    //                                      via magic link)
-    //   · is_registered, has_email       → proceed to send magic link
-    // SECURITY DEFINER + table-return — one round trip, no captcha.
-    const probe = await supabase.rpc("email_status", {
-      check_email: cleanEmail,
-    });
+    // ── Step 1: provider-aware existence probe (no captcha consumed) ──
+    const probe = await supabase.rpc("email_status", { check_email: cleanEmail });
     if (probe.error) {
-      setSubmittingMagic(false);
+      setSubmittingPassword(false);
       toast.error(t("auth.errUnexpected"));
       return;
     }
     const status = (probe.data as
-      | {
-          is_registered: boolean;
-          is_confirmed: boolean;
-          has_email: boolean;
-          has_google: boolean;
-        }[]
+      | { is_registered: boolean; is_confirmed: boolean; has_email: boolean; has_google: boolean }[]
       | null)?.[0] ?? {
       is_registered: false,
       is_confirmed: false,
@@ -240,135 +167,81 @@ export function LoginForm() {
     };
 
     if (!status.is_registered) {
-      // No account at all → "sign up first" toast. Prevents typo'd
-      // emails from silently creating ghost accounts.
-      setSubmittingMagic(false);
+      setSubmittingPassword(false);
       toast.error(t("login.errNoAccount"));
       return;
     }
 
-    // ── Step 1.5: ban check via email_ban_status RPC ───────────────────
-    // Runs BEFORE the OAuth-only check. Banned overrides every
-    // other provider-routing decision: if the user is suspended, the
-    // right message is "you're suspended for N minutes", regardless of
-    // which auth provider their account was originally created with.
-    //
-    // Without this ordering, a Google-only banned user who types their
-    // email at /login would see "use Google sign-in" (the OAuth-only
-    // toast) instead of "your account is suspended" — confusing and
-    // wrong. They'd then try Google, fail at the callback stage with
-    // the correct suspended toast, and wonder why /login lied to them.
-    //
-    // Why the RPC matters at all: Supabase's signInWithOtp does NOT
-    // block sends for banned users — it happily fires another magic
-    // link the banned user can't redeem. And on the SECOND click of
-    // the same dead link, /auth/callback returns "otp_expired" /
-    // "link_used" instead of the ban error, falling through to the
-    // generic "sign-in didn't complete" toast. So we check the
-    // database directly: is_banned + the absolute banned_until
-    // timestamp. Every retry recomputes the freshest state and shows
-    // the right duration. Reference: migration 0021.
-    const ban = await supabase.rpc("email_ban_status", {
-      check_email: cleanEmail,
-    });
+    // ── Step 1.5: ban check (overrides provider routing) ──────────────
+    const ban = await supabase.rpc("email_ban_status", { check_email: cleanEmail });
     if (!ban.error) {
       const row = (ban.data as
         | { is_banned: boolean; banned_until: string | null }[]
         | null)?.[0];
       if (row?.is_banned) {
-        setSubmittingMagic(false);
-        const until = row.banned_until
-          ? formatBanUntilExact(row.banned_until, lang)
-          : null;
-        if (until) {
-          toast.error(t("auth.errUserBannedFor", { until }));
-        } else {
-          toast.error(t("auth.errUserBanned"));
-        }
+        setSubmittingPassword(false);
+        const until = row.banned_until ? formatBanUntilExact(row.banned_until, lang) : null;
+        toast.error(until ? t("auth.errUserBannedFor", { until }) : t("auth.errUserBanned"));
         return;
       }
     }
-    // RPC error path → fall through. The /auth/callback ban-detector is
-    // still in place so a banned user clicking their link will see the
-    // generic suspended toast even if this pre-send guard couldn't run.
 
+    // ── Step 1.6: OAuth-only account → refuse password, point to Google ──
     if (!status.has_email && status.has_google) {
-      // OAuth-only account — REFUSE magic link. The account was created
-      // via Google and never opted in to email-link sign-in; sending one
-      // would either silently link a new identity (Supabase default) or
-      // be rejected. We surface the explicit "use Google" message and
-      // bail without sending anything to the inbox.
-      setSubmittingMagic(false);
+      setSubmittingPassword(false);
       toast.error(t("login.errOAuthOnlyGoogle"));
       return;
     }
 
-    // ── Step 2: send magic link ────────────────────────────────────────
-    // Email is registered. shouldCreateUser:false is still passed as a
-    // belt-and-suspenders guard against a race (account deleted between
-    // step 1 and step 2) — Supabase will refuse rather than auto-create.
-    //
-    // Auto-retry on captcha_failed: Turnstile tokens are single-use AND
-    // have a 5-minute TTL with non-trivial clock skew on the Cloudflare
-    // verifier. If our cached token is rejected we transparently reset
-    // the widget, wait up to 8s for a fresh one, and try once more
-    // before surfacing any error. The user shouldn't have to think
-    // about this.
-    const callOtp = (token: string | null) =>
-      supabase.auth.signInWithOtp({
+    // ── Step 2: sign in with password ─────────────────────────────────
+    // Auto-retry once on captcha_failed (single-use token exhausted /
+    // expired at the 5-minute boundary): reset the widget, wait for a
+    // fresh token, retry before surfacing any error.
+    const callSignIn = (token: string | null) =>
+      supabase.auth.signInWithPassword({
         email: cleanEmail,
-        options: {
-          emailRedirectTo: callback,
-          shouldCreateUser: false,
-          ...(token ? { captchaToken: token } : {}),
-        },
+        password,
+        options: token ? { captchaToken: token } : {},
       });
 
-    let { error: err } = await callOtp(tokenForCall);
+    let { error: err } = await callSignIn(tokenForCall);
 
     if (err?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
-      // First token rejected — reset and wait for the next one.
       turnstileRef.current?.reset();
       setCaptchaToken(null);
       const fresh = await waitForFreshCaptchaToken(captchaResolveRef);
       if (fresh) {
         setCaptchaToken(fresh);
-        ({ error: err } = await callOtp(fresh));
+        ({ error: err } = await callSignIn(fresh));
       }
     }
 
-    // Reset Turnstile so any subsequent submit gets a fresh single-use token.
-    turnstileRef.current?.reset();
-    setCaptchaToken(null);
-    setSubmittingMagic(false);
     if (err) {
-      toast.error(t(authErrorTranslationKey(err)));
+      // Token is spent — reset for the retry.
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
+      setSubmittingPassword(false);
+      const code = err.code;
+      const m = (err.message ?? "").toLowerCase();
+      if (code === "invalid_credentials" || m.includes("invalid login") || m.includes("invalid credentials")) {
+        toast.error(t("login.errInvalidCredentials"));
+      } else if (code === "email_not_confirmed" || m.includes("email not confirmed")) {
+        toast.error(t("auth.errEmailNotConfirmed"));
+      } else {
+        toast.error(t(authErrorTranslationKey(err)));
+      }
       return;
     }
-    setSent(true);
-    toast.success(t("login.linkSentSuccess"));
+
+    // Success → HARD nav so the destination loads with fresh auth state.
+    const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+    window.location.assign(safe);
   }
 
-  async function handleGoogle() {
-    // DIY OAuth — kick off the flow at our own /auth/google/init
-    // Cloudflare Pages Function instead of Supabase's broker. The
-    // Function generates state/nonce/PKCE, sets httpOnly cookies, and
-    // 302-redirects to Google with redirect_uri pointing back to our
-    // domain. Effect: Google's "Continue to" account chooser shows
-    // slothcv.pages.dev (or whatever this origin is) instead of the
-    // Supabase project subdomain.
-    //
-    // No captcha gate here either: Google handles bot detection on
-    // its own consent screen, and our init Function doesn't mutate
-    // any state until the user returns from Google with a valid code.
-    // Turnstile on this page stays gated to the magic-link flow.
-    //
-    // We hand off via window.location.href (full navigation) so the
-    // Function can issue Set-Cookie headers as part of the response —
-    // a fetch-then-redirect dance can't do that under cross-origin
-    // cookie rules. This also matches Supabase's broker behaviour
-    // (which also navigates the whole window away), so the UX of
-    // "click button, leave page" is identical.
+  function handleGoogle() {
+    // DIY OAuth at our own /auth/google/init Cloudflare Function — keeps
+    // Google's consent screen on our domain (not the supabase.co subdomain).
+    // Full navigation so the Function can set its httpOnly state cookies.
     setSubmittingGoogle(true);
     const initParams = new URLSearchParams();
     if (next) initParams.set("next", next);
@@ -376,7 +249,6 @@ export function LoginForm() {
       initParams.toString() ? `?${initParams.toString()}` : ""
     }`;
     window.location.href = initPath;
-    // No further state to set — we're navigating away.
   }
 
   if (loading || user) {
@@ -388,51 +260,14 @@ export function LoginForm() {
   }
 
   return (
-    // Mount entrance: 250ms fade+rise so the form settles in after the
-    // route transition. Mode="wait" on the inner AnimatePresence ensures
-    // the form fully exits before the success card enters — looks
-    // intentional, not chaotic.
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: DUR.base, ease: EASE.out }}
       className="flex flex-col gap-6"
     >
-      <AnimatePresence mode="wait">
-      {sent ? (
-        <motion.div
-          key="sent"
-          initial={{ opacity: 0, scale: 0.97, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: -4 }}
-          transition={{ duration: DUR.base, ease: EASE.out }}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-200"
-        >
-          <p>
-            {t("login.linkSentTo")} <strong>{email}</strong>. {t("login.linkSentBody")}
-          </p>
-          {/* Escape hatch: typo'd email = stuck without this. */}
-          <button
-            type="button"
-            onClick={() => {
-              setSent(false);
-              setEmail("");
-            }}
-            className="mt-3 text-xs font-medium text-emerald-900 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-100 dark:hover:text-emerald-300"
-          >
-            {t("login.sentWrongEmail")}
-          </button>
-        </motion.div>
-      ) : (
-        <motion.form
-          key="form"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.2, ease: EASE.out }}
-          onSubmit={handleMagicLink}
-          className="flex flex-col gap-3"
-        >
+      <form onSubmit={handleLogin} className="flex flex-col gap-3">
+        <div>
           <label
             htmlFor="email"
             className="text-sm font-medium text-[color:var(--color-text)]"
@@ -447,80 +282,109 @@ export function LoginForm() {
             placeholder={t("login.emailPlaceholder")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={submittingMagic || submittingGoogle}
+            disabled={submittingPassword || submittingGoogle}
+            className="mt-1.5"
           />
-          {/* Cloudflare Turnstile widget. Managed mode auto-passes for
-              low-risk users (no UI shown), shows a checkbox or interstitial
-              for suspicious traffic. Required by Supabase auth on every
-              signInWithOtp call when CAPTCHA is enabled in dashboard.
-              The Send-link button stays disabled until captchaToken !==
-              null so users physically can't bypass. Only renders if
-              sitekey is configured (graceful degradation if env var
-              missing). */}
-          {TURNSTILE_SITE_KEY && (
-            <div className="flex flex-col items-center gap-2">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => {
-                  setCaptchaToken(token);
-                  setCaptchaError(false);
-                  // Unblock any auto-retry that's waiting for a fresh token.
-                  if (captchaResolveRef.current) {
-                    captchaResolveRef.current(token);
-                    captchaResolveRef.current = null;
-                  }
-                }}
-                onError={() => {
-                  setCaptchaToken(null);
-                  setCaptchaError(true);
-                }}
-                onExpire={() => {
-                  setCaptchaToken(null);
-                }}
-                options={{ theme: "auto", size: "normal" }}
-              />
-              {/* Status line — explains exactly why the Send Link button
-                  is greyed out, with a one-click retry when the widget
-                  failed. Without this the disabled state is silent and
-                  the user has no idea what to do. */}
-              {captchaError ? (
-                <p className="text-center text-xs text-red-600 dark:text-red-400">
-                  {t("login.captchaFailed")}{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCaptchaError(false);
-                      setCaptchaToken(null);
-                      turnstileRef.current?.reset();
-                    }}
-                    className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
-                  >
-                    {t("login.captchaRetry")}
-                  </button>
-                </p>
-              ) : !captchaToken ? (
-                <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
-                  {t("login.captchaWaiting")}
-                </p>
-              ) : null}
-            </div>
-          )}
-          <Button
-            type="submit"
-            disabled={
-              submittingMagic ||
-              submittingGoogle ||
-              !email ||
-              (!!TURNSTILE_SITE_KEY && !captchaToken)
-            }
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="text-sm font-medium text-[color:var(--color-text)]"
           >
-            <Mail className="h-4 w-4" />
-            {submittingMagic ? t("login.sending") : t("login.sendLink")}
-          </Button>
-        </motion.form>
-      )}
-      </AnimatePresence>
+            {t("login.password")}
+          </label>
+          <div className="relative mt-1.5">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              placeholder={t("login.passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={submittingPassword || submittingGoogle}
+              className="pr-16"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-medium text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text)]"
+            >
+              {showPassword ? t("login.hidePassword") : t("login.showPassword")}
+            </button>
+          </div>
+          <div className="mt-1.5 text-right">
+            <Link
+              href={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+              className="text-xs font-medium text-[color:var(--color-text-subtle)] underline-offset-4 hover:text-[color:var(--color-text)] hover:underline"
+            >
+              {t("login.forgotPassword")}
+            </Link>
+          </div>
+        </div>
+
+        {/* Cloudflare Turnstile — required by Supabase auth on every
+            signInWithPassword call when CAPTCHA is enabled. The submit
+            button stays disabled until the token is present. */}
+        {TURNSTILE_SITE_KEY && (
+          <div className="flex flex-col items-center gap-2">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={TURNSTILE_SITE_KEY}
+              onSuccess={(token) => {
+                setCaptchaToken(token);
+                setCaptchaError(false);
+                if (captchaResolveRef.current) {
+                  captchaResolveRef.current(token);
+                  captchaResolveRef.current = null;
+                }
+              }}
+              onError={() => {
+                setCaptchaToken(null);
+                setCaptchaError(true);
+              }}
+              onExpire={() => setCaptchaToken(null)}
+              options={{ theme: "auto", size: "normal" }}
+            />
+            {captchaError ? (
+              <p className="text-center text-xs text-red-600 dark:text-red-400">
+                {t("login.captchaFailed")}{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaptchaError(false);
+                    setCaptchaToken(null);
+                    turnstileRef.current?.reset();
+                  }}
+                  className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+                >
+                  {t("login.captchaRetry")}
+                </button>
+              </p>
+            ) : !captchaToken ? (
+              <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
+                {t("login.captchaWaiting")}
+              </p>
+            ) : null}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          disabled={
+            submittingPassword ||
+            submittingGoogle ||
+            !email ||
+            !password ||
+            (!!TURNSTILE_SITE_KEY && !captchaToken)
+          }
+        >
+          <LogIn className="h-4 w-4" />
+          {submittingPassword ? t("login.loggingIn") : t("login.logIn")}
+        </Button>
+      </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
@@ -533,15 +397,12 @@ export function LoginForm() {
         </div>
       </div>
 
-      {/* Google sign-in button. Styled per Google's brand guidelines:
-          white background, neutral-300 border, full-color "G" mark.
-          Disabled until Turnstile is solved — Supabase requires
-          captchaToken on signInWithOAuth too when CAPTCHA is enabled. */}
+      {/* Google sign-in — per Google brand guidelines: white bg, full-color G. */}
       <Button
         type="button"
         variant="outline"
         onClick={handleGoogle}
-        disabled={submittingMagic || submittingGoogle}
+        disabled={submittingPassword || submittingGoogle}
         className="bg-white text-neutral-800 hover:bg-neutral-50"
       >
         <GoogleIcon size={18} />

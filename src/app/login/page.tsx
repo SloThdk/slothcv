@@ -1,5 +1,5 @@
 /**
- * /login — magic-link + Google OAuth entrypoint.
+ * /login — email + password sign-in, with Google OAuth as the fast path.
  *
  * The actual auth UI lives in <LoginForm>. The wrapper here translates the
  * page heading + subtitle and theme-styles the surrounding card.

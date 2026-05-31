@@ -375,16 +375,19 @@ export const TRANSLATIONS = {
     da: "Ingen konto fundet med den e-mail. Opret en konto først?",
   },
   "login.errAccountExistsOtherMethod": {
-    en: "An account with this email already exists. Try signing in with the method you used originally (Google or magic link).",
-    da: "Der findes allerede en konto med denne e-mail. Log ind med den metode, du brugte oprindeligt (Google eller magisk link).",
+    en: "An account with this email already exists. Sign in with the method you used originally (Google, or email and password).",
+    da: "Der findes allerede en konto med denne e-mail. Log ind med den metode, du brugte oprindeligt (Google eller e-mail og adgangskode).",
   },
+  // Reached when "Continue with Google" hits an email that already has an
+  // email/password account (prevent_provider_mixing trigger). Key name kept
+  // for the auth-errors.ts mapping; copy now points at password sign-in.
   "login.errAccountUseMagicLink": {
-    en: "You signed up with magic link. Type your email below and click \"Send link\" — you'll get a fresh sign-in link in your inbox.",
-    da: "Du oprettede kontoen med magisk link. Skriv din e-mail nedenfor og klik \"Send link\" — du får et nyt login-link i din indbakke.",
+    en: "You signed up with email and password. Log in with your password below instead.",
+    da: "Du oprettede kontoen med e-mail og adgangskode. Log ind med din adgangskode nedenfor i stedet.",
   },
   "login.errOAuthOnlyGoogle": {
-    en: "You signed up with Google. Use \"Continue with Google\" below — magic-link sign-in isn't enabled for this account.",
-    da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" nedenfor — login via magisk link er ikke aktiveret for denne konto.",
+    en: "You signed up with Google. Use \"Continue with Google\" below — password sign-in isn't enabled for this account.",
+    da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" nedenfor — login med adgangskode er ikke aktiveret for denne konto.",
   },
   "login.errOAuthDeclined": {
     en: "Google sign-in was cancelled. Try again or use the email option.",
@@ -411,6 +414,18 @@ export const TRANSLATIONS = {
   "login.sentWrongEmail": {
     en: "Wrong email? Try again",
     da: "Forkert e-mail? Prøv igen",
+  },
+  // ── Password sign-in ──────────────────────────────────────────────
+  "login.password": { en: "Password", da: "Adgangskode" },
+  "login.passwordPlaceholder": { en: "Your password", da: "Din adgangskode" },
+  "login.logIn": { en: "Log in", da: "Log ind" },
+  "login.loggingIn": { en: "Logging in…", da: "Logger ind…" },
+  "login.forgotPassword": { en: "Forgot password?", da: "Glemt adgangskode?" },
+  "login.showPassword": { en: "Show", da: "Vis" },
+  "login.hidePassword": { en: "Hide", da: "Skjul" },
+  "login.errInvalidCredentials": {
+    en: "Wrong email or password. Try again.",
+    da: "Forkert e-mail eller adgangskode. Prøv igen.",
   },
 
   // ─── Auth (granular Supabase error codes) ─────────────────────────
@@ -493,6 +508,28 @@ export const TRANSLATIONS = {
     en: "Something went wrong on my end. Try again — if it keeps happening, let me know.",
     da: "Der gik noget galt hos mig. Prøv igen — hvis det fortsætter, så sig til.",
   },
+  // ── Password policy + strength meter (shared by signup + reset) ────
+  "auth.pwTooWeak": {
+    en: "Password must be at least {n} characters and include one special character (e.g. ! ? @ # &).",
+    da: "Adgangskoden skal være mindst {n} tegn og indeholde mindst ét specialtegn (fx ! ? @ # &).",
+  },
+  "auth.pwStrength": { en: "Password strength", da: "Adgangskodestyrke" },
+  "auth.pwTierWeak": { en: "Weak", da: "Svag" },
+  "auth.pwTierMedium": { en: "Medium", da: "Middel" },
+  "auth.pwTierStrong": { en: "Strong", da: "Stærk" },
+  "auth.pwCritLength": { en: "At least {n} characters", da: "Mindst {n} tegn" },
+  "auth.pwCritSpecial": {
+    en: "At least one special character (e.g. ! ? @ # &)",
+    da: "Mindst ét specialtegn (fx ! ? @ # &)",
+  },
+  "auth.pwCritCase": {
+    en: "Upper and lower case (recommended)",
+    da: "Store og små bogstaver (anbefales)",
+  },
+  "auth.pwCritNumber": {
+    en: "At least one number (recommended)",
+    da: "Mindst ét tal (anbefales)",
+  },
 
   // ─── Signup ───────────────────────────────────────────────────────
   "signup.title": { en: "Create your SlothCV account", da: "Opret din SlothCV-konto" },
@@ -545,12 +582,12 @@ export const TRANSLATIONS = {
     da: "Du oprettede kontoen med Google. Brug \"Fortsæt med Google\" på login-siden.",
   },
   "signup.existingAccountBodyMagic": {
-    en: "You created this account with a magic link. Go to the sign-in page and I'll send you a fresh one.",
-    da: "Du oprettede kontoen med et magisk link. Gå til login-siden, så sender jeg et nyt.",
+    en: "You created this account with email and password. Go to the sign-in page and log in with your password.",
+    da: "Du oprettede kontoen med e-mail og adgangskode. Gå til login-siden og log ind med din adgangskode.",
   },
   "signup.existingAccountBodyBoth": {
-    en: "You can sign in either with Google or with a magic link to this email.",
-    da: "Du kan logge ind enten med Google eller med et magisk link til denne e-mail.",
+    en: "You can sign in either with Google or with your email and password.",
+    da: "Du kan logge ind enten med Google eller med din e-mail og adgangskode.",
   },
   "signup.existingAccountGoToLogin": {
     en: "Go to sign in",
@@ -560,6 +597,74 @@ export const TRANSLATIONS = {
     en: "Try a different email",
     da: "Prøv en anden e-mail",
   },
+  // ── Password signup + email confirmation ──────────────────────────
+  "signup.passwordHint": {
+    en: "At least {n} characters incl. a special character (e.g. ! @ # ?).",
+    da: "Mindst {n} tegn inkl. et specialtegn (fx ! @ # ?).",
+  },
+  "signup.creatingAccount": { en: "Creating account…", da: "Opretter konto…" },
+  "signup.confirmTitle": { en: "Check your email", da: "Tjek din mail" },
+  "signup.confirmBody": {
+    en: "I sent a confirmation link to {email}. Click it to activate your account, then log in.",
+    da: "Jeg sendte et bekræftelseslink til {email}. Klik på det for at aktivere din konto, og log derefter ind.",
+  },
+  "signup.confirmSpamHint": {
+    en: "Didn't get it within a few minutes? Check your spam folder.",
+    da: "Modtog du den ikke inden for et par minutter? Tjek dit spamfilter.",
+  },
+  "signup.confirmGoToLogin": { en: "Go to log in", da: "Gå til login" },
+
+  // ─── Forgot password ──────────────────────────────────────────────
+  "forgot.title": { en: "Forgot password?", da: "Glemt adgangskode?" },
+  "forgot.subtitle": {
+    en: "Enter the email you signed up with and I'll send a link to choose a new password.",
+    da: "Skriv den e-mail du oprettede kontoen med, så sender jeg et link, hvor du kan vælge en ny adgangskode.",
+  },
+  "forgot.send": { en: "Send me a link", da: "Send mig et link" },
+  "forgot.sentTitle": { en: "Check your email", da: "Tjek din mail" },
+  "forgot.sentBody": {
+    en: "If the account exists, I sent a link to {email}. Click it to choose a new password.",
+    da: "Hvis kontoen findes, har jeg sendt et link til {email}. Klik på det for at vælge en ny adgangskode.",
+  },
+  "forgot.sentSpamHint": {
+    en: "Didn't get anything within a few minutes? Check your spam folder, or",
+    da: "Modtog du intet inden for et par minutter? Tjek dit spamfilter, eller",
+  },
+  "forgot.tryAnotherEmail": { en: "try another email", da: "prøv en anden e-mail" },
+  "forgot.backToLogin": { en: "← Back to log in", da: "← Tilbage til login" },
+  "forgot.rememberedPassword": {
+    en: "Remember your password after all?",
+    da: "Husker du adgangskoden alligevel?",
+  },
+  "forgot.errGoogleOnly": {
+    en: "That email uses Google sign-in. Click \"Continue with Google\" on the login page instead.",
+    da: "Den e-mail bruger Google-login. Klik \"Fortsæt med Google\" på login-siden i stedet.",
+  },
+
+  // ─── Reset password ───────────────────────────────────────────────
+  "reset.title": { en: "Choose a new password", da: "Vælg en ny adgangskode" },
+  "reset.subtitle": {
+    en: "Pick a strong password you'll remember.",
+    da: "Vælg en stærk adgangskode, du kan huske.",
+  },
+  "reset.newPassword": { en: "New password", da: "Ny adgangskode" },
+  "reset.confirmPassword": { en: "Confirm password", da: "Bekræft adgangskode" },
+  "reset.submit": { en: "Update password", da: "Opdater adgangskode" },
+  "reset.submitting": { en: "Updating…", da: "Opdaterer…" },
+  "reset.errMismatch": {
+    en: "The two passwords don't match.",
+    da: "De to adgangskoder er ikke ens.",
+  },
+  "reset.success": {
+    en: "Password updated. You're signed in.",
+    da: "Adgangskode opdateret. Du er logget ind.",
+  },
+  "reset.errNoSession": {
+    en: "This reset link has expired or already been used. Request a new one.",
+    da: "Dette nulstillingslink er udløbet eller allerede brugt. Bed om et nyt.",
+  },
+  "reset.requestNew": { en: "Request a new link", da: "Bed om et nyt link" },
+  "reset.checking": { en: "Checking your link…", da: "Tjekker dit link…" },
   // ─── Dashboard ────────────────────────────────────────────────────
   "dashboard.title": { en: "Your CVs", da: "Dine CV'er" },
   "dashboard.subtitle": {

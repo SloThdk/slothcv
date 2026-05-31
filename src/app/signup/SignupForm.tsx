@@ -1,46 +1,24 @@
 /**
- * SignupForm — first-time account creation via magic link or Google OAuth.
+ * SignupForm — create an account with first/last name + email + password, or
+ * continue with Google. Email/password signups require email confirmation
+ * (Supabase mailer_autoconfirm = false): supabase.auth.signUp() sends a
+ * confirmation link the user must click before they can log in.
  *
- * Differs from LoginForm in two substantive ways:
- *   1. Collects first + last name. These get joined into `full_name` and
- *      passed via signInWithOtp's `options.data` so Supabase stores them on
- *      auth.users.raw_user_meta_data — the handle_new_user trigger
- *      (migration 0005) then writes them to the profiles row.
- *   2. Detects the "you already have an account" case BEFORE sending a
- *      magic link, via the public.email_exists() RPC (migration 0007).
- *      If the email is already in auth.users we abort the signup and
- *      direct the user to /login. Only NEW emails proceed to the real
- *      signup that creates the account.
+ * Strict provider separation (shared/playbooks/supabase-auth-provider-
+ * separation.md): before creating anything we probe
+ * `public.email_status(email)`:
+ *   - is_registered + is_confirmed → BLOCK, show the "account exists" banner
+ *     with provider-specific copy (Google vs email/password vs both).
+ *   - is_registered + !confirmed   → fall through; signUp resends the
+ *     confirmation link to the still-pending account (same UX as first-time).
+ *   - not registered               → proceed.
+ * A ban pre-check runs first so a suspended email gets the real reason.
+ * The `prevent_provider_mixing` trigger (migration 0020) is the hard backstop
+ * for the Google-side direction.
  *
- * Why the RPC instead of a `shouldCreateUser:false` probe (the previous
- * approach):
- *   The probe pattern had two failure modes that this implementation
- *   replaces:
- *     1. For OAuth-only users (Google sign-up, no email/password
- *        identity), Supabase returns user_not_found on the probe even
- *        though the auth.users row exists — so /signup wrongly proceeded
- *        to send a magic link to an already-registered email.
- *     2. The probe ALWAYS sent an unsolicited magic link as a side
- *        effect when the email already existed. Confusing.
- *   The RPC reads auth.users directly with SECURITY DEFINER and returns
- *   a boolean — deterministic, no magic-link side effect, works for
- *   OAuth-only and email-only users alike. Public RPC is gated by
- *   Turnstile + Supabase rate limits; small enumeration vector accepted.
- *
- * Identity-collision matrix:
- *
- *   ┌───────────────────────────┬─────────────────────────────────────────┐
- *   │ Existing account state    │ What happens when they submit /signup    │
- *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ Google OAuth account for  │ RPC returns true → abort, show          │
- *   │ this email                │ "account exists, sign in with Google".   │
- *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ Magic-link account for    │ RPC returns true → abort, show          │
- *   │ this email                │ "account exists, please log in".         │
- *   ├───────────────────────────┼─────────────────────────────────────────┤
- *   │ No account                │ RPC returns false → proceed with real   │
- *   │                           │ signup carrying the name metadata.       │
- *   └───────────────────────────┴─────────────────────────────────────────┘
+ * Name metadata rides along in signUp options.data ({full_name, first_name,
+ * last_name}) → auth.users.raw_user_meta_data → the handle_new_user trigger
+ * writes it onto the profiles row.
  */
 
 "use client";
@@ -48,7 +26,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { createClient } from "@/lib/supabase/client";
@@ -64,6 +42,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleIcon } from "@/components/google-icon";
+import {
+  PasswordStrength,
+  passwordMeetsPolicy,
+  PASSWORD_MIN_LENGTH,
+} from "@/components/password-strength";
 import { DUR, EASE } from "@/lib/motion";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -79,42 +62,27 @@ export function SignupForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  // Per-button submitting flags so clicking Google doesn't flip the email
-  // button's label to "Sending…" (and vice versa). Same pattern as
-  // LoginForm — both flows are independent.
-  const [submittingMagic, setSubmittingMagic] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submittingEmail, setSubmittingEmail] = useState(false);
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
+  // Confirmation-email-sent state ("check your inbox to activate").
   const [sent, setSent] = useState(false);
-  // Distinct from `sent`: set when the RPC detected an existing account.
-  // Renders a different message that points the user at /login instead of
-  // the generic "check your inbox" success state. The provider state is
-  // captured alongside so the banner copy can be specific ("you signed
-  // up with Google" vs "you signed up with magic link" vs "either works").
+  // Set when the probe detects an existing CONFIRMED account — renders a
+  // banner pointing the user at /login with provider-specific copy.
   const [existingAccount, setExistingAccount] = useState(false);
   const [existingHasEmail, setExistingHasEmail] = useState(false);
   const [existingHasGoogle, setExistingHasGoogle] = useState(false);
-  // Cloudflare Turnstile token. Required by Supabase auth (CAPTCHA enabled
-  // in dashboard). Mitigates the user-enumeration vector inherent to the
-  // probe pattern (Supabase issues #1547, #1955) by forcing every probe
-  // through a CAPTCHA challenge.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  // Mirrors LoginForm — track widget errors so the disabled Send Link
-  // button has a visible reason + retry instead of silently greying out.
-  // See LoginForm.tsx for the bug-report context.
   const [captchaError, setCaptchaError] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
-  // Same auto-retry coordination as LoginForm — when Supabase rejects
-  // a token we wait for a fresh one and retry once before surfacing
-  // the captcha-failed error to the user. See src/lib/captcha.ts.
   const captchaResolveRef = useRef<((token: string) => void) | null>(null);
 
-  // bfcache safety: same as LoginForm — Google OAuth navigates away, back
-  // button restores from bfcache with React state preserved. Reset the
-  // submitting flags on bfcache restore so the buttons aren't stuck loading.
+  // bfcache safety — same as LoginForm.
   useEffect(() => {
     function onPageShow(e: PageTransitionEvent) {
       if (e.persisted) {
-        setSubmittingMagic(false);
+        setSubmittingEmail(false);
         setSubmittingGoogle(false);
       }
     }
@@ -122,12 +90,7 @@ export function SignupForm() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
-  // Hard timeout for a stuck Turnstile widget — mirrors LoginForm. If
-  // 12 s pass with no token and no error, the widget script is wedged
-  // (ad-blocker, network drop, CF challenge-platform glitch) and the
-  // "waiting for human-verification" message would otherwise hang
-  // forever. Forcing captchaError exposes the Retry button so the user
-  // has a path out instead of staring at a greyed-out submit button.
+  // Stuck-Turnstile timeout — mirrors LoginForm.
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     if (captchaToken || captchaError) return;
@@ -135,7 +98,7 @@ export function SignupForm() {
     return () => clearTimeout(timer);
   }, [captchaToken, captchaError]);
 
-  // Forward already-signed-in users so they don't see a confusing signup form.
+  // Forward already-signed-in users.
   useEffect(() => {
     if (!loading && user) {
       const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
@@ -143,10 +106,7 @@ export function SignupForm() {
     }
   }, [loading, user, next, router]);
 
-  // Surface ?error=... once auth state has settled. Skip the toast if
-  // the user is already signed in — they're about to be redirected, no
-  // point flashing an error for a flow that already succeeded. Strip
-  // the param either way so it doesn't re-fire on re-render.
+  // Surface ?error=... once auth state settles.
   useEffect(() => {
     if (loading) return;
     if (!queryError) return;
@@ -159,8 +119,7 @@ export function SignupForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- guarded one-shot on first non-loading render
   }, [loading]);
 
-  // Build the absolute callback URL on the client so we hit the same origin
-  // we're running on (works in localhost AND on every Pages preview URL).
+  // Absolute callback URL on the client (works on localhost + every Pages URL).
   const callback = useMemo(() => {
     if (typeof window === "undefined") return "/auth/callback";
     const url = new URL("/auth/callback", window.location.origin);
@@ -168,69 +127,51 @@ export function SignupForm() {
     return url.toString();
   }, [next]);
 
-  // Trim + collapse whitespace before storing — defense against users
-  // typing extra spaces.
   function fullNameFrom(first: string, last: string): string {
     const f = first.trim().replace(/\s+/g, " ");
     const l = last.trim().replace(/\s+/g, " ");
     return [f, l].filter(Boolean).join(" ");
   }
 
-  async function handleMagicLink(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Trim whitespace from the email — copy-pasted addresses often carry
-    // leading/trailing spaces that Supabase's email validator rejects.
     const cleanEmail = email.trim();
     if (!cleanEmail) return;
     if (!firstName.trim()) {
       toast.error(t("signup.errFirstNameRequired"));
       return;
     }
-    // CAPTCHA gate — same race-safe pattern as LoginForm. If the user
-    // submits before Turnstile has issued its first token (Enter key on
-    // a fresh page, or rapid resubmit while the widget is mid-reset),
-    // enter the loading state and wait up to 8s for the next token
-    // before bouncing them back with a misleading "we couldn't verify"
-    // toast. Managed-mode tokens usually arrive in 1-2s.
-    setSubmittingMagic(true);
+    if (!passwordMeetsPolicy(password)) {
+      toast.error(t("auth.pwTooWeak", { n: PASSWORD_MIN_LENGTH }));
+      return;
+    }
+
+    setSubmittingEmail(true);
+
+    // CAPTCHA gate — race-safe wait for the first token.
     let tokenForCall: string | null = captchaToken;
     if (TURNSTILE_SITE_KEY && !tokenForCall) {
       tokenForCall = await waitForFreshCaptchaToken(captchaResolveRef);
       if (!tokenForCall) {
-        setSubmittingMagic(false);
+        setSubmittingEmail(false);
         toast.error(t("auth.errCaptchaFailed"));
         return;
       }
       setCaptchaToken(tokenForCall);
     }
+
     const supabase = createClient();
 
-    // ── Step 1: provider-aware existence check via public.email_status ──
-    // RPC returns {is_registered, is_confirmed, has_email, has_google}.
-    // SECURITY DEFINER reads auth.users + auth.identities with one round
-    // trip, no captcha consumed, no magic-link side effect. The four
-    // booleans drive both the BLOCK decision (only block CONFIRMED
-    // accounts — see below) and the banner copy ("you signed up with
-    // Google" vs "with magic link" vs "either").
-    const probe = await supabase.rpc("email_status", {
-      check_email: cleanEmail,
-    });
-
+    // ── Step 1: provider-aware existence probe (no captcha consumed) ──
+    const probe = await supabase.rpc("email_status", { check_email: cleanEmail });
     if (probe.error) {
-      // RPC failed (network / DB blip) — fail closed. Creating a duplicate
-      // account is worse than asking the user to retry.
-      setSubmittingMagic(false);
+      // Fail closed — a duplicate account is worse than a retry.
+      setSubmittingEmail(false);
       toast.error(t("auth.errUnexpected"));
       return;
     }
-
     const status = (probe.data as
-      | {
-          is_registered: boolean;
-          is_confirmed: boolean;
-          has_email: boolean;
-          has_google: boolean;
-        }[]
+      | { is_registered: boolean; is_confirmed: boolean; has_email: boolean; has_google: boolean }[]
       | null)?.[0] ?? {
       is_registered: false,
       is_confirmed: false,
@@ -238,49 +179,26 @@ export function SignupForm() {
       has_google: false,
     };
 
-    // Block ONLY when the email belongs to a CONFIRMED account. The
-    // signInWithOtp call (Step 2) creates an auth.users row IMMEDIATELY
-    // when sending the magic link, so an unclicked-but-link-sent signup
-    // also returns is_registered:true. Blocking that case stranded users
-    // mid-signup ("I never clicked anything, why does it say it exists?").
-    // For unconfirmed users we fall through to Step 2, where Supabase
-    // resends the magic link to the same pending user — same UX as a
-    // first-time signup, just a fresh link.
-    //
-    // Google OAuth users are confirmed instantly (Google's email is
-    // pre-verified), so is_confirmed:true is the natural state for them.
-    // ── Ban check FIRST, before any other branching. ──────────────────
-    // Banned users get the explicit suspended toast regardless of
-    // whether they're "registered + confirmed" or some weird in-between
-    // state — the suspension is the load-bearing fact. Same ordering
-    // discipline as LoginForm: banned overrides every other branch.
+    // ── Ban check first (overrides every other branch) ────────────────
     if (status.is_registered) {
-      const ban = await supabase.rpc("email_ban_status", {
-        check_email: cleanEmail,
-      });
+      const ban = await supabase.rpc("email_ban_status", { check_email: cleanEmail });
       if (!ban.error) {
         const row = (ban.data as
           | { is_banned: boolean; banned_until: string | null }[]
           | null)?.[0];
         if (row?.is_banned) {
-          setSubmittingMagic(false);
-          const until = row.banned_until
-            ? formatBanUntilExact(row.banned_until, lang)
-            : null;
-          if (until) {
-            toast.error(t("auth.errUserBannedFor", { until }));
-          } else {
-            toast.error(t("auth.errUserBanned"));
-          }
+          setSubmittingEmail(false);
+          const until = row.banned_until ? formatBanUntilExact(row.banned_until, lang) : null;
+          toast.error(until ? t("auth.errUserBannedFor", { until }) : t("auth.errUserBanned"));
           return;
         }
       }
     }
 
+    // Block only CONFIRMED accounts. An unconfirmed pending signup falls
+    // through so signUp resends the confirmation link to the same user.
     if (status.is_registered && status.is_confirmed) {
-      // Confirmed existing account, not banned — show the standard
-      // "already exists" banner directing to /login.
-      setSubmittingMagic(false);
+      setSubmittingEmail(false);
       setExistingAccount(true);
       setExistingHasEmail(status.has_email);
       setExistingHasGoogle(status.has_google);
@@ -288,19 +206,12 @@ export function SignupForm() {
       return;
     }
 
-    // ── Step 2: real signup ────────────────────────────────────────────
-    // Email is genuinely new (or pending-unconfirmed → resend). Send
-    // the magic link. The captcha token is still fresh because step 1
-    // was a plain RPC, not an auth call.
-    //
-    // Auto-retry on captcha_failed (single-use exhausted, expired at
-    // the 5-minute boundary, etc.): reset widget, wait up to 8s for
-    // the next fresh token, retry once before surfacing any error to
-    // the user. Same pattern as LoginForm.
+    // ── Step 2: create the account (email confirmation required) ──────
     const fullName = fullNameFrom(firstName, lastName);
-    const callOtp = (token: string | null) =>
-      supabase.auth.signInWithOtp({
+    const callSignUp = (token: string | null) =>
+      supabase.auth.signUp({
         email: cleanEmail,
+        password,
         options: {
           emailRedirectTo: callback,
           ...(token ? { captchaToken: token } : {}),
@@ -312,7 +223,7 @@ export function SignupForm() {
         },
       });
 
-    let { error: err } = await callOtp(tokenForCall);
+    let { data, error: err } = await callSignUp(tokenForCall);
 
     if (err?.code === "captcha_failed" && TURNSTILE_SITE_KEY) {
       turnstileRef.current?.reset();
@@ -320,34 +231,47 @@ export function SignupForm() {
       const fresh = await waitForFreshCaptchaToken(captchaResolveRef);
       if (fresh) {
         setCaptchaToken(fresh);
-        ({ error: err } = await callOtp(fresh));
+        ({ data, error: err } = await callSignUp(fresh));
       }
     }
 
     turnstileRef.current?.reset();
     setCaptchaToken(null);
-    setSubmittingMagic(false);
+    setSubmittingEmail(false);
+
     if (err) {
+      // email_exists / identity_already_exists → existing-account banner.
+      if (err.code === "email_exists" || err.code === "user_already_exists") {
+        setExistingAccount(true);
+        setExistingHasEmail(true);
+        setExistingHasGoogle(false);
+        return;
+      }
       toast.error(t(authErrorTranslationKey(err)));
       return;
     }
+
+    // Supabase obfuscates a signUp for an already-registered confirmed
+    // email by returning a user with an EMPTY identities array and no
+    // error (anti-enumeration). Treat that as "account exists" so the
+    // user is pointed at /login rather than waiting for an email that
+    // will never arrive.
+    const identities = (data?.user as { identities?: unknown[] } | null)?.identities;
+    if (data?.user && Array.isArray(identities) && identities.length === 0) {
+      setExistingAccount(true);
+      setExistingHasEmail(true);
+      setExistingHasGoogle(false);
+      toast.error(t("signup.errAccountExists"));
+      return;
+    }
+
+    // Confirmation email sent — show the "check your inbox" state.
     setSent(true);
     toast.success(t("login.linkSentSuccess"));
   }
 
-  async function handleGoogle() {
-    // DIY OAuth — see LoginForm.tsx handleGoogle for the full
-    // rationale. Identical flow on signup; the init Function doesn't
-    // care which page kicked off the request. New users land on
-    // /dashboard via signInWithIdToken on the finalize page (Supabase
-    // auto-creates the auth.users row on first sign-in if no
-    // collision); existing users get the same provider-mixing toast
-    // they'd see via the broker.
-    //
-    // The Turnstile-equipped magic-link signup form gates on its
-    // captcha; this Google path doesn't (Google handles bot
-    // detection at the consent screen + we don't mutate any state
-    // until the round-trip returns with a verified ID token).
+  function handleGoogle() {
+    // DIY OAuth — see LoginForm.handleGoogle.
     setSubmittingGoogle(true);
     const initParams = new URLSearchParams();
     if (next) initParams.set("next", next);
@@ -355,10 +279,6 @@ export function SignupForm() {
       initParams.toString() ? `?${initParams.toString()}` : ""
     }`;
     window.location.href = initPath;
-    // No further state to set — we're navigating away. If the user
-    // comes back via the browser's back button, the `pageshow`
-    // bfcache listener at the top of this component clears
-    // `submittingGoogle` so the button isn't stuck on "Connecting…".
   }
 
   if (loading || user) {
@@ -370,10 +290,6 @@ export function SignupForm() {
   }
 
   return (
-    // Mount entrance: 250ms fade+rise mirrors LoginForm so the two pages
-    // feel symmetric. AnimatePresence with mode="wait" cycles between
-    // the three possible states (existing-account banner, sent banner,
-    // form) without overlap.
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -381,191 +297,211 @@ export function SignupForm() {
       className="flex flex-col gap-6"
     >
       <AnimatePresence mode="wait">
-      {existingAccount ? (
-        // Probe found an existing account. Tell the user clearly: their
-        // email is already registered, and direct them at /login. They
-        // also got an unsolicited magic link in their inbox — surface that
-        // so they're not confused if they spot it.
-        <motion.div
-          key="existing"
-          initial={{ opacity: 0, scale: 0.97, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: -4 }}
-          transition={{ duration: DUR.base, ease: EASE.out }}
-          className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200"
-        >
-          <p className="font-medium">
-            {t("signup.existingAccountTitle")} <strong>{email}</strong>
-          </p>
-          <p className="mt-2">
-            {existingHasEmail && existingHasGoogle
-              ? t("signup.existingAccountBodyBoth")
-              : existingHasGoogle
-                ? t("signup.existingAccountBodyGoogle")
-                : existingHasEmail
-                  ? t("signup.existingAccountBodyMagic")
-                  : t("signup.existingAccountBody")}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+        {existingAccount ? (
+          <motion.div
+            key="existing"
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -4 }}
+            transition={{ duration: DUR.base, ease: EASE.out }}
+            className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <p className="font-medium">
+              {t("signup.existingAccountTitle")} <strong>{email}</strong>
+            </p>
+            <p className="mt-2">
+              {existingHasEmail && existingHasGoogle
+                ? t("signup.existingAccountBodyBoth")
+                : existingHasGoogle
+                  ? t("signup.existingAccountBodyGoogle")
+                  : existingHasEmail
+                    ? t("signup.existingAccountBodyMagic")
+                    : t("signup.existingAccountBody")}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a
+                href="/login"
+                className="inline-flex items-center justify-center rounded-md bg-[color:var(--color-text)] px-3 py-1.5 text-xs font-medium text-[color:var(--color-bg)] hover:opacity-90"
+              >
+                {t("signup.existingAccountGoToLogin")}
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setExistingAccount(false);
+                  setEmail("");
+                }}
+                className="inline-flex items-center justify-center rounded-md border border-amber-300 bg-transparent px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/30"
+              >
+                {t("signup.existingAccountTryAnother")}
+              </button>
+            </div>
+          </motion.div>
+        ) : sent ? (
+          <motion.div
+            key="sent"
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -4 }}
+            transition={{ duration: DUR.base, ease: EASE.out }}
+            className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-100"
+          >
+            <p className="font-medium">{t("signup.confirmTitle")}</p>
+            <p className="mt-2">
+              {t("signup.confirmBody", { email })}
+            </p>
+            <p className="mt-3 text-xs text-emerald-800 dark:text-emerald-300/90">
+              {t("signup.confirmSpamHint")}
+            </p>
             <a
               href="/login"
-              className="inline-flex items-center justify-center rounded-md bg-[color:var(--color-text)] px-3 py-1.5 text-xs font-medium text-[color:var(--color-bg)] hover:opacity-90"
+              className="mt-3 inline-flex text-xs font-medium text-emerald-900 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-100 dark:hover:text-emerald-300"
             >
-              {t("signup.existingAccountGoToLogin")}
+              {t("signup.confirmGoToLogin")}
             </a>
-            <button
-              type="button"
-              onClick={() => {
-                setExistingAccount(false);
-                setEmail("");
-              }}
-              className="inline-flex items-center justify-center rounded-md border border-amber-300 bg-transparent px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/30"
-            >
-              {t("signup.existingAccountTryAnother")}
-            </button>
-          </div>
-        </motion.div>
-      ) : sent ? (
-        <motion.div
-          key="sent"
-          initial={{ opacity: 0, scale: 0.97, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: -4 }}
-          transition={{ duration: DUR.base, ease: EASE.out }}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-200"
-        >
-          <p>
-            {t("login.linkSentTo")} <strong>{email}</strong>. {t("login.linkSentBody")}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setSent(false);
-              setEmail("");
-              // Keep firstName/lastName — user likely just typo'd email.
-            }}
-            className="mt-3 text-xs font-medium text-emerald-900 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-100 dark:hover:text-emerald-300"
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2, ease: EASE.out }}
+            onSubmit={handleSignup}
+            className="flex flex-col gap-3"
           >
-            {t("login.sentWrongEmail")}
-          </button>
-        </motion.div>
-      ) : (
-        <motion.form
-          key="form"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.2, ease: EASE.out }}
-          onSubmit={handleMagicLink}
-          className="flex flex-col gap-3"
-        >
-          {/* Stack name fields on narrow phones — two side-by-side inputs
-              get cramped under ~360px. Switch to a 2-col grid at sm. */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="first_name">{t("signup.firstName")}</Label>
+                <Input
+                  id="first_name"
+                  type="text"
+                  autoComplete="given-name"
+                  required
+                  placeholder={t("signup.firstNamePlaceholder")}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={submittingEmail || submittingGoogle}
+                  maxLength={40}
+                />
+              </div>
+              <div>
+                <Label htmlFor="last_name">{t("signup.lastName")}</Label>
+                <Input
+                  id="last_name"
+                  type="text"
+                  autoComplete="family-name"
+                  placeholder={t("signup.lastNamePlaceholder")}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={submittingEmail || submittingGoogle}
+                  maxLength={40}
+                />
+              </div>
+            </div>
             <div>
-              <Label htmlFor="first_name">{t("signup.firstName")}</Label>
+              <Label htmlFor="email">{t("login.email")}</Label>
               <Input
-                id="first_name"
-                type="text"
-                autoComplete="given-name"
+                id="email"
+                type="email"
+                autoComplete="email"
                 required
-                placeholder={t("signup.firstNamePlaceholder")}
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                disabled={submittingMagic || submittingGoogle}
-                maxLength={40}
+                placeholder={t("login.emailPlaceholder")}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submittingEmail || submittingGoogle}
               />
             </div>
             <div>
-              <Label htmlFor="last_name">{t("signup.lastName")}</Label>
-              <Input
-                id="last_name"
-                type="text"
-                autoComplete="family-name"
-                placeholder={t("signup.lastNamePlaceholder")}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                disabled={submittingMagic || submittingGoogle}
-                maxLength={40}
-              />
+              <Label htmlFor="password">{t("login.password")}</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  placeholder={t("login.passwordPlaceholder")}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={submittingEmail || submittingGoogle}
+                  className="pr-16"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-medium text-[color:var(--color-text-subtle)] transition-colors hover:text-[color:var(--color-text)]"
+                >
+                  {showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-[color:var(--color-text-subtle)]">
+                {t("signup.passwordHint", { n: PASSWORD_MIN_LENGTH })}
+              </p>
+              <div className="mt-2">
+                <PasswordStrength password={password} />
+              </div>
             </div>
-          </div>
-          <div>
-            <Label htmlFor="email">{t("login.email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder={t("login.emailPlaceholder")}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={submittingMagic || submittingGoogle}
-            />
-          </div>
-          {/* Cloudflare Turnstile widget. Managed mode auto-passes for
-              low-risk users (no UI shown). Required by Supabase auth on
-              every signInWithOtp call when CAPTCHA is enabled. The probe
-              consumes the first token; handleMagicLink polls for a fresh
-              one before the real-signup call. */}
-          {TURNSTILE_SITE_KEY && (
-            <div className="flex flex-col items-center gap-2">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => {
-                  setCaptchaToken(token);
-                  setCaptchaError(false);
-                  // Unblock any in-flight auto-retry waiting for a fresh token.
-                  if (captchaResolveRef.current) {
-                    captchaResolveRef.current(token);
-                    captchaResolveRef.current = null;
-                  }
-                }}
-                onError={() => {
-                  setCaptchaToken(null);
-                  setCaptchaError(true);
-                }}
-                onExpire={() => setCaptchaToken(null)}
-                options={{ theme: "auto", size: "normal" }}
-              />
-              {captchaError ? (
-                <p className="text-center text-xs text-red-600 dark:text-red-400">
-                  {t("login.captchaFailed")}{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCaptchaError(false);
-                      setCaptchaToken(null);
-                      turnstileRef.current?.reset();
-                    }}
-                    className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
-                  >
-                    {t("login.captchaRetry")}
-                  </button>
-                </p>
-              ) : !captchaToken ? (
-                <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
-                  {t("login.captchaWaiting")}
-                </p>
-              ) : null}
-            </div>
-          )}
-          <Button
-            type="submit"
-            disabled={
-              submittingMagic ||
-              submittingGoogle ||
-              !email ||
-              !firstName.trim() ||
-              (!!TURNSTILE_SITE_KEY && !captchaToken)
-            }
-          >
-            <Mail className="h-4 w-4" />
-            {submittingMagic ? t("login.sending") : t("signup.createAccount")}
-          </Button>
-        </motion.form>
-      )}
+            {/* Cloudflare Turnstile — required on every signUp call. */}
+            {TURNSTILE_SITE_KEY && (
+              <div className="flex flex-col items-center gap-2">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => {
+                    setCaptchaToken(token);
+                    setCaptchaError(false);
+                    if (captchaResolveRef.current) {
+                      captchaResolveRef.current(token);
+                      captchaResolveRef.current = null;
+                    }
+                  }}
+                  onError={() => {
+                    setCaptchaToken(null);
+                    setCaptchaError(true);
+                  }}
+                  onExpire={() => setCaptchaToken(null)}
+                  options={{ theme: "auto", size: "normal" }}
+                />
+                {captchaError ? (
+                  <p className="text-center text-xs text-red-600 dark:text-red-400">
+                    {t("login.captchaFailed")}{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCaptchaError(false);
+                        setCaptchaToken(null);
+                        turnstileRef.current?.reset();
+                      }}
+                      className="font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+                    >
+                      {t("login.captchaRetry")}
+                    </button>
+                  </p>
+                ) : !captchaToken ? (
+                  <p className="text-center text-[11px] text-[color:var(--color-text-subtle)]">
+                    {t("login.captchaWaiting")}
+                  </p>
+                ) : null}
+              </div>
+            )}
+            <Button
+              type="submit"
+              disabled={
+                submittingEmail ||
+                submittingGoogle ||
+                !email ||
+                !firstName.trim() ||
+                !passwordMeetsPolicy(password) ||
+                (!!TURNSTILE_SITE_KEY && !captchaToken)
+              }
+            >
+              <UserPlus className="h-4 w-4" />
+              {submittingEmail ? t("signup.creatingAccount") : t("signup.createAccount")}
+            </Button>
+          </motion.form>
+        )}
       </AnimatePresence>
 
       <div className="relative">
@@ -579,21 +515,16 @@ export function SignupForm() {
         </div>
       </div>
 
-      {/* Google sign-in button. Per Google's brand guidelines:
-          white background, neutral border, full-color "G" mark. */}
       <Button
         type="button"
         variant="outline"
         onClick={handleGoogle}
-        disabled={submittingMagic || submittingGoogle}
+        disabled={submittingEmail || submittingGoogle}
         className="bg-white text-neutral-800 hover:bg-neutral-50"
       >
         <GoogleIcon size={18} />
         {submittingGoogle ? t("login.googleConnecting") : t("signup.googleButton")}
       </Button>
-      {/* I5 fix: when user has typed a name, warn that Google overrides it
-          with the name from their Google profile. Hidden when fields are
-          empty so we don't add noise to the no-input default state. */}
       {(firstName.trim() || lastName.trim()) && !existingAccount && !sent && (
         <p className="-mt-2 text-center text-xs text-[color:var(--color-text-subtle)]">
           {t("signup.googleOverridesName")}

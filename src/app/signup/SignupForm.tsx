@@ -47,6 +47,7 @@ import {
   passwordMeetsPolicy,
   PASSWORD_MIN_LENGTH,
 } from "@/components/password-strength";
+import { ResendConfirmation } from "@/components/resend-confirmation";
 import { DUR, EASE } from "@/lib/motion";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -392,11 +393,15 @@ export function SignupForm() {
               {t("signup.confirmBody", { email })}
             </p>
             <p className="mt-3 text-xs text-emerald-800 dark:text-emerald-300/90">
-              {t("signup.confirmSpamHint")}
+              {t("resend.didntGet")}
             </p>
+            {/* Resend path — so a user who lost/never-got the mail isn't stuck.
+                Its own captcha (the signup token is spent) + 60s cooldown
+                (a mail was just sent). See rules/resend-confirmation-email-flow. */}
+            <ResendConfirmation email={email} initialCooldown={60} />
             <a
               href="/login"
-              className="mt-3 inline-flex text-xs font-medium text-emerald-900 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-100 dark:hover:text-emerald-300"
+              className="mt-4 inline-flex text-xs font-medium text-emerald-900 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-100 dark:hover:text-emerald-300"
             >
               {t("signup.confirmGoToLogin")}
             </a>

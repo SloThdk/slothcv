@@ -32,6 +32,17 @@ export function createClient(): SupabaseClient {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
+        // GoTrue's e-mail links (confirmation + recovery) come back with the
+        // session in the URL HASH (implicit flow):
+        // `…/#access_token=…&refresh_token=…&type=signup`. Left ON,
+        // detectSessionInUrl makes the client SILENTLY consume that hash on
+        // whatever page GoTrue dropped the user (usually the homepage) and
+        // auto-login — no /login, no "konto bekræftet" notice, and recovery
+        // never reaches /reset-password. We turn it OFF and handle the hash
+        // deterministically in <AuthHashHandler> (mounted in the root layout):
+        // confirmation → /login?notice=email_confirmed, recovery →
+        // /reset-password. See rules/auth-link-tokens-in-url-hash.md.
+        detectSessionInUrl: false,
         // Use the in-memory processLock instead of the default
         // navigator.locks-based lock. `signUp()` under @supabase/ssr + PKCE
         // stalls on navigator.locks: the POST /auth/v1/signup returns 200

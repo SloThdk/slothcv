@@ -620,6 +620,36 @@ export const TRANSLATIONS = {
     da: "Modtog du den ikke inden for et par minutter? Tjek dit spamfilter.",
   },
   "signup.confirmGoToLogin": { en: "Go to log in", da: "Gå til login" },
+  // ── Resend confirmation email (shared component) ──────────────────
+  "resend.didntGet": {
+    en: "Didn't get it within a few minutes? Check your spam folder, or send a new confirmation email.",
+    da: "Modtog du den ikke inden for et par minutter? Tjek dit spamfilter, eller send en ny bekræftelsesmail.",
+  },
+  "resend.button": {
+    en: "Send confirmation email again",
+    da: "Send bekræftelsesmail igen",
+  },
+  "resend.sending": { en: "Sending…", da: "Sender…" },
+  "resend.cooldown": { en: "Resend in {n}s", da: "Send igen om {n}s" },
+  "resend.sent": {
+    en: "If the account needs confirming, I've sent a new email to {email}. Check your spam folder too.",
+    da: "Hvis kontoen mangler bekræftelse, har jeg sendt en ny mail til {email}. Tjek også dit spamfilter.",
+  },
+  "resend.rateLimited": {
+    en: "You just requested an email. Wait a moment before trying again.",
+    da: "Du har lige bedt om en mail. Vent et øjeblik, før du prøver igen.",
+  },
+  "resend.needEmail": { en: "Enter your email first.", da: "Skriv din e-mail først." },
+  "resend.needCaptcha": {
+    en: "Waiting for human-verification. Try again in a moment.",
+    da: "Afventer menneske-verifikation. Prøv igen om et øjeblik.",
+  },
+  // Login: shown above the resend control when sign-in fails because the
+  // account hasn't been confirmed yet.
+  "login.needsConfirmationPrompt": {
+    en: "You need to confirm your email before logging in.",
+    da: "Du skal bekræfte din e-mail, før du kan logge ind.",
+  },
 
   // ─── Forgot password ──────────────────────────────────────────────
   "forgot.title": { en: "Forgot password?", da: "Glemt adgangskode?" },

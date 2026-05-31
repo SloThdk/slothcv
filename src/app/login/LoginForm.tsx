@@ -43,6 +43,7 @@ import { formatBanUntilExact } from "@/lib/ban-format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/google-icon";
+import { ResendConfirmation } from "@/components/resend-confirmation";
 import { DUR, EASE } from "@/lib/motion";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -72,6 +73,9 @@ export function LoginForm() {
   // flip the password button's label, and vice versa.
   const [submittingPassword, setSubmittingPassword] = useState(false);
   const [submittingGoogle, setSubmittingGoogle] = useState(false);
+  // Set when sign-in fails with "email not confirmed" → surfaces the resend
+  // control. See rules/resend-confirmation-email-flow.md.
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   // Cloudflare Turnstile token. null = challenge not yet solved (or expired).
   // Required by Supabase auth (CAPTCHA enabled in the dashboard) — every
   // signInWithPassword call MUST carry captchaToken. Single-use; we reset the
@@ -248,6 +252,10 @@ export function LoginForm() {
       if (code === "invalid_credentials" || m.includes("invalid login") || m.includes("invalid credentials")) {
         toast.error(t("login.errInvalidCredentials"));
       } else if (code === "email_not_confirmed" || m.includes("email not confirmed")) {
+        // The account exists but the e-mail was never confirmed. Surface the
+        // resend control so the user (back days later, mail lost) isn't stuck.
+        // See rules/resend-confirmation-email-flow.md.
+        setNeedsConfirmation(true);
         toast.error(t("auth.errEmailNotConfirmed"));
       } else {
         toast.error(t(authErrorTranslationKey(err)));
@@ -311,7 +319,11 @@ export function LoginForm() {
             required
             placeholder={t("login.emailPlaceholder")}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              // Editing the email invalidates a prior "needs confirmation".
+              if (needsConfirmation) setNeedsConfirmation(false);
+            }}
             disabled={submittingPassword || submittingGoogle}
             className="mt-1.5"
           />
@@ -415,6 +427,17 @@ export function LoginForm() {
           {submittingPassword ? t("login.loggingIn") : t("login.logIn")}
         </Button>
       </form>
+
+      {/* "Email not confirmed" → let them resend the confirmation link right
+          here (its own captcha + 60s cooldown). So a user who never got / lost
+          the mail and comes back via LOGIN isn't permanently stuck. See
+          rules/resend-confirmation-email-flow.md. */}
+      {needsConfirmation && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200">
+          <p className="font-medium">{t("login.needsConfirmationPrompt")}</p>
+          <ResendConfirmation email={email} />
+        </div>
+      )}
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

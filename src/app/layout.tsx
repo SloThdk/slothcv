@@ -7,6 +7,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth-context";
+import { AuthHashHandler } from "@/components/auth-hash-handler";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ThemeProvider } from "@/lib/theme/ThemeContext";
 import { ConfirmProvider } from "@/components/ui/confirm-modal";
@@ -63,6 +64,12 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
+              {/* Reads Supabase auth tokens that arrive in the URL #hash
+                  (implicit-flow e-mail links) and routes: confirmation →
+                  /login?notice=email_confirmed, recovery → /reset-password.
+                  detectSessionInUrl is OFF so this is the single place that
+                  handles the hash. See rules/auth-link-tokens-in-url-hash.md. */}
+              <AuthHashHandler />
               {/* Confirm modal at this level (above Auth, below Theme) so
                   every page can spawn confirmations and the modal still
                   picks up theme tokens. The modal renders its own backdrop

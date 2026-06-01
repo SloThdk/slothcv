@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
-    "@opennextjs/cloudflare": "^1.19.4",
+    "@opennextjs/cloudflare": "^1.19.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.39",
     "@types/react": "^19",
@@ -48,6 +48,6 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
-    "wrangler": "^4.85.0"
+    "wrangler": "^4.95.0"
   }
 }
